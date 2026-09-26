@@ -1,0 +1,18 @@
+# FARCI — Modelfile llama.cpp
+# llama.cpp n'utilise pas de Modelfile comme Ollama, mais ce fichier sert
+# de documentation pour les paramètres du modèle.
+
+# Modèle principal
+MODEL=/models/Ornith-1.5-9B-Q5_K_M.gguf
+
+# Paramètres serveur
+HOST=0.0.0.0
+PORT=8081
+CTX_SIZE=8192
+GPU_LAYERS=0
+THREADS=4
+
+# Options
+JINJA=true          # Obligatoire pour le chat template Ornith
+REASONING=off       # Neutralise le raisonnement pour l'extraction
+GRAMMAR=clinical.gbnf  # GBNF pour structured output

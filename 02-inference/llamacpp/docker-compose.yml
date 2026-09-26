@@ -1,0 +1,38 @@
+# FARCI — llama.cpp (FARCI §15)
+#
+# Image construite localement (phase 1) : farci/llamacpp:server-b<N>
+# Même fichier GGUF qu'Ollama → comparaison à poids constants.
+
+services:
+  llamacpp:
+    image: farci/llamacpp:server-${LLAMACPP_BUILD}
+    container_name: farci-llamacpp
+    restart: unless-stopped
+    command: >
+      llama-server
+      --model /models/Ornith-1.5-9B-Q5_K_M.gguf
+      --host 0.0.0.0
+      --port 8081
+      --ctx-size ${LLAMACPP_CTX_SIZE:-8192}
+      --n-gpu-layers ${LLAMACPP_GPU_LAYERS:-0}
+      --threads ${LLAMACPP_THREADS:-4}
+      --jinja
+      --reasoning off
+      --grammar-file /app/grammar/clinical.gbnf
+    volumes:
+      - ${FARCI_MODELS_DIR}:/models:ro
+      - ./grammar:/app/grammar:ro
+    ports:
+      - "8081:8081"
+    networks:
+      farci:
+        ipv4_address: ${INFERENCE_B_IP}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  farci:
+    external: true

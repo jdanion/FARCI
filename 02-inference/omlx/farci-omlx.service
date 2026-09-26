@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>fr.farci.omlx</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/mlx_lm.server</string>
+        <string>--model</string>
+        <string>/models/Ornith-1.5-9B-Q5_K_M.gguf</string>
+        <string>--port</string>
+        <string>8082</string>
+        <string>--host</string>
+        <string>0.0.0.0</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/var/log/farci-omlx.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/farci-omlx.log</string>
+</dict>
+</plist>
