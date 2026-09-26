@@ -1,0 +1,30 @@
+# FARCI — Bifrost gateway (option 3B, alternative à LiteLLM)
+#
+# Bifrost est une gateway OpenAI-compatible écrite en Go.
+# Plus léger que LiteLLM, mais moins de fonctionnalités.
+
+services:
+  bifrost:
+    image: ghcr.com/MaximFaq/bifrost:${BIFROST_VERSION}
+    container_name: farci-bifrost
+    restart: unless-stopped
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - bifrost-data:/data
+    ports:
+      - "4001:4001"
+    networks:
+      farci:
+        ipv4_address: ${GATEWAY_B_IP}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  bifrost-data:
+
+networks:
+  farci:
+    external: true

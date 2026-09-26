@@ -1,0 +1,45 @@
+# FARCI — configuration LiteLLM proxy
+#
+# LiteLLM est la gateway LLM. Elle :
+# 1. Masque les vrais noms de modèles
+# 2. Gère le rate limiting
+# 3. Gère le fallback (primaire -> secondaire)
+# 4. Coupe reasoning_content
+
+model_list:
+  - model_name: med-extraction
+    litellm_params:
+      model: ollama/ornith-1.5-9b-q5km
+      api_base: http://192.168.50.20:8080
+      api_key: ollama
+      num_retries: 2
+      timeout: 60
+
+  - model_name: med-extraction-lite
+    litellm_params:
+      model: ollama/qwen3.5-2b-q4km
+      api_base: http://192.168.50.20:8080
+      api_key: ollama
+
+  - model_name: med-extraction-max
+    litellm_params:
+      model: ollama/qwen3.8-27b-q4km
+      api_base: http://192.168.50.20:8080
+      api_key: ollama
+
+litellm_settings:
+  drop_params: true
+  set_verbose: true
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+
+general_settings:
+  master_key: sk-priority-placeholder
+  database_url: "sqlite:////data/litellm.db"
+  store_model_in_db: true
+
+router_settings:
+  routing_strategy: "least-busy"
+  num_retries: 2
+  timeout: 60
+  retry_after: 5

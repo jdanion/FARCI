@@ -1,0 +1,34 @@
+# FARCI — LiteLLM gateway (FARCI §17)
+#
+# LiteLLM est la gateway OpenAI-compatible qui masque les runtimes.
+
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:${LITELLM_VERSION}
+    container_name: farci-litellm
+    restart: unless-stopped
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./litellm_proxy_config.yaml:/app/litellm_proxy_config.yaml:ro
+      - litellm-data:/data
+    ports:
+      - "4000:4000"
+    networks:
+      farci:
+        ipv4_address: ${GATEWAY_A_IP}
+    environment:
+      LITELLM_LOG: "DEBUG"
+      LITELLM_LOCAL_MODEL_COST_MAP: "True"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  litellm-data:
+
+networks:
+  farci:
+    external: true
