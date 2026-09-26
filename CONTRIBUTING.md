@@ -7,6 +7,40 @@
 3. **PR** : créer une Pull Request vers `main`
 4. **Revue** : au moins 1 review avant merge
 
+## Règle obligatoire : branche + PR humaine
+
+**Toute modification de code du projet doit passer par une nouvelle branche.**
+Aucun push direct sur `main` n'est autorisé.
+
+**Le travail de session se termine par une demande de Pull Request.**
+La PR est ensuite validée **uniquement par un utilisateur humain** — pas par un agent,
+pas par un workflow automatique, pas par un bot.
+
+### Procédure
+
+```bash
+# 1. Créer une branche
+git checkout -b feat/ma-fonctionnalite
+
+# 2. Committer
+git add .
+git commit -m "feat: description"
+
+# 3. Pousser
+git push origin feat/ma-fonctionnalite
+
+# 4. Créer la PR (via l'interface Gitea ou l'API)
+# 5. Attendre la revue humaine
+# 6. Merge manuel par un humain après approbation
+```
+
+### Interdictions
+
+- ❌ Push direct sur `main`
+- ❌ Merge automatique (auto-merge)
+- ❌ Merge par un agent ou un bot
+- ❌ Merge sans revue humaine
+
 ## Convention de commit
 
 ```
