@@ -15,6 +15,11 @@
 # =============================================================================
 
 help	atelier	Afficher cette aide	help.sh
+preload	atelier	Précharger les artefacts air-gap	../preload.sh
+verify-airgap	atelier	Vérifier que le workshop fonctionne hors ligne	../verify-airgap.sh
+verify-images	atelier	Vérifier les images Docker locales	../scripts/verify-images.sh
+verify-models	atelier	Vérifier les poids de modèles	../scripts/verify-models.sh
+verify-wheels	atelier	Vérifier les wheels Python	../scripts/verify-wheels.sh
 version	atelier	Versions figées du dépôt (versions.env)	version.sh
 env	atelier	Afficher la configuration effective	env.sh
 env-check	atelier	Valider la configuration (adresses, sous-réseau)	env.sh
