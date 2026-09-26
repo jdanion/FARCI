@@ -1,0 +1,106 @@
+# FARCI — Agents Arcane déportés sur chaque brique (Phase 15)
+#
+# Chaque agent supervise une brique du pipeline et alerte en cas d'anomalie.
+# Déploiement orchestré par GitOps (webhook Gitea → gitops.sh).
+
+services:
+  agent-ollama:
+    build:
+      context: ./arcane-agent
+      dockerfile: Dockerfile
+      args:
+        TARGET_SERVICE: ollama
+    container_name: farci-agent-ollama
+    restart: unless-stopped
+    environment:
+      TARGET_SERVICE: ollama
+      TARGET_URL: http://192.168.50.20:8080
+      CHECK_INTERVAL: "30"
+      ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
+    networks:
+      - farci
+
+  agent-llamacpp:
+    build:
+      context: ./arcane-agent
+      dockerfile: Dockerfile
+      args:
+        TARGET_SERVICE: llamacpp
+    container_name: farci-agent-llamacpp
+    restart: unless-stopped
+    environment:
+      TARGET_SERVICE: llamacpp
+      TARGET_URL: http://192.168.50.21:8081
+      CHECK_INTERVAL: "30"
+      ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
+    networks:
+      - farci
+
+  agent-gateway:
+    build:
+      context: ./arcane-agent
+      dockerfile: Dockerfile
+      args:
+        TARGET_SERVICE: gateway
+    container_name: farci-agent-gateway
+    restart: unless-stopped
+    environment:
+      TARGET_SERVICE: gateway
+      TARGET_URL: http://192.168.50.15/v1
+      CHECK_INTERVAL: "30"
+      ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
+    networks:
+      - farci
+
+  agent-docling:
+    build:
+      context: ./arcane-agent
+      dockerfile: Dockerfile
+      args:
+        TARGET_SERVICE: docling
+    container_name: farci-agent-docling
+    restart: unless-stopped
+    environment:
+      TARGET_SERVICE: docling
+      TARGET_URL: http://192.168.50.40:5001
+      CHECK_INTERVAL: "30"
+      ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
+    networks:
+      - farci
+
+  agent-mlflow:
+    build:
+      context: ./arcane-agent
+      dockerfile: Dockerfile
+      args:
+        TARGET_SERVICE: mlflow
+    container_name: farci-agent-mlflow
+    restart: unless-stopped
+    environment:
+      TARGET_SERVICE: mlflow
+      TARGET_URL: http://192.168.50.50:5000
+      CHECK_INTERVAL: "30"
+      ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
+    networks:
+      - farci
+
+  webhook-receiver:
+    build:
+      context: ./webhook
+      dockerfile: Dockerfile
+    container_name: farci-webhook-receiver
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      WEBHOOK_SECRET: ${WEBHOOK_SECRET:?WEBHOOK_SECRET requis}
+      GITOPS_SCRIPT: /app/gitops/gitops.sh
+    volumes:
+      - ./gitops:/app/gitops:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - farci
+
+networks:
+  farci:
+    external: true
