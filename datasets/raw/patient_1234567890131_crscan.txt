@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Thierry Laurent
+IPP : 1234567890131
+
+Indication : adénocarcinome canalaire du pancréas
+
+Résultat :
+Tumeur du pancréas de 38.0 mm.
+Envahissement veineux constaté.
+
+Conclusion : adénocarcinome canalaire du pancréas

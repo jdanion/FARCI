@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Martine Faure
+IPP : 1234567890140
+NIR : 2 40 62 6789 0123 456 95
+Date de naissance : 30/01/1963
+Âge : 62 ans
+Sexe : F
+
+Diagnostic préopératoire : TNE grade 1 du pancréas
+
+Intervention : Duodénopancréatectomie
+Voie d'abord : cœlioscopie
+Résection veineuse : Non
+
+Taille tumorale : 14.0 mm
+Histologie : TNE grade 1
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 6 jours
+Réadmission : Non

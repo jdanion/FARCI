@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Monique Barbier
+IPP : 1234567890142
+
+Indication : adénocarcinome canalaire du pancréas
+
+Résultat :
+Tumeur du pancréas de 39.0 mm.
+Envahissement veineux constaté.
+
+Conclusion : adénocarcinome canalaire du pancréas

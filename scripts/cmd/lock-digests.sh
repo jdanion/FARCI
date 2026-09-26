@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export FARCI_ROOT
 
 # shellcheck source=scripts/lib/common.sh

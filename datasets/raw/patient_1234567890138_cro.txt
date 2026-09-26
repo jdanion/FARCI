@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Virginie Perrot
+IPP : 1234567890138
+NIR : 2 38 60 6789 0123 456 93
+Date de naissance : 13/05/1968
+Âge : 57 ans
+Sexe : F
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : DPC
+Voie d'abord : cœlioscopie
+Résection veineuse : Non
+
+Taille tumorale : 23.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 7 jours
+Réadmission : Non

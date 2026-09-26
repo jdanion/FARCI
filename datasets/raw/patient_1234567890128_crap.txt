@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Isabelle Lemoine
+IPP : 1234567890128
+
+Pièce opératoire : Duodénopancréatectomie
+
+Résultats :
+- pT : pT1
+- pN : pN0
+- Ganglions examinés : 12
+- Ganglions envahis : 0
+- Marge : R0
+- Histologie : TNE grade 1
+- Taille : 12.0 mm

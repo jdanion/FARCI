@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Georges Lambert
+IPP : 1234567890139
+
+Pièce opératoire : Duodénopancréatectomie
+
+Résultats :
+- pT : pT3
+- pN : pN1
+- Ganglions examinés : 23
+- Ganglions envahis : 2
+- Marge : R0
+- Histologie : adénocarcinome canalaire
+- Taille : 29.0 mm

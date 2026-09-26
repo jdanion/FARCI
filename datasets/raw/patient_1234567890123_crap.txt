@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Jean Dupont
+IPP : 1234567890123
+
+Pièce opératoire : DPC
+
+Résultats :
+- pT : pT3
+- pN : pN1
+- Ganglions examinés : 24
+- Ganglions envahis : 3
+- Marge : R0
+- Histologie : adénocarcinome canalaire
+- Taille : 28.0 mm

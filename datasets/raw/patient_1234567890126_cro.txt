@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Sophie Petit
+IPP : 1234567890126
+NIR : 2 26 48 6789 0123 456 81
+Date de naissance : 05/01/1964
+Âge : 61 ans
+Sexe : F
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : DPC
+Voie d'abord : laparotomie
+Résection veineuse : Non
+
+Taille tumorale : Non précisé mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 8 jours
+Réadmission : Non

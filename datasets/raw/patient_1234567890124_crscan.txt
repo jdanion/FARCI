@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Marie Martin
+IPP : 1234567890124
+
+Indication : TNE grade 2 du pancréas
+
+Résultat :
+Tumeur du pancréas de 15.0 mm.
+Pas d'envahissement veineux.
+
+Conclusion : TNE grade 2 du pancréas

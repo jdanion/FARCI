@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Bernard Fournier
+IPP : 1234567890137
+NIR : 1 37 59 6789 0123 456 92
+Date de naissance : 21/03/1949
+Âge : 76 ans
+Sexe : M
+
+Diagnostic préopératoire : IPMN transformé
+
+Intervention : Whipple modifié
+Voie d'abord : cœlioscopie convertie
+Résection veineuse : Oui
+
+Taille tumorale : 50.0 mm
+Histologie : IPMN transformé
+
+Complications :
+- Fistule pancréatique : Oui
+- DGE : Oui
+- Hémorragie : Oui
+
+Durée de séjour : 28 jours
+Réadmission : Oui

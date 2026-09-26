@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Marie Martin
+IPP : 1234567890124
+
+Pièce opératoire : Duodénopancréatectomie
+
+Résultats :
+- pT : pT2
+- pN : pN0
+- Ganglions examinés : 18
+- Ganglions envahis : 0
+- Marge : R0
+- Histologie : TNE grade 2
+- Taille : 15.0 mm

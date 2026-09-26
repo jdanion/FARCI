@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Claire Dubois
+IPP : 1234567890130
+
+Pièce opératoire : Duodénopancréatectomie
+
+Résultats :
+- pT : pT2
+- pN : pN0
+- Ganglions examinés : 14
+- Ganglions envahis : 0
+- Marge : R0
+- Histologie : IPMN bordeline
+- Taille : 22.0 mm

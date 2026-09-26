@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Michel Garcia
+IPP : 1234567890129
+NIR : 1 29 51 6789 0123 456 84
+Date de naissance : 08/12/1962
+Âge : 63 ans
+Sexe : M
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : Whipple modifié
+Voie d'abord : laparotomie
+Résection veineuse : Non
+
+Taille tumorale : 31.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Oui
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 16 jours
+Réadmission : Non

@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Robert Mercier
+IPP : 1234567890135
+
+Indication : adénocarcinome canalaire du pancréas
+
+Résultat :
+Tumeur du pancréas de 41.0 mm.
+Envahissement veineux constaté.
+
+Conclusion : adénocarcinome canalaire du pancréas

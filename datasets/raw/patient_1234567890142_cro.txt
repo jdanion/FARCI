@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Monique Barbier
+IPP : 1234567890142
+NIR : 2 42 64 6789 0123 456 97
+Date de naissance : 04/09/1952
+Âge : 73 ans
+Sexe : F
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : Whipple modifié
+Voie d'abord : laparotomie
+Résection veineuse : Oui
+
+Taille tumorale : 39.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Oui
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 17 jours
+Réadmission : Non

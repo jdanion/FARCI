@@ -1,0 +1,16 @@
+LETTRE DE SORTIE
+
+Patient : Martine Faure
+IPP : 1234567890140
+
+Intervention : Duodénopancréatectomie
+Date de sortie : jour 6 post-opératoire
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Réadmission à 30 jours : Non
+
+Suivi : consultation chirurgicale à 1 mois.

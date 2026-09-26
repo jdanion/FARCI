@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export FARCI_ROOT
 
 # shellcheck source=scripts/lib/common.sh
@@ -15,6 +15,15 @@ source "$FARCI_ROOT/scripts/lib/common.sh"
 source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
+
+# Charger versions.env (non inclus dans farci_env_files)
+if [[ -r "$FARCI_ROOT/versions.env" ]]; then
+  while IFS='=' read -r key value; do
+    [[ -z "$key" || "$key" == \#* ]] && continue
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    [[ -z "${!key+x}" ]] && export "$key=$value"
+  done < "$FARCI_ROOT/versions.env"
+fi
 
 section "FARCI — vérification des wheels Python"
 

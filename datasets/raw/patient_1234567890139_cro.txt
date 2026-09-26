@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Georges Lambert
+IPP : 1234567890139
+NIR : 1 39 61 6789 0123 456 94
+Date de naissance : 07/11/1955
+Âge : 70 ans
+Sexe : M
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : Duodénopancréatectomie
+Voie d'abord : laparotomie
+Résection veineuse : Non
+
+Taille tumorale : 29.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Oui
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 15 jours
+Réadmission : Non

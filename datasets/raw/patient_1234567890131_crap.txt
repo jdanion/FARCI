@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Thierry Laurent
+IPP : 1234567890131
+
+Pièce opératoire : DPC
+
+Résultats :
+- pT : pT3
+- pN : pN2
+- Ganglions examinés : 29
+- Ganglions envahis : 6
+- Marge : R1
+- Histologie : adénocarcinome canalaire
+- Taille : 38.0 mm

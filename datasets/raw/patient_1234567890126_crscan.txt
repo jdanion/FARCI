@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Sophie Petit
+IPP : 1234567890126
+
+Indication : adénocarcinome canalaire du pancréas
+
+Résultat :
+Tumeur du pancréas de Non précisé mm.
+Pas d'envahissement veineux.
+
+Conclusion : adénocarcinome canalaire du pancréas

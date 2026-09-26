@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Bernard Fournier
+IPP : 1234567890137
+
+Pièce opératoire : Whipple modifié
+
+Résultats :
+- pT : pT3
+- pN : pN2
+- Ganglions examinés : 35
+- Ganglions envahis : 7
+- Marge : R2
+- Histologie : IPMN transformé
+- Taille : 50.0 mm

@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Jacques Moreau
+IPP : 1234567890127
+
+Indication : adénocarcinome canalaire du pancréas
+
+Résultat :
+Tumeur du pancréas de 35.0 mm.
+Envahissement veineux constaté.
+
+Conclusion : adénocarcinome canalaire du pancréas

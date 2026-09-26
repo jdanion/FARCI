@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Paul Bernard
+IPP : 1234567890125
+
+Pièce opératoire : Whipple modifié
+
+Résultats :
+- pT : pT3
+- pN : pN2
+- Ganglions examinés : 31
+- Ganglions envahis : 5
+- Marge : R1
+- Histologie : IPMN transformé
+- Taille : 42.0 mm

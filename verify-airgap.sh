@@ -23,6 +23,15 @@ source "$FARCI_ROOT/scripts/preload_lib.sh"
 
 farci_load_env
 
+# Charger versions.env (non inclus dans farci_env_files)
+if [[ -r "$FARCI_ROOT/versions.env" ]]; then
+  while IFS='=' read -r key value; do
+    [[ -z "$key" || "$key" == \#* ]] && continue
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    [[ -z "${!key+x}" ]] && export "$key=$value"
+  done < "$FARCI_ROOT/versions.env"
+fi
+
 VERIFY_STRICT=0
 VERIFY_JSON=0
 

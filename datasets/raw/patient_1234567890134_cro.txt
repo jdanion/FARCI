@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Sylvie Girard
+IPP : 1234567890134
+NIR : 2 34 56 6789 0123 456 89
+Date de naissance : 11/10/1966
+Âge : 59 ans
+Sexe : F
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : Duodénopancréatectomie
+Voie d'abord : cœlioscopie
+Résection veineuse : Non
+
+Taille tumorale : 19.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 6 jours
+Réadmission : Non

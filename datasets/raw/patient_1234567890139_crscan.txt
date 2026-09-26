@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Georges Lambert
+IPP : 1234567890139
+
+Indication : adénocarcinome canalaire du pancréas
+
+Résultat :
+Tumeur du pancréas de 29.0 mm.
+Pas d'envahissement veineux.
+
+Conclusion : adénocarcinome canalaire du pancréas

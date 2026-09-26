@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Bernard Fournier
+IPP : 1234567890137
+
+Indication : IPMN transformé
+
+Résultat :
+Tumeur du pancréas de 50.0 mm.
+Envahissement veineux constaté.
+
+Conclusion : IPMN transformé

@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Pierre Renard
+IPP : 1234567890141
+NIR : 1 41 63 6789 0123 456 96
+Date de naissance : 16/06/1957
+Âge : 68 ans
+Sexe : M
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : DPC
+Voie d'abord : cœlioscopie
+Résection veineuse : Non
+
+Taille tumorale : 27.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 8 jours
+Réadmission : Non

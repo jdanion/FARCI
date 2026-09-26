@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Virginie Perrot
+IPP : 1234567890138
+
+Indication : adénocarcinome canalaire du pancréas
+
+Résultat :
+Tumeur du pancréas de 23.0 mm.
+Pas d'envahissement veineux.
+
+Conclusion : adénocarcinome canalaire du pancréas

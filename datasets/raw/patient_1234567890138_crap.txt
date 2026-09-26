@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Virginie Perrot
+IPP : 1234567890138
+
+Pièce opératoire : DPC
+
+Résultats :
+- pT : pT2
+- pN : pN0
+- Ganglions examinés : 17
+- Ganglions envahis : 0
+- Marge : R0
+- Histologie : adénocarcinome canalaire
+- Taille : 23.0 mm

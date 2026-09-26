@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Monique Barbier
+IPP : 1234567890142
+
+Pièce opératoire : Whipple modifié
+
+Résultats :
+- pT : pT3
+- pN : pN1
+- Ganglions examinés : 25
+- Ganglions envahis : 3
+- Marge : R1
+- Histologie : adénocarcinome canalaire
+- Taille : 39.0 mm

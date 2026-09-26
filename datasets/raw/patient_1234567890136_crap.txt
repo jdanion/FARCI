@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Françoise Blanc
+IPP : 1234567890136
+
+Pièce opératoire : Duodénopancréatectomie
+
+Résultats :
+- pT : pT2
+- pN : pN0
+- Ganglions examinés : 16
+- Ganglions envahis : 0
+- Marge : R0
+- Histologie : TNE grade 2
+- Taille : 17.0 mm

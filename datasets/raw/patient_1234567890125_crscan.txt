@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Paul Bernard
+IPP : 1234567890125
+
+Indication : IPMN transformé
+
+Résultat :
+Tumeur du pancréas de 42.0 mm.
+Envahissement veineux constaté.
+
+Conclusion : IPMN transformé

@@ -1,0 +1,16 @@
+LETTRE DE SORTIE
+
+Patient : Bernard Fournier
+IPP : 1234567890137
+
+Intervention : Whipple modifié
+Date de sortie : jour 28 post-opératoire
+
+Complications :
+- Fistule pancréatique : Oui
+- DGE : Oui
+- Hémorragie : Oui
+
+Réadmission à 30 jours : Oui
+
+Suivi : consultation chirurgicale à 1 mois.

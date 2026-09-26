@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Jacques Moreau
+IPP : 1234567890127
+NIR : 1 27 49 6789 0123 456 82
+Date de naissance : 30/09/1947
+Âge : 78 ans
+Sexe : M
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : DPC
+Voie d'abord : cœlioscopie convertie
+Résection veineuse : Oui
+
+Taille tumorale : 35.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 11 jours
+Réadmission : Non

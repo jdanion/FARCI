@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Robert Mercier
+IPP : 1234567890135
+NIR : 1 35 57 6789 0123 456 90
+Date de naissance : 27/07/1943
+Âge : 82 ans
+Sexe : M
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : DPC
+Voie d'abord : laparotomie
+Résection veineuse : Oui
+
+Taille tumorale : 41.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Oui
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 18 jours
+Réadmission : Oui

@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Jacques Moreau
+IPP : 1234567890127
+
+Pièce opératoire : DPC
+
+Résultats :
+- pT : pT4
+- pN : pN1
+- Ganglions examinés : 22
+- Ganglions envahis : 2
+- Marge : R2
+- Histologie : adénocarcinome canalaire
+- Taille : 35.0 mm

@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Marie Martin
+IPP : 1234567890124
+NIR : 2 24 46 6789 0123 456 79
+Date de naissance : 22/07/1953
+Âge : 72 ans
+Sexe : F
+
+Diagnostic préopératoire : TNE grade 2 du pancréas
+
+Intervention : Duodénopancréatectomie
+Voie d'abord : laparotomie
+Résection veineuse : Non
+
+Taille tumorale : 15.0 mm
+Histologie : TNE grade 2
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 9 jours
+Réadmission : Non

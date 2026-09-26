@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Jean Dupont
+IPP : 1234567890123
+NIR : 1 23 45 6789 0123 456 78
+Date de naissance : 15/03/1958
+Âge : 67 ans
+Sexe : M
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : DPC
+Voie d'abord : cœlioscopie
+Résection veineuse : Non
+
+Taille tumorale : 28.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Oui
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 14 jours
+Réadmission : Non

@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Robert Mercier
+IPP : 1234567890135
+
+Pièce opératoire : DPC
+
+Résultats :
+- pT : pT4
+- pN : pN1
+- Ganglions examinés : 27
+- Ganglions envahis : 3
+- Marge : R1
+- Histologie : adénocarcinome canalaire
+- Taille : 41.0 mm

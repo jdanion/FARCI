@@ -1,0 +1,27 @@
+{
+  "patient_id": "1234567890131",
+  "nir": "1 31 53 6789 0123 456 86",
+  "age": 74,
+  "sex": "M",
+  "diagnosis": "adénocarcinome canalaire du pancréas",
+  "procedure_type": "DPC",
+  "approach": "cœlioscopie",
+  "venous_resection": true,
+  "tumor_size_mm": 38.0,
+  "histology": "adénocarcinome canalaire",
+  "pT": "pT3",
+  "pN": "pN2",
+  "nodes_examined": 29,
+  "nodes_positive": 6,
+  "margin_R": "R1",
+  "pancreatic_fistula": true,
+  "delayed_gastrojejunostomy": true,
+  "hemorrhage": true,
+  "length_of_stay": 24,
+  "readmission": true,
+  "_meta": {
+    "checksum": "20e8c83c59a7e34ebad6bee66ca18781e63fca55230b01a7b7faf5ee3d9f9933",
+    "generator": "build_gold.py",
+    "source": "cases.py (registre structuré)"
+  }
+}

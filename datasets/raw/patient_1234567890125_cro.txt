@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Paul Bernard
+IPP : 1234567890125
+NIR : 1 25 47 6789 0123 456 80
+Date de naissance : 10/11/1970
+Âge : 55 ans
+Sexe : M
+
+Diagnostic préopératoire : IPMN transformé
+
+Intervention : Whipple modifié
+Voie d'abord : cœlioscopie
+Résection veineuse : Oui
+
+Taille tumorale : 42.0 mm
+Histologie : IPMN transformé
+
+Complications :
+- Fistule pancréatique : Oui
+- DGE : Oui
+- Hémorragie : Oui
+
+Durée de séjour : 21 jours
+Réadmission : Oui

@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Martine Faure
+IPP : 1234567890140
+
+Pièce opératoire : Duodénopancréatectomie
+
+Résultats :
+- pT : pT1
+- pN : pN0
+- Ganglions examinés : 10
+- Ganglions envahis : 0
+- Marge : R0
+- Histologie : TNE grade 1
+- Taille : 14.0 mm

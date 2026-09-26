@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Pierre Renard
+IPP : 1234567890141
+
+Pièce opératoire : DPC
+
+Résultats :
+- pT : pT2
+- pN : pN0
+- Ganglions examinés : 20
+- Ganglions envahis : 0
+- Marge : R0
+- Histologie : adénocarcinome canalaire
+- Taille : 27.0 mm

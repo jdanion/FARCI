@@ -1,0 +1,12 @@
+COMPTE RENDU SCANNER
+
+Patient : Sylvie Girard
+IPP : 1234567890134
+
+Indication : adénocarcinome canalaire du pancréas
+
+Résultat :
+Tumeur du pancréas de 19.0 mm.
+Pas d'envahissement veineux.
+
+Conclusion : adénocarcinome canalaire du pancréas

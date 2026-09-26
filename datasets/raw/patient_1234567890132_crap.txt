@@ -1,0 +1,15 @@
+COMPTE RENDU ANATOMOPATHOLOGIQUE
+
+Patient : Nathalie Roux
+IPP : 1234567890132
+
+Pièce opératoire : DPC
+
+Résultats :
+- pT : pT4
+- pN : pN2
+- Ganglions examinés : 33
+- Ganglions envahis : 8
+- Marge : R2
+- Histologie : TNE grade 3
+- Taille : 45.0 mm

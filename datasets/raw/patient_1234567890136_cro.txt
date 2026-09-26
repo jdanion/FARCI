@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Françoise Blanc
+IPP : 1234567890136
+NIR : 2 36 58 6789 0123 456 91
+Date de naissance : 09/12/1961
+Âge : 64 ans
+Sexe : F
+
+Diagnostic préopératoire : TNE grade 2 du pancréas
+
+Intervention : Duodénopancréatectomie
+Voie d'abord : cœlioscopie
+Résection veineuse : Non
+
+Taille tumorale : 17.0 mm
+Histologie : TNE grade 2
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 8 jours
+Réadmission : Non

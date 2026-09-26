@@ -1,0 +1,25 @@
+COMPTE RENDU OPÉRATOIRE
+
+Patient : Philippe Morel
+IPP : 1234567890133
+NIR : 1 33 55 6789 0123 456 88
+Date de naissance : 19/04/1954
+Âge : 71 ans
+Sexe : M
+
+Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+
+Intervention : Whipple modifié
+Voie d'abord : cœlioscopie
+Résection veineuse : Non
+
+Taille tumorale : 26.0 mm
+Histologie : adénocarcinome canalaire
+
+Complications :
+- Fistule pancréatique : Non
+- DGE : Non
+- Hémorragie : Non
+
+Durée de séjour : 9 jours
+Réadmission : Non
