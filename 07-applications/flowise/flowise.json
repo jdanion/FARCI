@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "id": "file_input",
+      "type": "fileInput",
+      "data": {
+        "label": "Document PDF",
+        "fileType": "pdf"
+      },
+      "position": {"x": 100, "y": 200}
+    },
+    {
+      "id": "docling",
+      "type": "httpRequest",
+      "data": {
+        "label": "Docling (via Caddy)",
+        "url": "http://192.168.50.15/docling/v1/convert/file",
+        "method": "POST",
+        "body": "{{file_input}}"
+      },
+      "position": {"x": 300, "y": 200}
+    },
+    {
+      "id": "prompt",
+      "type": "promptTemplate",
+      "data": {
+        "label": "Prompt d'extraction",
+        "template": "Extrait les données cliniques du document suivant:\n\n{{docling_output}}"
+      },
+      "position": {"x": 500, "y": 200}
+    },
+    {
+      "id": "llm",
+      "type": "llmChain",
+      "data": {
+        "label": "LLM (via Caddy)",
+        "model": "med-extraction",
+        "temperature": 0,
+        "maxTokens": 4096
+      },
+      "position": {"x": 700, "y": 200}
+    },
+    {
+      "id": "validation",
+      "type": "function",
+      "data": {
+        "label": "Validation schéma",
+        "function": "validateClinicalExtraction",
+        "schema": "clinical_extraction.schema.json"
+      },
+      "position": {"x": 900, "y": 200}
+    }
+  ],
+  "edges": [
+    {"source": "file_input", "target": "docling"},
+    {"source": "docling", "target": "prompt"},
+    {"source": "prompt", "target": "llm"},
+    {"source": "llm", "target": "validation"}
+  ]
+}
