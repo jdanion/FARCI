@@ -1,0 +1,19 @@
+# FARCI — configuration act_runner
+# Le runner est configuré via variables d'environnement dans docker-compose.yml.
+# Ce fichier sert de documentation et de fallback.
+
+log:
+  level: info
+
+runner:
+  name: farci-runner
+  labels:
+    - ubuntu-latest:docker://node:20-bookworm
+
+container:
+  network: farci
+  privileged: false
+
+cache:
+  enabled: true
+  port: 8080
