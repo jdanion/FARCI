@@ -1,0 +1,38 @@
+# FARCI — dépendances Python de l'application
+#
+# RÔLE DE CE FICHIER
+# C'est la SOURCE DE VÉRITÉ des dépendances Python du projet (FARCI §10).
+# `requirements.txt` est le fichier verrouillé (versions exactes des
+# dépendances transitives + empreintes) produit par :
+#
+#     ./scripts/lock-requirements.sh        (une fois, avec Internet)
+#
+# Pendant le workshop, l'installation se fait sans réseau (FARCI §10) :
+#
+#     pip install --no-index --find-links=offline/wheels -r requirements.txt
+#
+# RÈGLE DE DÉPENDANCES (FARCI §10)
+# « Ajouter uniquement les bibliothèques réellement nécessaires. » Chaque
+# ligne ci-dessous indique QUI l'utilise : une dépendance sans consommateur
+# identifié n'a pas sa place ici.
+
+# --- Client LLM et validation des sorties (étape 2, parcours Python) -------
+openai==3.19.2            # SDK OpenAI : parle à la gateway via l'API OpenAI
+pydantic==2.13.5          # schémas ClinicalExtraction + validation stricte
+
+# --- Chaîne documentaire (étape 1, équipe 4) -------------------------------
+requests==2.34.2         # appels HTTP à Docling et au health-aggregator
+fpdf2==2.8.8              # génération des PDF de synthèse du dataset (§25)
+
+# --- Restitution et évaluation ----------------------------------------------
+pandas==3.0.6             # export CSV des extractions (§30)
+scikit-learn==1.9.1       # metrics par champ : precision_recall_fscore_support
+
+# --- Observabilité OpenTelemetry (étape 1, équipe 5) -----------------------
+opentelemetry-api==1.45.0        # API de trace/span
+opentelemetry-sdk==1.45.0        # TracerProvider, exporteur OTLP
+opentelemetry-exporter-otlp==1.45.0   # envoi vers Phoenix et/ou Langfuse
+
+# --- Tableau de bord et tests ----------------------------------------------
+pytest==9.1.1            # suite de tests du dépôt (FARCI §54)
+python-socketio==5.17.0   # création automatisée des moniteurs Uptime Kuma (§13)

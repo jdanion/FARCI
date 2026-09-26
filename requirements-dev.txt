@@ -1,0 +1,10 @@
+# FARCI — outillage de développement
+#
+# Installe UNIQUEMENT ce qui sert à développer et à vérifier le dépôt.
+# Pendant le workshop, ce fichier n'est pas nécessaire.
+#
+#   pip install --no-index --find-links=offline/wheels -r requirements-dev.txt
+
+# Shell / Python
+ruff==0.15.1              # formatage et analyse statique Python
+pip-audit==2.10.0         # vulnérabilités connues des dépendances pip

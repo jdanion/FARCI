@@ -1,0 +1,68 @@
+# ---------------------------------------------------------------------------
+# Secrets et configuration propre à une machine (FARCI §53)
+# ---------------------------------------------------------------------------
+# Ces fichiers sont CRÉÉS par ./bin/farci bootstrap à partir de leurs exemples.
+.env
+config/network.env
+config/workshop.env
+
+# ---------------------------------------------------------------------------
+# Données lourdes : JAMAIS dans Git (contrainte du plan, §0.1)
+# ---------------------------------------------------------------------------
+# offline/ est un LIEN SYMBOLIQUE vers $FARCI_DATA_DIR/offline, créé par
+# ./bin/farci bootstrap. On ne versionne pas le lien : un clone frais n'en a
+# pas besoin, et bootstrap le recrée en pointant vers le FARCI_DATA_DIR local
+# (le chemin du formateur ne serait pas valide chez l'étudiant).
+#
+# C'est plus sûr qu'un dossier vide versionné : le lien pointe hors du dépôt,
+# donc rien de lourd ne peut être ajouté par accident.
+offline
+
+# Poids, images, wheels : qu'ils soient dans un dossier ou à la racine
+*.gguf
+*.safetensors
+*.whl
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.bin
+
+# ---------------------------------------------------------------------------
+# Résultats d'expérience (reproductibles, coûteux à refaire)
+# ---------------------------------------------------------------------------
+# Les extractions des étudiants ne sont PAS commitées : elles sont volumineuses
+# etouraient chaque commit de plusieurs Mo (FARCI §33, §53).
+datasets/extracted/*
+!datasets/extracted/.gitignore
+datasets/pseudonymized/*
+!datasets/pseudonymized/.gitignore
+
+# État d'un scénario de chaos en cours (toujours réversible, jamais versionné)
+.chaos/
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---------------------------------------------------------------------------
+# divers
+# ---------------------------------------------------------------------------
+logs/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~

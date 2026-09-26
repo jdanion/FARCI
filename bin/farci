@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# FARCI — lanceur unique du dépôt.
+#
+#   ./bin/farci help
+#   ./bin/farci lint
+#   ./bin/farci status
+#
+# Pourquoi ce fichier existe en plus de la Makefile ?
+# Parce que `make` n'est pas installé partout (poste étudiant minimal, image
+# Docker de CI, Mac sans Xcode). La Makefile ne fait qu'appeler ce script :
+# les deux executent donc rigoureusement le même code, et `make help` affiche
+# exactement la même liste que `./bin/farci help`.
+
+set -euo pipefail
+
+FARCI_BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FARCI_ROOT="$(cd "$FARCI_BIN_DIR/.." && pwd)"
+export FARCI_ROOT
+
+# shellcheck source=scripts/lib/common.sh
+source "$FARCI_ROOT/scripts/lib/common.sh"
+# shellcheck source=scripts/dev-env.sh
+source "$FARCI_ROOT/scripts/dev-env.sh"
+
+farci_load_env
+
+TARGETS_DEF="$FARCI_ROOT/scripts/targets.def"
+CMD_DIR="$FARCI_ROOT/scripts/cmd"
+
+# alias -> "cible:drapeaux"   (un seul littéral par entrée : pas d'espace ici,
+# sinon bash refuse l'affectation d'un tableau associatif)
+declare -A ALIASES=(
+  [h]="help"
+  [help]="help"
+  [v]="version"
+  [version]="version"
+  [check]="env-check"
+  [st]="status"
+  [l]="lint"
+)
+
+resolve() {
+  local name="$1"
+  if [[ -n "${ALIASES[$name]:-}" ]]; then
+    printf '%s\n' "${ALIASES[$name]}"
+    return 0
+  fi
+  printf '%s\n' "$name"
+}
+
+target_exists() {
+  awk -F'\t' -v n="$1" 'NF>=4 && $1==n && $1 !~ /^#/ {found=1} END{exit !found}' "$TARGETS_DEF"
+}
+
+# Nom du script associé à une cible, d'après scripts/targets.def.
+# La 4e colonne fait autorité : plusieurs cibles peuvent partager un script
+# (lint et lint-versions, docs et checklist...), et c'est le script qui décide
+# de son comportement selon $FARCI_TARGET.
+target_script() {
+  awk -F'\t' -v n="$1" 'NF>=4 && $1==n && $1 !~ /^#/ {print $4; exit}' "$TARGETS_DEF"
+}
+
+main() {
+  local requested="${1:-help}"
+  [[ $# -gt 0 ]] && shift
+
+  # --version / --help gérés ici pour rester utilisables même sans registre.
+  case "$requested" in
+    -h|--help) requested="help" ;;
+    -V|--version) requested="version" ;;
+  esac
+
+  local resolved
+  resolved="$(resolve "$requested")"
+  # shellcheck disable=SC2206  # découpe volontaire en deux champs
+  local -a parts=( $resolved )
+  local name="${parts[0]}"
+  if (( ${#parts[@]} > 1 )); then
+    set -- "${parts[@]:1}" "$@"
+  fi
+  if ! target_exists "$name"; then
+    err "cible inconnue : $name"
+    err ""
+    err "Cibles disponibles :"
+    "$FARCI_BIN_DIR/farci" help >&2
+    exit 64
+  fi
+
+  local script_name
+  script_name="$(target_script "$name")"
+  if [[ -z "$script_name" ]]; then
+    err "la cible '$name' est déclarée sans script dans scripts/targets.def"
+    exit 70
+  fi
+  local script="$CMD_DIR/$script_name"
+  if [[ ! -f "$script" ]]; then
+    err "la cible '$name' pointe vers un script absent :"
+    err "  $script"
+    err "corriger scripts/targets.def, ou créer le script manquant"
+    exit 70
+  fi
+  if [[ ! -x "$script" ]]; then
+    err "script non exécutable : $script"
+    err "  chmod +x $script"
+    exit 70
+  fi
+
+  # Un script partagé par plusieurs cibles sait laquelle l'a invoqué.
+  export FARCI_TARGET="$name"
+  exec "$script" "$@"
+}
+
+main "$@"

@@ -1,0 +1,13 @@
+# FARCI — dépendances de la chaîne d'évaluation (équipe 6)
+#
+# Séparée de requirements.txt pour une raison pédagogique : le suivi
+# d'expériences n'est nécessaire qu'à l'équipe qui évalue (étape 2), pas à
+# l'étudiant qui se contente d'appeler la gateway. Cela montre que les
+# dépendances d'un projet se choisissent, elles ne s'héritent pas toutes.
+#
+# Utilisé par 06-evaluation/ (image MLflow et scripts d'évaluation).
+
+mlflow==3.16.1            # client de suivi d'expériences (même version que l'image)
+pandas==3.0.6             # tableaux de résultats
+numpy==2.3.5              # calcul numérique pour les métriques
+scikit-learn==1.9.1       # métriques par champ

@@ -1,0 +1,251 @@
+# FARCI — registre des services
+# =============================================================================
+# SOURCE DE VÉRITÉ UNIQUE du dépôt (hors versions et adresses).
+#
+# Tout ce qui décrit « quels services existent » est ici :
+#   - Caddy sait quoi exposer            (phases 1 et 3)
+#   - health-aggregator sait quoi exiger  (phase 3)
+#   - Uptime Kuma sait quelles sondes créer (phase 3)
+#   - le tableau de progression sait quoi afficher (phase 3)
+#   - le lint sait quelles adresses sont autorisées
+#
+# RÈGLES DE FORMAT (ce fichier est lu par scripts/lib/miniyaml.py, pas par un
+# parseur YAML complet — aucune dépendance externe en mode air-gap) :
+#   - indentation de 2 espaces exactement
+#   - une liste est introduite par "- " ; un objet d'une liste par "- cle: valeur"
+#   - pas d'ancres, pas d'alias, pas de valeurs multilignes, pas de tabs
+#   - pas d'adresse IP ici : uniquement le NOM de la variable (ip_var)
+# =============================================================================
+
+meta:
+  schema_version: 1
+  # Chemin du réseau Docker partagé par toutes les équipes (FARCI §4).
+  network_name: farci
+
+groups:
+  CORE_INFRASTRUCTURE: Infrastructure cœur
+  AI_RUNTIMES: Runtimes d'inférence
+  LLM_GATEWAYS: Passerelles LLM
+  DOCUMENT_PIPELINE: Traitement documentaire
+  OBSERVABILITY: Observabilité
+  RESEARCH_PIPELINE: Pipeline de recherche
+  CLIENT_APPLICATIONS: Applications clientes
+
+# Le pipeline n'est "ready" que si TOUS les services marqués critical: true
+# sont joignables (FARCI §14).
+services:
+  - id: gitea
+    label: Gitea
+    team: "0"
+    compose: 00-gitops
+    group: CORE_INFRASTRUCTURE
+    ip_var: GITEA_IP
+    port_var: GITEA_PORT
+    # Chemins essayés dans l'ordre : un même contrat peut s'appeler
+    # différemment selon l'implémentation (cf. FARCI §16 et §2).
+    health_paths:
+      - /api/healthz
+      - /healthz
+    critical: true
+    phase: 2
+
+  - id: caddy
+    label: Caddy
+    team: "1"
+    compose: 01-network-dashboard
+    group: CORE_INFRASTRUCTURE
+    ip_var: CADDY_IP
+    port_var: CADDY_INTERNAL_PORT
+    health_paths:
+      - /healthz
+    critical: true
+    phase: 3
+
+  - id: health-aggregator
+    label: Health Aggregator
+    team: "1"
+    compose: 01-network-dashboard
+    group: CORE_INFRASTRUCTURE
+    ip_var: HEALTH_AGGREGATOR_IP
+    port_var: HEALTH_AGGREGATOR_PORT
+    health_paths:
+      - /healthz
+    critical: false
+    phase: 3
+
+  - id: inference-ollama
+    label: Inference A (Ollama)
+    team: "2"
+    compose: 02-inference
+    group: AI_RUNTIMES
+    ip_var: INFERENCE_A_IP
+    port_var: INFERENCE_PORT
+    health_paths:
+      - /v1/models
+      - /api/tags
+    critical: true
+    phase: 4
+
+  - id: inference-llamacpp
+    label: Inference B (llama.cpp)
+    team: "2"
+    compose: 02-inference
+    group: AI_RUNTIMES
+    ip_var: INFERENCE_B_IP
+    port_var: INFERENCE_PORT
+    health_paths:
+      - /v1/models
+      - /health
+    critical: false
+    phase: 4
+
+  - id: inference-omlx
+    label: Inference C (oMLX / Mac)
+    team: "2"
+    compose: 02-inference
+    group: AI_RUNTIMES
+    ip_var: INFERENCE_C_IP
+    port_var: INFERENCE_PORT
+    health_paths:
+      - /v1/models
+      - /health
+    critical: false
+    phase: 4
+
+  - id: gateway-litellm
+    label: Gateway A (LiteLLM)
+    team: "3"
+    compose: 03-llm-gateway
+    group: LLM_GATEWAYS
+    ip_var: GATEWAY_A_IP
+    port_var: GATEWAY_PORT
+    health_paths:
+      - /health/liveliness
+      - /health
+    critical: true
+    phase: 5
+
+  - id: gateway-bifrost
+    label: Gateway B (Bifrost)
+    team: "3"
+    compose: 03-llm-gateway
+    group: LLM_GATEWAYS
+    ip_var: GATEWAY_B_IP
+    port_var: GATEWAY_PORT
+    health_paths:
+      - /health
+      - /api/health
+    critical: false
+    phase: 5
+
+  - id: docling
+    label: Docling
+    team: "4"
+    compose: 04-clinical-documents
+    group: DOCUMENT_PIPELINE
+    ip_var: DOCLING_IP
+    port_var: DOCLING_PORT
+    health_paths:
+      - /health
+      - /v1/health
+    critical: true
+    phase: 6
+
+  - id: phoenix
+    label: Observability A (Phoenix)
+    team: "5"
+    compose: 05-observability
+    group: OBSERVABILITY
+    ip_var: OBSERVABILITY_A_IP
+    port_var: PHOENIX_PORT
+    health_paths:
+      - /healthz
+      - /
+    critical: true
+    phase: 7
+
+  - id: langfuse
+    label: Observability B (Langfuse)
+    team: "5"
+    compose: 05-observability
+    group: OBSERVABILITY
+    ip_var: OBSERVABILITY_B_IP
+    port_var: LANGFUSE_PORT
+    health_paths:
+      - /api/public/health
+      - /health
+    critical: false
+    phase: 7
+
+  - id: mlflow
+    label: MLflow
+    team: "6"
+    compose: 06-evaluation
+    group: RESEARCH_PIPELINE
+    ip_var: MLFLOW_IP
+    port_var: MLFLOW_PORT
+    health_paths:
+      - /health
+      - /version
+    critical: true
+    phase: 8
+
+  - id: uptime-kuma
+    label: Uptime Kuma
+    team: "1"
+    compose: 01-network-dashboard
+    group: CORE_INFRASTRUCTURE
+    ip_var: UPTIME_KUMA_IP
+    port_var: UPTIME_KUMA_PORT
+    health_paths:
+      - /api/status-page/heartbeat/1
+    critical: false
+    phase: 3
+
+  - id: open-webui
+    label: Open WebUI
+    team: "7"
+    compose: 07-applications
+    group: CLIENT_APPLICATIONS
+    ip_var: OPEN_WEBUI_IP
+    port_var: OPEN_WEBUI_PORT
+    health_paths:
+      - /health
+    critical: false
+    phase: 9
+
+  - id: flowise
+    label: Flowise
+    team: "7"
+    compose: 07-applications
+    group: CLIENT_APPLICATIONS
+    ip_var: FLOWISE_IP
+    port_var: FLOWISE_PORT
+    health_paths:
+      - /health
+    critical: false
+    phase: 9
+
+# Lignes du tableau de progression projeté dans l'amphithéâtre (FARCI §49).
+# Onze lignes, pas plus : au-delà, personne ne lit depuis le fond de la salle.
+status_rows:
+  - label: GitOps
+    check: [gitea]
+  - label: Network
+    check: [caddy]
+  - label: Inference Primary
+    check: [inference-ollama]
+  - label: Inference Secondary
+    check: [inference-llamacpp]
+  - label: Inference Mac
+    check: [inference-omlx]
+  - label: LLM Gateway
+    check: [gateway-litellm]
+  - label: Docling
+    check: [docling]
+  - label: Observability
+    check: [phoenix]
+  - label: Evaluation
+    check: [mlflow]
+  - label: Client
+    check: [open-webui]

@@ -1,0 +1,6 @@
+# Contenu de pseudonymized/ — hors Git.
+#
+# Ces fichiers sont dérivés de raw/ par le module de pseudonymisation :
+# ils sont reproductibles à l'identique, donc inutiles dans l historique.
+*
+!.gitignore

@@ -1,0 +1,40 @@
+# FARCI — registre des cibles (source de vérité unique)
+# =============================================================================
+# Colonnes séparées par des TAB : nom, groupe, description, script.
+# Ce fichier est lu par DEUX consommateurs :
+#   - scripts/bin/farci  (le lanceur)  : ./bin/farci <nom>
+#   - Makefile                          : make <nom>
+# Il est donc impossible que les deux proposed des listes différentes : c'est
+# l'un des moyens de garantir qu'un dépôt air-gappé reste utilisable même
+# sans `make` installé (beaucoup de postes étudiants n'ont pas make).
+#
+# Règles :
+#   - une ligne par cible, aucune ligne sans script
+#   - le script doit exister et être exécutable, sinon `farci help` le signale
+#   - les noms sont kebab-case, sans espace
+# =============================================================================
+
+help	atelier	Afficher cette aide	help.sh
+version	atelier	Versions figées du dépôt (versions.env)	version.sh
+env	atelier	Afficher la configuration effective	env.sh
+env-check	atelier	Valider la configuration (adresses, sous-réseau)	env.sh
+services	atelier	Lister le registre des services	services.sh
+network-check	atelier	Vérifier cohérence registré <-> adresses	network-check.sh
+status	atelier	Tableau de progression du workshop (§49)	status.sh
+doctor	atelier	Diagnostic de la machine (docker, python, RAM, disque)	doctor.sh
+bootstrap	atelier	Préparer la machine (hors ligne, .env, outils)	bootstrap.sh
+selftest	atelier	Auto-tests des parseurs internes (yaml, json)	selftest.sh
+read	atelier	Lire le TUTORIAL d'une équipe	read.sh
+docs	atelier	Ouvrir la documentation (ARCHITECTURE, CONTRACTS...)	docs.sh
+checklist	atelier	Checklist formateur (INSTRUCTOR_GUIDE)	docs.sh
+
+lint	qualité	Toute la batterie de contrôles	lint.sh
+lint-versions	qualité	Aucun tag flottant, versions épinglées	lint.sh
+lint-ips	qualité	Aucune adresse IP en dur hors configuration	lint.sh
+lint-docs	qualité	Documentation et TUTORIALs conformes (§45)	lint.sh
+lint-offline	qualité	Politique air-gap (pas de CDN, pas de pull)	lint.sh
+lint-todo	qualité	Ni TODO ni stub dans le code livré	lint.sh
+lint-shell	qualité	Syntaxe bash (+ shellcheck si disponible)	lint.sh
+lint-python	qualité	Syntaxe Python (compilation)	lint.sh
+
+clean	nettoyage	Supprimer les artefacts locaux (demande --yes)	clean.sh

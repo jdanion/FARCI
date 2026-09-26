@@ -1,0 +1,8 @@
+# Contenu de extracted/ — hors Git.
+#
+# Ce sont les résultats d'expérience de chaque équipe (cahier des charges §33).
+# Ils sont reproductibles, volumineux, et ne doivent pas alourdir l historique.
+# On garde le fichier pour pouvoir le versionner : sans lui, ce répertoire
+# serait ignoré en entier et Git n'y entrerait plus.
+*
+!.gitignore
