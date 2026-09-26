@@ -1,0 +1,22 @@
+# FARCI — OTel Collector (optionnel, profil `otel`)
+#
+# Fan-out : reçoit les spans et les distribue à Phoenix et Langfuse.
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.120.0
+    container_name: farci-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otel-collector.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    networks:
+      farci:
+        ipv4_address: ${OTEL_COLLECTOR_IP}
+
+networks:
+  farci:
+    external: true
