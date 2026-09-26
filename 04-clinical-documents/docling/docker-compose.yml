@@ -1,0 +1,34 @@
+# FARCI — Docling (FARCI §20)
+#
+# Docling convertit les PDF en markdown/JSON structuré.
+# OCR désactivé par défaut (CPU).
+
+services:
+  docling:
+    image: ds4sd/docling-serve:${DOCLING_SERVE_VERSION}
+    container_name: farci-docling
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      DOCLING_DO_OCR: "false"
+      DOCLING_DO_TABLE_STRUCTURE: "true"
+      DOCLING_TABLE_STRUCTURE_MODE: "fast"
+      DOCLING_USE_V2: "true"
+    volumes:
+      - docling-cache:/root/.cache
+    networks:
+      farci:
+        ipv4_address: ${DOCLING_IP}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  docling-cache:
+
+networks:
+  farci:
+    external: true

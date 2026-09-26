@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://farci.example/schemas/clinical_extraction.schema.json",
+  "title": "ClinicalExtraction",
+  "description": "Schéma d'extraction clinique FARCI — source de vérité du contrat",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "patient_id",
+    "age",
+    "sex",
+    "diagnosis",
+    "procedure_type",
+    "approach",
+    "venous_resection",
+    "tumor_size_mm",
+    "histology",
+    "pT",
+    "pN",
+    "nodes_examined",
+    "nodes_positive",
+    "margin_R",
+    "pancreatic_fistula",
+    "delayed_gastrojejunostomy",
+    "hemorrhage",
+    "length_of_stay",
+    "readmission"
+  ],
+  "properties": {
+    "patient_id": {
+      "type": "string",
+      "description": "IPP du patient, repris du pseudonyme. Jamais inventé."
+    },
+    "age": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 120,
+      "description": "Âge en années"
+    },
+    "sex": {
+      "type": "string",
+      "enum": ["M", "F"],
+      "description": "Sexe"
+    },
+    "diagnosis": {
+      "type": "string",
+      "description": "Diagnostic principal"
+    },
+    "procedure_type": {
+      "type": "string",
+      "enum": [
+        "DPC",
+        "Duodénopancréatectomie",
+        "Whipple modifié"
+      ],
+      "description": "Type d'intervention"
+    },
+    "approach": {
+      "type": "string",
+      "enum": [
+        "cœlioscopie",
+        "laparotomie",
+        "cœlioscopie convertie"
+      ],
+      "description": "Voie d'abord"
+    },
+    "venous_resection": {
+      "type": "boolean",
+      "description": "Résection veineuse associée"
+    },
+    "tumor_size_mm": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "description": "Taille de la tumeur en mm. null si non précisé."
+    },
+    "histology": {
+      "type": "string",
+      "description": "Type histologique"
+    },
+    "pT": {
+      "type": ["string", "null"],
+      "enum": ["pT1", "pT2", "pT3", "pT4", null],
+      "description": "Classification pT"
+    },
+    "pN": {
+      "type": ["string", "null"],
+      "enum": ["pN0", "pN1", "pN2", null],
+      "description": "Classification pN"
+    },
+    "nodes_examined": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Nombre de ganglions examinés. null si non précisé."
+    },
+    "nodes_positive": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Nombre de ganglions envahis. 0 est une valeur, pas null."
+    },
+    "margin_R": {
+      "type": ["string", "null"],
+      "enum": ["R0", "R1", "R2", null],
+      "description": "Marge d'exérèse"
+    },
+    "pancreatic_fistula": {
+      "type": "boolean",
+      "description": "Fistule pancréatique"
+    },
+    "delayed_gastrojejunostomy": {
+      "type": "boolean",
+      "description": "Gastrogastrojonostomie retardée (DGE)"
+    },
+    "hemorrhage": {
+      "type": "boolean",
+      "description": "Hémorragie post-opératoire"
+    },
+    "length_of_stay": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Durée de séjour en jours"
+    },
+    "readmission": {
+      "type": "boolean",
+      "description": "Réadmission à 30 jours"
+    }
+  }
+}
