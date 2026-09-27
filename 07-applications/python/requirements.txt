@@ -1,0 +1,5 @@
+# FARCI — dépendances Python (parcours Python)
+openai==3.19.2
+pydantic==2.13.5
+fpdf2==2.8.8
+requests==2.34.2

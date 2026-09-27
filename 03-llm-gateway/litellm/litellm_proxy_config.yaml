@@ -1,0 +1,28 @@
+# FARCI — configuration proxy LiteLLM
+#
+# Ce fichier est chargé en complément de config.yaml.
+# Il définit les clés API, le rate limiting, et les callbacks.
+
+model_list: []
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false
+
+general_settings:
+  master_key: sk-priority-placeholder
+
+# Rate limiting (FARCI §38)
+user_max_budget: 0
+user_rpm_limit:
+  sk-standard-placeholder: 10
+  sk-priority-placeholder: 120
+
+# Fallbacks
+fallbacks:
+  - med-extraction:
+      - med-extraction-lite
+
+# Callbacks observabilité
+callbacks:
+  - langfuse

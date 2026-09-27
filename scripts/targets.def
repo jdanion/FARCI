@@ -45,4 +45,5 @@ lint-python	qualité	Syntaxe Python (compilation)	lint.sh
 generate-dataset	dataset	Générer le dataset synthétique (PDF)	generate-dataset.sh
 build-gold	dataset	Générer le gold standard depuis le registre	build-gold.sh
 make-quick-set	dataset	Créer le sous-ensemble quick (10 cas)	make-quick-set.sh
+casting	dataset	Répartition des équipes selon le matériel	casting.sh
 clean	nettoyage	Supprimer les artefacts locaux (demande --yes)	clean.sh

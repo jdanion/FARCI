@@ -1213,6 +1213,69 @@ Une phase est close quand :
 
 ---
 
+# PHASE 15 — Agents Arcane déportés & GitOps
+
+**Objectif** : déployer un agent de supervision (Arcane) en conteneur Docker sur chaque
+brique du pipeline, et orchestrer les déploiements via GitOps (webhook Gitea → runner).
+
+## Fichiers à créer
+
+```
+08-arcane-agents/
+├── docker-compose.yml          # agents déportés sur chaque brique
+├── arcane-agent/
+│   ├── Dockerfile
+│   ├── agent.py                # agent de supervision (stdlib)
+│   └── config.yaml             # configuration par brique
+├── webhook/
+│   ├── webhook.py              # récepteur de webhooks Gitea
+│   └── webhook.service         # service systemd (ou conteneur)
+├── gitops/
+│   ├── gitops.sh               # déploiement GitOps
+│   └── webhook-handler.sh      # traitement des événements
+└── TUTORIAL.md
+```
+
+## Architecture
+
+```
+Gitea (push/PR)
+    │
+    ▼ (webhook)
+┌─────────────┐
+│  Webhook    │  ← reçoit les événements Git
+│  Handler    │
+└──────┬──────┘
+       │
+       ▼ (GitOps)
+┌─────────────┐
+│  gitops.sh  │  ← pull + apply
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│  Agents Arcane (conteneurs Docker)  │
+│  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐  │
+│  │Ollama│ │LLM  │ │Docl.│ │MLfl.│  │
+│  │agent │ │agent│ │agent│ │agent│  │
+│  └─────┘ └─────┘ └─────┘ └─────┘  │
+└─────────────────────────────────────┘
+```
+
+## Points techniques
+
+1. **Agent Arcane** : conteneur Docker par brique, supervise l'état, alerte en cas d'anomalie
+2. **Webhook Gitea** : reçoit les événements push/PR, déclenche le déploiement GitOps
+3. **Gitops.sh** : pull le dépôt + apply les manifests (docker compose up -d)
+4. **Idempotence** : chaque déploiement est idempotent (apply sans effet de bord)
+
+## Critère de fin
+
+Un push sur `main` déclenche un déploiement automatique via webhook → gitops.sh,
+et chaque brique a son agent Arcane de supervision actif.
+
+---
+
 ## 5. Prochaine action
 
 Étape immédiate recommandée : **Phase 0 + Phase 1 + Phase 10 (lot 1-3)**, car elles

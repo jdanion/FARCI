@@ -1,0 +1,15 @@
+{
+  "model": "/models/Ornith-1.5-9B-Q5_K_M.gguf",
+  "host": "0.0.0.0",
+  "port": 8081,
+  "ctx_size": 8192,
+  "n_gpu_layers": 0,
+  "threads": 4,
+  "jinja": true,
+  "reasoning": false,
+  "grammar_file": "/app/grammar/clinical.gbnf",
+  "temperature": 0,
+  "top_p": 0.95,
+  "top_k": 40,
+  "repeat_penalty": 1.1
+}

@@ -1,0 +1,41 @@
+# FARCI — configuration OTel Collector
+#
+# Fan-out : reçoit les spans et les envoie à Phoenix et Langfuse.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  otlphttp/phoenix:
+    endpoint: http://192.168.50.51:6006
+    headers:
+      Content-Type: application/x-protobuf
+
+  otlphttp/langfuse:
+    endpoint: http://192.168.50.52:3000/api/public/otel
+    headers:
+      Content-Type: application/x-protobuf
+
+  logging:
+    loglevel: warn
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/phoenix, otlphttp/langfuse, logging]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp/phoenix, logging]

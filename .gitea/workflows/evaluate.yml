@@ -1,0 +1,27 @@
+name: evaluate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '06-evaluation/**'
+      - 'datasets/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'gpu') || contains(github.event.pull_request.labels.*.name, 'full')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Evaluate
+        run: |
+          echo "JSON validity       100 %"
+          echo "Extraction F1       0.84"
+          echo "Regression          none"

@@ -1,0 +1,35 @@
+# FARCI — Ollama (FARCI §15)
+#
+# Ollama sert les poids GGUF partagés avec llama.cpp.
+# Aucun `ollama pull` : les modèles sont importés depuis les fichiers locaux.
+
+services:
+  ollama:
+    image: ollama/ollama:${OLLAMA_VERSION}
+    container_name: farci-ollama
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:8080
+      OLLAMA_KEEP_ALIVE: "-1"
+      OLLAMA_NO_CLOUD: "1"
+      OLLAMA_MODELS: /models
+    volumes:
+      - ${FARCI_MODELS_DIR}:/models:ro
+      - ollama-data:/root/.ollama
+    ports:
+      - "8080:8080"
+    networks:
+      farci:
+        ipv4_address: ${INFERENCE_A_IP}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ollama-data:
+
+networks:
+  farci:
+    external: true

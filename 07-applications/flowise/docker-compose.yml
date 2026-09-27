@@ -1,0 +1,31 @@
+# FARCI — Flowise (FARCI §32)
+#
+# Flowise est un outil de construction de pipelines LLM par glisser-déposer.
+
+services:
+  flowise:
+    image: flowiseai/flowise:${FLOWISE_VERSION}
+    container_name: farci-flowise
+    restart: unless-stopped
+    environment:
+      FLOWISE_USERNAME: admin
+      FLOWISE_PASSWORD: farci-admin
+    volumes:
+      - flowise-data:/root/.flowise
+    ports:
+      - "3000:3000"
+    networks:
+      farci:
+        ipv4_address: ${FLOWISE_IP}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  flowise-data:
+
+networks:
+  farci:
+    external: true

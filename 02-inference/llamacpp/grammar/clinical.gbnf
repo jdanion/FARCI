@@ -1,0 +1,35 @@
+# FARCI — GBNF grammar pour structured output clinique
+# Utilisé par llama.cpp pour contraindre la sortie JSON
+
+root ::= "{" ws "\"patient_id\"" ws ":" ws string ws "," ws
+         "\"age\"" ws ":" ws number ws "," ws
+         "\"sex\"" ws ":" ws sex ws "," ws
+         "\"diagnosis\"" ws ":" ws string ws "," ws
+         "\"procedure_type\"" ws ":" ws procedure ws "," ws
+         "\"approach\"" ws ":" ws approach ws "," ws
+         "\"venous_resection\"" ws ":" ws boolean ws "," ws
+         "\"tumor_size_mm\"" ws ":" ws number-or-null ws "," ws
+         "\"histology\"" ws ":" ws string ws "," ws
+         "\"pT\"" ws ":" ws pt-or-null ws "," ws
+         "\"pN\"" ws ":" ws pn-or-null ws "," ws
+         "\"nodes_examined\"" ws ":" ws int-or-null ws "," ws
+         "\"nodes_positive\"" ws ":" ws int-or-null ws "," ws
+         "\"margin_R\"" ws ":" ws margin-or-null ws "," ws
+         "\"pancreatic_fistula\"" ws ":" ws boolean ws "," ws
+         "\"delayed_gastrojejunostomy\"" ws ":" ws boolean ws "," ws
+         "\"hemorrhage\"" ws ":" ws boolean ws "," ws
+         "\"length_of_stay\"" ws ":" ws number ws "," ws
+         "\"readmission\"" ws ":" ws boolean ws "}"
+
+sex ::= "\"M\"" | "\"F\""
+procedure ::= "\"DPC\"" | "\"Duodénopancréatectomie\"" | "\"Whipple modifié\""
+approach ::= "\"cœlioscopie\"" | "\"laparotomie\"" | "\"cœlioscopie convertie\""
+pt-or-null ::= "\"pT1\"" | "\"pT2\"" | "\"pT3\"" | "\"pT4\"" | "null"
+pn-or-null ::= "\"pN0\"" | "\"pN1\"" | "\"pN2\"" | "null"
+margin-or-null ::= "\"R0\"" | "\"R1\"" | "\"R2\"" | "null"
+boolean ::= "true" | "false"
+number ::= [0-9]+ ("." [0-9]+)?
+int-or-null ::= [0-9]+ | "null"
+number-or-null ::= number | "null"
+string ::= "\"" [^\"]* "\""
+ws ::= [ \t\n]*

@@ -1,0 +1,51 @@
+# FARCI — Langfuse (observabilité LLM)
+#
+# Langfuse est une plateforme d'observabilité open-source pour LLM.
+# Il accepte l'ingest OTLP (v3+).
+
+services:
+  langfuse:
+    image: langfuse/langfuse:${LANGFUSE_VERSION}
+    container_name: farci-langfuse
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD:-langfuse}@postgres:5432/langfuse
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-changeme}
+      NEXTAUTH_URL: http://192.168.50.52:3000
+      SALT: ${LANGFUSE_SALT:-changeme}
+      LANGFUSE_ENABLE_EXPERIMENTAL_OTEL: "true"
+    volumes:
+      - langfuse-data:/app/data
+    networks:
+      farci:
+        ipv4_address: ${LANGFUSE_IP}
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/public/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: farci-langfuse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: langfuse
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse}
+    volumes:
+      - langfuse-postgres-data:/var/lib/postgresql/data
+    networks:
+      - farci
+
+volumes:
+  langfuse-data:
+  langfuse-postgres-data:
+
+networks:
+  farci:
+    external: true

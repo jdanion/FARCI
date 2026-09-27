@@ -1,0 +1,62 @@
+# FARCI — Caddy reverse proxy (FARCI §12)
+#
+# Routage des services internes. HTTP only (air-gap prime sur TLS, §61.1).
+# handle_errors renvoie un JSON explicite pour débogage.
+
+:80 {
+    # Health check rapide
+    handle /healthz {
+        reverse_proxy ${HEALTH_AGGREGATOR_IP}:8081
+    }
+
+    # Health aggregator (status détaillé)
+    handle /status {
+        reverse_proxy ${HEALTH_AGGREGATOR_IP}:8081
+    }
+
+    # LLM Gateway (OpenAI-compatible)
+    handle /v1/* {
+        reverse_proxy ${GATEWAY_A_IP}:4000
+    }
+
+    # Docling (documents)
+    handle /docling/* {
+        reverse_proxy ${DOCLING_IP}:5001
+    }
+
+    # Observabilité (Phoenix / Langfuse)
+    handle /observability/* {
+        reverse_proxy ${PHOENIX_IP}:6006
+    }
+
+    # MLflow (évaluation)
+    handle /mlflow/* {
+        reverse_proxy ${MLFLOW_IP}:5000
+    }
+
+    # Uptime Kuma (dashboard)
+    handle /kuma/* {
+        reverse_proxy ${UPTIME_KUMA_IP}:3001
+    }
+
+    # Flowise
+    handle /flowise/* {
+        reverse_proxy ${FLOWISE_IP}:3000
+    }
+
+    # Open WebUI
+    handle /webui/* {
+        reverse_proxy ${OPEN_WEBUI_IP}:8080
+    }
+
+    # Gitea
+    handle /gitea/* {
+        reverse_proxy ${GITEA_IP}:3000
+    }
+
+    # Erreurs JSON explicites
+    handle_errors {
+        header Content-Type application/json
+        respond `{"error": "{http.error.status_code}", "message": "{http.error.status_text}"}` {http.error.status_code}
+    }
+}

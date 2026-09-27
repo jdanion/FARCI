@@ -1,0 +1,34 @@
+{
+  "gateway": {
+    "port": 4001,
+    "host": "0.0.0.0"
+  },
+  "models": [
+    {
+      "alias": "med-extraction",
+      "backend": "ollama",
+      "url": "http://192.168.50.20:8080",
+      "model": "ornith-1.5-9b-q5km"
+    },
+    {
+      "alias": "med-extraction-lite",
+      "backend": "ollama",
+      "url": "http://192.168.50.20:8080",
+      "model": "qwen3.5-2b-q4km"
+    },
+    {
+      "alias": "med-extraction-max",
+      "backend": "ollama",
+      "url": "http://192.168.50.20:8080",
+      "model": "qwen3.8-27b-q4km"
+    }
+  ],
+  "fallbacks": {
+    "med-extraction": ["med-extraction-lite"]
+  },
+  "rate_limit": {
+    "default": 10,
+    "sk-priority-*": 120
+  },
+  "reasoning": "strip"
+}

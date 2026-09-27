@@ -1,0 +1,42 @@
+# FARCI — configuration agent Arcane
+
+agent:
+  name: farci-arcane-agent
+  version: "1.0"
+
+# Healthcheck par brique
+services:
+  ollama:
+    url: http://192.168.50.20:8080
+    health_path: /api/tags
+    interval: 30
+    timeout: 5
+
+  llamacpp:
+    url: http://192.168.50.21:8081
+    health_path: /health
+    interval: 30
+    timeout: 5
+
+  gateway:
+    url: http://192.168.50.15/v1
+    health_path: /healthz
+    interval: 30
+    timeout: 5
+
+  docling:
+    url: http://192.168.50.40:5001
+    health_path: /health
+    interval: 30
+    timeout: 5
+
+  mlflow:
+    url: http://192.168.50.50:5000
+    health_path: /health
+    interval: 30
+    timeout: 5
+
+# Alertes
+alerts:
+  webhook_url: ${ALERT_WEBHOOK_URL:-}
+  on_status: ["down", "error"]

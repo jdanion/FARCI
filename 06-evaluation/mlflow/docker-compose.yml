@@ -1,0 +1,34 @@
+# FARCI — MLflow (FARCI §24, §27)
+#
+# MLflow suit les runs d'évaluation : modèle, runtime, gateway, params.
+
+services:
+  mlflow:
+    image: mlflow/mlflow:${MLFLOW_VERSION}
+    container_name: farci-mlflow
+    restart: unless-stopped
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    volumes:
+      - mlflow-data:/mlflow
+    ports:
+      - "5000:5000"
+    networks:
+      farci:
+        ipv4_address: ${MLFLOW_IP}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mlflow-data:
+
+networks:
+  farci:
+    external: true
