@@ -14,8 +14,21 @@ sans réseau.
 
 | Phase | Quand | Internet | Commande |
 |---|---|---|---|
+| **Préparation** | Maintenant | oui | `./preload.sh --core` |
 | **Préchargement** | J-7 à J-1 | oui | `./preload.sh --core` |
 | **Atelier** | J0 | **non** | `make core-up`, `make health`, … |
+
+## État de la CI/CD
+
+**Les runners Gitea Actions sont désactivés pendant la phase de préparation.**
+
+La CI/CD avec les agents Arcane sera activée uniquement pendant l'atelier offline,
+avec un Gitea local. Les workflows resteront en attendant un runner disponible.
+
+| État | Quand | Raison |
+|---|---|---|
+| **Désactivé** | Phase de préparation | Le projet est en cours de construction |
+| **Activé** | Atelier offline | Gitea local + runners disponibles |
 
 Ce qui est téléchargé pendant la phase 1 est **figé** : ni le jour J, ni le mois
 suivant. Les empreintes SHA256 sont conservées pour le prouver.

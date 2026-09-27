@@ -86,6 +86,18 @@ Types : `feat`, `fix`, `docs`, `chore`, `test`, `refactor`
 - Aucun secret dans les fichiers (utiliser `.env`)
 - Les artefacts lourds (images, modèles) vont dans `$FARCI_DATA_DIR`
 
+## État de la CI/CD
+
+**Les runners Gitea Actions sont désactivés pendant la phase de préparation.**
+
+La CI/CD avec les agents Arcane sera activée uniquement pendant l'atelier offline,
+avec un Gitea local. Les workflows resteront en attendant un runner disponible.
+
+| État | Quand | Raison |
+|---|---|---|
+| **Désactivé** | Phase de préparation | Le projet est en cours de construction |
+| **Activé** | Atelier offline | Gitea local + runners disponibles |
+
 ## Structure du dépôt
 
 ```
