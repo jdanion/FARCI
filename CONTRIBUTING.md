@@ -34,6 +34,36 @@ git push origin feat/ma-fonctionnalite
 # 6. Merge manuel par un humain après approbation
 ```
 
+### Automatisation en fin de session
+
+**À la fin de chaque session de travail, les actions suivantes sont exécutées
+automatiquement :**
+
+1. **Pull** : `git pull origin main` pour synchroniser la branche avec `main`
+2. **Commit** : tous les changements sont commités automatiquement
+3. **Push** : la branche est poussée vers le distant
+4. **PR** : une Pull Request est créée automatiquement vers `main`
+
+```bash
+# Fin de session — à exécuter automatiquement
+git pull origin main
+git add .
+git commit -m "feat: description de la session"
+git push origin feat/ma-fonctionnalite
+# Création de la PR via l'API Gitea
+curl -X POST "http://192.168.50.10:3000/api/v1/repos/FARCI/farci/pulls" \
+  -H "Content-Type: application/json" \
+  -u "farci-admin:mot-de-passe-admin" \
+  -d '{
+    "title": "feat: description de la session",
+    "head": "feat/ma-fonctionnalite",
+    "base": "main"
+  }'
+```
+
+> **Note** : la PR est créée automatiquement, mais le merge reste **manuel**
+> et réservé à un **utilisateur humain**.
+
 ### Interdictions
 
 - ❌ Push direct sur `main`
