@@ -1,0 +1,90 @@
+# Équipe 7 — Applications (Python, Open WebUI, Flowise)
+
+## Attendus pédagogiques
+
+- Comprendre le rôle d'une application cliente
+- Comprendre pourquoi l'application ne voit jamais le vrai modèle
+- Comprendre la notion de contrat commun (même schéma, même dataset, même alias)
+- Comprendre la différence entre les trois parcours (Python, Open WebUI, Flowise)
+- Savoir valider une sortie JSON avec Pydantic
+
+## Solution simple (scripts)
+
+```bash
+# Parcours A — Python
+cd 07-applications/python
+pip install -r requirements.txt
+python run_pipeline.py --input ../datasets/raw --output ../datasets/extracted/python
+
+# Parcours B — Open WebUI
+cd ../open-webui
+docker compose up -d
+./post-setup.sh
+
+# Parcours C — Flowise
+cd ../flowise
+docker compose up -d
+```
+
+## Solution from scratch
+
+### Parcours A — Python
+
+```python
+from common.pipeline import process_pdf
+
+output = process_pdf(
+    pdf_path=Path("datasets/raw/patient_001.pdf"),
+    output_dir=Path("datasets/extracted/python"),
+    model="med-extraction",
+    prompt_version="v1",
+)
+```
+
+### Parcours B — Open WebUI
+
+```bash
+docker run -d \
+  --name farci-open-webui \
+  --network farci \
+  -p 8080:8080 \
+  -e OAI_API_BASE_URL=http://192.168.50.15/v1 \
+  -e DEFAULT_MODEL=med-extraction \
+  -v open-webui-data:/app/backend/data \
+  ghcr.io/open-webui/open-webui:0.11.4
+```
+
+### Parcours C — Flowise
+
+```bash
+docker run -d \
+  --name farci-flowise \
+  --network farci \
+  -p 3000:3000 \
+  -e FLOWISE_USERNAME=admin \
+  -e FLOWISE_PASSWORD=farci-admin \
+  -v flowise-data:/root/.flowise \
+  flowiseai/flowise:3.1.4
+```
+
+### Validation Pydantic
+
+```python
+from common.schemas import ClinicalExtraction
+
+# Valide un JSON
+data = {"patient_id": "123", "age": 67, ...}
+extraction = ClinicalExtraction(**data)
+
+# JSON invalide → ValidationError
+try:
+    ClinicalExtraction(**{"patient_id": "123"})  # champs manquants
+except ValidationError as e:
+    print(f"Validation échouée: {e}")
+```
+
+## Vérifications
+
+- [ ] Les 3 parcours produisent le même schéma
+- [ ] `make evaluate` compare les 3 parcours
+- [ ] Aucun fichier invalide n'est écrit
