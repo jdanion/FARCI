@@ -64,6 +64,41 @@ curl -X POST "http://192.168.50.10:3000/api/v1/repos/FARCI/farci/pulls" \
 > **Note** : la PR est créée automatiquement, mais le merge reste **manuel**
 > et réservé à un **utilisateur humain**.
 
+### Résumé obligatoire dans la PR
+
+Chaque Pull Request créée par l'agent codeur **doit contenir un résumé structuré**
+pour aider l'humain qui valide le merge à comprendre et vérifier le travail.
+
+Le résumé doit inclure :
+
+1. **Objectif** : ce que la branche accomplit (une phrase)
+2. **Fichiers modifiés** : liste des fichiers créés ou modifiés
+3. **Points clés** : décisions techniques, choix d'implémentation
+4. **Vérifications** : tests effectués, commandes exécutées
+5. **Impact** : ce qui change pour les utilisateurs
+
+Exemple de template :
+
+```markdown
+## Résumé
+
+**Objectif** : [description courte]
+
+**Fichiers modifiés** :
+- `fichier1` : [description]
+- `fichier2` : [description]
+
+**Points clés** :
+- [décision 1]
+- [décision 2]
+
+**Vérifications** :
+- [x] `./bin/farci lint` est vert
+- [x] [autre test]
+
+**Impact** : [description de l'impact]
+```
+
 ### Interdictions
 
 - ❌ Push direct sur `main`
