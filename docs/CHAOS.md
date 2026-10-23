@@ -12,12 +12,27 @@ pas du sabotage. Chaque scénario est **réversible**, **documenté**, et son r�
 ## Utilisation
 
 ```bash
-./chaos/chaos.sh list                 # les scénarios disponibles
-./chaos/chaos.sh scenario-01          # appliquer
-./chaos/chaos.sh scenario-01 --duration 90   # appliquer, puis réparer tout seul
-./chaos/chaos.sh status               # ce qui est encore cassé
-./chaos/chaos.sh reset                # tout réparer
+./bin/farci chaos list                 # les scénarios disponibles
+./bin/farci chaos scenario-01          # appliquer
+./bin/farci chaos scenario-01 --duration 90   # appliquer, puis réparer tout seul
+./bin/farci chaos status               # ce qui est encore cassé
+./bin/farci chaos reset                # tout réparer
 ```
+
+`./chaos/chaos.sh` accepte exactement les mêmes commandes.
+
+## Pendant la séance de 4 h : 4 scénarios, 35 minutes
+
+| Ordre | Scénario | Tableau attendu |
+|---|---|---|
+| 1 | 01 — runtime principal | `Inference` rouge, `CLINICAL PIPELINE` **READY** (un runtime suffit) |
+| 2 | 04 — JSON invalide | tout reste vert ; le dossier est refusé, rien n'est écrit |
+| 3 | 06 si Bifrost tourne, **sinon 05** | 06 : rien ne bouge côté client ; 05 : `Documents` rouge, pipeline **DEGRADED**, l'extraction texte continue |
+| 4 | 07 — observabilité | `Observability` rouge, `CLINICAL PIPELINE` **READY** |
+
+Les scénarios 02 et 03 restent disponibles pour une séance plus longue.
+La règle de `CLINICAL PIPELINE` est unique (`scripts/services.py`) et ces cas
+sont vérifiés par `tests/test_pipeline_rule.py`.
 
 Chaque scénario expose la même interface : `apply` et `revert`. L'état est
 conservé dans `.chaos/state.json`, ce qui permet de savoir ce qui est actif même
@@ -52,9 +67,12 @@ découverte.
 ```
 Gateway      → 200, service rendu par le secondaire
 Client       → ne change pas d'adresse
-Tableau      → Ollama 🔴   Gateway 🟢   CLINICAL AI PIPELINE 🟢
+Tableau      → Inference 🔴   LLM Gateway 🟢   CLINICAL PIPELINE READY
 En-tête      → le repli est indiqué
 ```
+
+Pré-requis : un runtime secondaire tourne (llama.cpp, brique bonus, ou celui
+de la machine de référence).
 
 **Leçon** : la redondance n'est utile que si elle est **exercée**. Une
 architecture qui n'a jamais été testée dans son mode dégradé n'est pas
@@ -66,8 +84,9 @@ redondante, elle est théorique.
 
 **Action** : arrêter **aussi** le runtime secondaire.
 
-**Attendu** : `CLINICAL AI PIPELINE` passe au rouge, la gateway renvoie une erreur
-**documentée** (503), et les journaux disent quelle cause.
+**Attendu** : `CLINICAL PIPELINE` passe à `DEGRADED` et le tableau affiche
+« Il manque : 1 runtime » ; la gateway renvoie une erreur **documentée** (503),
+et les journaux disent quelle cause.
 
 **Leçon** : la résilience a une profondeur. Enchaîner deux pannes montre où
 s'arrête la protection — et l'étudiant doit être capable de l'expliquer.
@@ -111,8 +130,9 @@ l'écriture.
 
 **Action** : arrêter Docling.
 
-**Attendu** : chaîne documentaire au rouge, passerelle et inférence toujours
-vertes.
+**Attendu** : ligne `Documents` au rouge, `CLINICAL PIPELINE` en `DEGRADED`,
+passerelle et inférence toujours vertes. Le parcours texte de l'étape 2
+(`./bin/farci extract`) continue de fonctionner : il ne passe pas par Docling.
 
 **Leçon** : les dépendances sont **partielles**. Savoir que le reste tient est
 aussi important que savoir que la partie cassée est tombée.
@@ -126,6 +146,9 @@ aussi important que savoir que la partie cassée est tombée.
 **Attendu** : la gateway B prend le relais, **sans que le client change d'adresse**,
 toujours via Caddy.
 
+Pré-requis : Bifrost (brique bonus) tourne et Caddy sait basculer vers lui.
+Sinon, jouer le scénario 05 à la place.
+
 **Leçon** : le client ne connaît qu'un **point d'entrée logique**. C'est toute la
 valeur du contrat d'API.
 
@@ -135,7 +158,8 @@ valeur du contrat d'API.
 
 **Action** : arrêter Phoenix (ou Langfuse).
 
-**Attendu** : l'extraction **réussit toujours**, seules les traces sont perdues.
+**Attendu** : l'extraction **réussit toujours**, seules les traces sont perdues ;
+`CLINICAL PIPELINE` reste **READY** (Phoenix n'en fait pas partie).
 
 **Leçon** : **l'observabilité n'est pas sur le chemin de production**. Si la
 coupure d'un outil de supervision arrête le soin, l'architecture est mal conçue.
@@ -148,7 +172,7 @@ Ce scénario doit rester **vert**, c'est un test bloquant.
 Toujours réparer :
 
 ```bash
-./chaos/chaos.sh reset
+./bin/farci chaos reset
 ./bin/farci status --strict     # doit repasser à READY
 ```
 

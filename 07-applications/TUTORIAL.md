@@ -5,10 +5,13 @@
 Utiliser la plateforme pour une **extraction clinique** : des dossiers
 médicaux synthétiques → des variables structurées, validées, comparables.
 
-- **Objectif minimal** : parcours Python sur le jeu rapide (10 dossiers),
-  extractions évaluées.
-- **Bonus** : parcours Open WebUI, prompt v2 comparé à v1 ; Flowise en
-  démonstration du formateur.
+- **Objectif minimal (étape 1)** : Open WebUI démarré et branché sur `/v1`
+  (ligne `Open WebUI` verte) : c'est l'interface des étudiants sans machine
+  utilisable à l'étape 2.
+- **Bonus (étape 1)** : un premier dossier extrait par le parcours Python.
+- **Étape 2, pour tous** : parcours Python sur le jeu rapide (10 dossiers),
+  extractions évaluées ; prompt v2 comparé à v1 ; Flowise en démonstration du
+  formateur.
 
 ## Ce que votre service apporte
 

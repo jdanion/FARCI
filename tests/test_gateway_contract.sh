@@ -8,7 +8,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
 
 TEST_NAME="gateway-contract"
 test_start
-test_need_service CADDY_URL /healthz
+test_need_service CADDY_URL /livez
 
 API_KEY="${FARCI_API_KEY:-${GATEWAY_KEY_STANDARD:-}}"
 code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 \

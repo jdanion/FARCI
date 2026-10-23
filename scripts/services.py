@@ -17,7 +17,9 @@ Commandes :
   url <id> [chemin]    URL de base d'un service, ou URL complète
   health <id>          liste des chemins de santé candidats
   critical             ids des services indispensables (pipeline "ready")
-  status-rows          lignes du tableau de progression (§49)
+  pipeline             état du pipeline ; lit {"id": "UP"|"DOWN"...} en JSON sur stdin
+  status-rows          lignes du tableau de progression (§49) : label, tier, ids
+  validate             cohérence interne du registre (tier, groupes, lignes)
   check-network        cohérence services.yaml <-> config/network.env
 """
 
@@ -104,7 +106,8 @@ def cmd_list() -> int:
         )
     print()
     print(f"{len(rows)} services, {len(registry().get('groups', {}))} groupes, "
-          f"{sum(1 for s in rows if s.get('critical'))} indispensables")
+          f"{sum(1 for s in rows if s.get('tier') == 'core')} cœur, "
+          f"{sum(1 for s in rows if s.get('critical'))} critiques + 1 runtime")
     return 0
 
 
@@ -160,6 +163,84 @@ def cmd_critical() -> int:
     return 0
 
 
+TIERS = ("core", "bonus")
+
+
+def pipeline_state(states: dict[str, bool]) -> dict:
+    """Règle unique de CLINICAL PIPELINE READY (tableau ET health-aggregator).
+
+    states : id de service -> True s'il répond. Renvoie
+      {"state": "READY" | "DEGRADED" | "NOT READY",
+       "missing": [ce qui manque, dans l'ordre de montage conseillé],
+       "met": n, "required": m}
+    Un service `critical: true` est une exigence ; un `critical_group` est UNE
+    exigence satisfaite dès qu'un de ses membres répond.
+    """
+    # Exigences dans l'ordre du registre, qui est l'ordre de montage conseillé.
+    members_of: dict[str, list[str]] = {}
+    for service in services():
+        if service.get("critical_group"):
+            members_of.setdefault(str(service["critical_group"]), []).append(str(service["id"]))
+    requirements: list[tuple[str, list[str]]] = []
+    for service in services():
+        group = service.get("critical_group")
+        if service.get("critical") is True:
+            requirements.append((str(service["id"]), [str(service["id"])]))
+        elif group and not any(label.startswith(f"1 {group} ") for label, _ in requirements):
+            members = members_of[str(group)]
+            requirements.append((f"1 {group} ({' | '.join(members)})", members))
+
+    missing = [label for label, members in requirements
+               if not any(states.get(m, False) for m in members)]
+    met = len(requirements) - len(missing)
+    if not missing:
+        state = "READY"
+    elif met:
+        state = "DEGRADED"
+    else:
+        state = "NOT READY"
+    return {"state": state, "missing": missing, "met": met, "required": len(requirements)}
+
+
+def cmd_pipeline() -> int:
+    raw = json.load(sys.stdin)
+    states = {key: str(value).upper().startswith("UP") for key, value in raw.items()}
+    print(json.dumps(pipeline_state(states), ensure_ascii=False))
+    return 0
+
+
+def validate_registry() -> list[str]:
+    """Erreurs de cohérence du registre (vide = cohérent)."""
+    problems = []
+    ids = {str(s.get("id")) for s in services()}
+    for service in services():
+        sid = service.get("id")
+        if service.get("tier") not in TIERS:
+            problems.append(f"{sid} : tier {service.get('tier')!r} (attendu : {', '.join(TIERS)})")
+        if service.get("critical") not in (True, False):
+            problems.append(f"{sid} : critical doit valoir true ou false")
+        if service.get("critical") is True and service.get("tier") != "core":
+            problems.append(f"{sid} : un service critique doit être de tier core")
+    for row in registry().get("status_rows", []):
+        if row.get("tier") not in TIERS:
+            problems.append(f"ligne {row.get('label')!r} : tier {row.get('tier')!r}")
+        for sid in row.get("check", []):
+            if sid not in ids:
+                problems.append(f"ligne {row.get('label')!r} : service inconnu {sid}")
+    return problems
+
+
+def cmd_validate() -> int:
+    problems = validate_registry()
+    for problem in problems:
+        print(f"KO   {problem}", file=sys.stderr)
+    if problems:
+        return 1
+    print(f"registre cohérent : {len(services())} services, "
+          f"{sum(1 for s in services() if s.get('tier') == 'core')} cœur")
+    return 0
+
+
 def cmd_ids() -> int:
     for service in services():
         print(service["id"])
@@ -168,7 +249,7 @@ def cmd_ids() -> int:
 
 def cmd_status_rows() -> int:
     for row in registry().get("status_rows", []):
-        print(f"{row.get('label','')}\t{','.join(row.get('check', []))}")
+        print(f"{row.get('label','')}\t{row.get('tier', 'core')}\t{','.join(row.get('check', []))}")
     return 0
 
 
@@ -259,6 +340,10 @@ def main(argv: list[str]) -> int:
         return cmd_critical()
     if command == "ids":
         return cmd_ids()
+    if command == "pipeline":
+        return cmd_pipeline()
+    if command == "validate":
+        return cmd_validate()
     if command == "status-rows":
         return cmd_status_rows()
     if command == "check-network":

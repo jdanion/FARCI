@@ -8,6 +8,12 @@
 # docker-compose.yml depuis config/network.env.
 
 :{$CADDY_INTERNAL_PORT} {
+    # Sonde de Caddy LUI-MÊME : ne dépend d'aucun autre service, sinon Caddy
+    # paraîtrait en panne dès que l'agrégateur l'est.
+    handle /livez {
+        respond "ok" 200
+    }
+
     # Santé globale du pipeline et état détaillé (health-aggregator)
     handle /healthz {
         reverse_proxy {$HEALTH_AGGREGATOR_IP}:{$HEALTH_AGGREGATOR_PORT}

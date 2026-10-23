@@ -84,8 +84,8 @@ La ligne `network` doit être `PASS` (Caddy répond et relaie `/status`).
 ./bin/farci status --watch      # sur l'écran projeté
 ```
 
-Bonus Uptime Kuma : créer les sondes depuis le registre avec
-`scripts/uptime-kuma-seed.sh`, puis ouvrir Uptime Kuma dans le navigateur.
+Bonus Uptime Kuma : `./bin/farci up 01-network-dashboard uptime-kuma`, puis
+créer les sondes depuis le registre avec `scripts/uptime-kuma-seed.sh`.
 
 ## Commit
 

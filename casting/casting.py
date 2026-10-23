@@ -78,11 +78,15 @@ class CastingResult:
     """Résultat du casting."""
     assignments: list[Assignment] = field(default_factory=list)
     unassigned: list[Student] = field(default_factory=list)
+    # Rôles cœur sans aucun étudiant : le formateur les sert depuis sa pile
+    # de référence. Le dire AVANT la séance évite de le découvrir à 0:45.
+    uncovered: list[Role] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
             "assignments": [a.to_dict() for a in self.assignments],
             "unassigned": [s.name for s in self.unassigned],
+            "uncovered": [r.name for r in self.uncovered],
         }
 
     def summary(self) -> str:
@@ -100,6 +104,12 @@ class CastingResult:
             for a in role_assignments:
                 primary = "⭐" if a.is_primary else "  "
                 lines.append(f"  {primary} {a.student.name} → {a.option.label}")
+            lines.append("")
+
+        if self.uncovered:
+            lines.append("## Briques cœur sans équipe (servies par le formateur)")
+            for role in self.uncovered:
+                lines.append(f"  ! {role.label}")
             lines.append("")
 
         if self.unassigned:
@@ -206,8 +216,10 @@ def cast_teams(
                 ))
                 assigned_students.add(student.name)
 
-    # 4. Étudiants non assignés
+    # 4. Étudiants non assignés, rôles cœur non couverts
     result.unassigned = [s for s in students if s.name not in assigned_students]
+    covered = {a.role.name for a in result.assignments}
+    result.uncovered = [r for r in get_critical_roles() if r.name not in covered]
 
     return result
 

@@ -30,7 +30,7 @@ from miniyaml import load
 data = load('${FARCI_ROOT}/config/services.yaml')
 assert isinstance(data.get('services'), list) and data['services'], 'liste services vide'
 for s in data['services']:
-    for champ in ('id', 'label', 'group', 'ip_var', 'port_var', 'health_paths'):
+    for champ in ('id', 'label', 'group', 'ip_var', 'port_var', 'health_paths', 'tier'):
         assert champ in s, f\"service {s.get('id')}: champ {champ} manquant\"
     assert isinstance(s['health_paths'], list) and s['health_paths'], f\"{s['id']}: health_paths vide\"
 print(f\"registre : {len(data['services'])} services, {len(data.get('groups', {}))} groupes, \"
@@ -39,6 +39,13 @@ print(f\"registre : {len(data['services'])} services, {len(data.get('groups', {}
   :
 else
   err "le registre config/services.yaml ne respecte pas le format attendu"
+  FAILED=1
+fi
+
+if FARCI_ROOT="$FARCI_ROOT" python3 "$FARCI_ROOT/scripts/services.py" validate; then
+  :
+else
+  err "config/services.yaml : tier, critique ou lignes du tableau incohérents"
   FAILED=1
 fi
 

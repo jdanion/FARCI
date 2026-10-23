@@ -37,7 +37,7 @@ class Role:
     options: list[Option]
     min_students: int = 1
     max_students: int = 1
-    critical: bool = True  # True = rôle indispensable (choix n°1)
+    critical: bool = True  # True = brique cœur (config/services.yaml, tier: core)
     description: str = ""
 
     @property
@@ -60,7 +60,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=False,  # bonus : démonstration du formateur si personne
         description="Forge Git + CI/CD",
     ),
 
@@ -73,7 +73,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Réverse proxy + dashboard",
     ),
 
@@ -88,7 +88,7 @@ ROLES: list[Role] = [
         ],
         min_students=2,
         max_students=4,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Runtime d'inférence LLM",
     ),
 
@@ -102,7 +102,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Gateway LLM + rate limiting",
     ),
 
@@ -115,7 +115,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Conversion + pseudonymisation",
     ),
 
@@ -129,7 +129,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Traces + métriques LLM",
     ),
 
@@ -142,7 +142,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=False,  # bonus (MLflow) : l'évaluation se fait en CLI pour tous
         description="Métriques + comparaison",
     ),
 
@@ -157,7 +157,7 @@ ROLES: list[Role] = [
         ],
         min_students=2,
         max_students=4,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Applications clientes",
     ),
 
@@ -170,7 +170,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=False,  # Optionnel
+        critical=False,  # bonus
         description="Supervision + GitOps",
     ),
 
@@ -183,7 +183,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=False,  # Optionnel
+        critical=False,  # étape 3, pilotée par le formateur
         description="Tests de résilience",
     ),
 ]

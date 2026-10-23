@@ -14,7 +14,7 @@ if [[ "${FARCI_TESTS_DESTRUCTIVE:-0}" != "1" ]]; then
   test_finish
   exit $?
 fi
-test_need_service CADDY_URL /healthz
+test_need_service CADDY_URL /livez
 
 PRIMARY="${PRIMARY:-farci-ollama}"
 API_KEY="${FARCI_API_KEY:-${GATEWAY_KEY_STANDARD:-}}"
