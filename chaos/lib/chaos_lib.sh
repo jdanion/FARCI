@@ -4,7 +4,9 @@
 #
 # Contrat d'un scénario (chaos/scenarios/scenario-NN-<nom>.sh) :
 #   SCENARIO_TITLE="..."            une ligne, affichée par `list`
+#   SCENARIO_ATTENDU="..."          le résultat attendu, annoncé AVANT la panne
 #   chaos_scenario_apply            casse (idempotent)
+#   chaos_scenario_check            vérifie l'attendu (code 0 = conforme)
 #   chaos_scenario_revert           répare (idempotent)
 #
 # État : .chaos/state.json = liste des scénarios actifs. Il survit à un
@@ -58,6 +60,7 @@ chaos_script() {
 chaos_id() { basename "$1" | sed -E 's/^scenario-([0-9]+)-.*/\1/'; }
 
 chaos_title() {
+  # shellcheck source=/dev/null
   ( SCENARIO_TITLE=""; source "$1"; printf '%s' "$SCENARIO_TITLE" )
 }
 
@@ -68,7 +71,8 @@ chaos_title() {
 chaos_run() {
   local script="$1" action="$2"
   set +e
-  ( set -e; source "$script"; "$action" )
+  # shellcheck source=/dev/null
+  ( set -e; source "$script"; eval "$action" )
   CHAOS_RC=$?
   set -e
   return 0
@@ -111,9 +115,17 @@ chaos_apply() {
 
   id="$(chaos_id "$script")"
   section "scenario-$id — $(chaos_title "$script")"
+  # shellcheck source=/dev/null
+  info "attendu : $( ( SCENARIO_ATTENDU=""; source "$script"; printf '%s' "$SCENARIO_ATTENDU" ) )"
   chaos_state add "$id" >/dev/null
-  chaos_run "$script" chaos_scenario_apply
-  (( CHAOS_RC == 0 )) || warn "l'application du scénario a échoué (code $CHAOS_RC)"
+  # shellcheck disable=SC2034  # lu par chaos/chaos.sh
+  CHAOS_CHECK_RC=0
+  chaos_run "$script" "chaos_scenario_apply; if declare -F chaos_scenario_check >/dev/null; then chaos_scenario_check; fi"
+  if (( CHAOS_RC != 0 )); then
+    warn "le scénario ne s'est pas déroulé comme attendu (code $CHAOS_RC) : c'est aussi une découverte"
+    # shellcheck disable=SC2034  # lu par chaos/chaos.sh
+    CHAOS_CHECK_RC=$CHAOS_RC
+  fi
 
   if [[ -n "$duration" ]]; then
     info "réparation automatique dans ${duration}s (Ctrl+C : la panne reste, ./bin/farci chaos reset)"
@@ -153,4 +165,85 @@ chaos_reset() {
     chaos_status
     return 1
   fi
+}
+
+# ---------------------------------------------------------------------------
+# Pannes simulées À L'ACCUEIL (sur la machine du formateur)
+# ---------------------------------------------------------------------------
+# Les briques des équipes tournent sur leurs portables : depuis le Pi, on ne
+# les arrête pas, on coupe leur route à l'accueil. Deux gestes :
+#   exclude <route>  l'accueil ignore la brique de l'ÉQUIPE (la suivante sert)
+#   block   <route>  l'accueil ne sert PLUS PERSONNE sur cette route
+# L'état est dans .chaos/routes.env, lu par scripts/services.py (upstreams).
+CHAOS_ROUTES_FILE="${CHAOS_STATE_DIR}/routes.env"
+
+chaos_route() {
+  local action="$1" route="$2" key list
+  case "$action" in
+    exclude) key=FARCI_CHAOS_EXCLUDE ;;
+    block)   key=FARCI_CHAOS_BLOCK ;;
+    *) err "chaos_route : exclude | block"; return 64 ;;
+  esac
+  chaos_init
+  touch "$CHAOS_ROUTES_FILE"
+  list="$(sed -n "s/^${key}=//p" "$CHAOS_ROUTES_FILE")"
+  grep -qx "$route" <<< "${list//,/$'\n'}" || list="${list:+$list,}$route"
+  grep -v "^${key}=" "$CHAOS_ROUTES_FILE" > "$CHAOS_ROUTES_FILE.tmp" || true
+  printf '%s=%s\n' "$key" "$list" >> "$CHAOS_ROUTES_FILE.tmp"
+  mv "$CHAOS_ROUTES_FILE.tmp" "$CHAOS_ROUTES_FILE"
+  chaos_reload
+}
+
+# Retire une route des deux listes (réparation).
+chaos_route_clear() {
+  local route="$1" key list
+  [[ -f "$CHAOS_ROUTES_FILE" ]] || return 0
+  for key in FARCI_CHAOS_EXCLUDE FARCI_CHAOS_BLOCK; do
+    list="$(sed -n "s/^${key}=//p" "$CHAOS_ROUTES_FILE" | tr ',' '\n' | grep -vx "$route" | paste -sd, - || true)"
+    grep -v "^${key}=" "$CHAOS_ROUTES_FILE" > "$CHAOS_ROUTES_FILE.tmp" || true
+    [[ -n "$list" ]] && printf '%s=%s\n' "$key" "$list" >> "$CHAOS_ROUTES_FILE.tmp"
+    mv "$CHAOS_ROUTES_FILE.tmp" "$CHAOS_ROUTES_FILE"
+  done
+  chaos_reload
+}
+
+chaos_reload() {
+  # shellcheck source=scripts/lib/entry.sh
+  source "$FARCI_ROOT/scripts/lib/entry.sh"
+  farci_reload_entry >/dev/null
+  # Caddy écarte un amont 20 s après un échec : on laisse le temps à la
+  # nouvelle configuration d'être celle que voient les clients.
+  sleep 2
+}
+
+# --- assertions, partagées par les scénarios -------------------------------
+CHAOS_DOSSIER="${FARCI_ROOT}/datasets/raw/patient_1234567890123_crap.txt"
+
+# Code HTTP d'une extraction d'un dossier par la passerelle de la salle.
+chaos_chat_code() {
+  local model="${1:-med-extraction}" body
+  body="$(python3 -c 'import json,sys; print(json.dumps({"model": sys.argv[1], "messages": [{"role": "user", "content": open(sys.argv[2], encoding="utf-8").read()}]}))' "$model" "$CHAOS_DOSSIER")"
+  curl -s --noproxy '*' -o /dev/null -w '%{http_code}' --max-time 120 \
+    -X POST "${FARCI_GATEWAY_URL:?FARCI_GATEWAY_URL manquante (REFERENCE_IP)}/chat/completions" \
+    -H "Content-Type: application/json" -H "Authorization: Bearer ${GATEWAY_KEY_STANDARD:-farci}" \
+    -d "$body" || true
+}
+
+# Extraction réelle de N dossiers dans un dossier temporaire ; affiche le bilan.
+#   chaos_extract <n> [modèle]  ->  « écrits rejetés erreurs »
+chaos_extract() {
+  local n="$1" model="${2:-med-extraction}" tmp out
+  tmp="$(mktemp -d)"
+  out="$(python3 "$FARCI_ROOT/07-applications/python/run_pipeline.py" --limit "$n" \
+           --model "$model" --output "$tmp" 2>&1 | tail -1)"
+  rm -rf "$tmp"
+  python3 -c 'import re,sys; m=[int(x) for x in re.findall(r"(\d+)", sys.argv[1])[:3]]; print(*(m+[0,0,0])[:3])' "$out"
+}
+
+# chaos_expect <description> <commande…> : PASS/FAIL lisible, code de retour.
+chaos_expect() {
+  local description="$1"; shift
+  if "$@"; then ok "ATTENDU : $description"; return 0; fi
+  err "INATTENDU : $description"
+  return 1
 }

@@ -10,24 +10,17 @@ services:
     restart: unless-stopped
     environment:
       # Adresse du runtime, construite depuis config/network.env (aucune IP ici).
-      INFERENCE_A_URL: http://${INFERENCE_A_IP:?INFERENCE_A_IP manquant (config/network.env)}:${INFERENCE_PORT:?INFERENCE_PORT manquant}
+      FARCI_RUNTIME_URL: ${FARCI_RUNTIME_URL:?FARCI_RUNTIME_URL manquante (REFERENCE_IP, config/network.env)}
     volumes:
       - ./config.json:/app/config.json:ro
       - bifrost-data:/data
     ports:
-      - "4001:4001"
-    networks:
-      farci:
-        ipv4_address: ${GATEWAY_B_IP}
+      - "${GATEWAY_B_PORT:?GATEWAY_B_PORT manquant (config/network.env)}:8080"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
   bifrost-data:
-
-networks:
-  farci:
-    external: true

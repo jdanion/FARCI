@@ -56,7 +56,7 @@ Ce qui est enseigné n'est pas « Phoenix » ni « Langfuse », mais **OpenTelem
   Pseudonymisation                  [IPP_0], [NOM_0], [DATE_0]…  (04-clinical-documents)
         │
         ▼
-  LLM Gateway (via Caddy /v1)       alias med-extraction, clés virtuelles, quota
+  LLM Gateway (via l'accueil /v1)   alias med-extraction, repli, (bonus) clés et quota
         │
         ▼
   Runtime d'inférence               modèle local, aucun appel sortant
@@ -93,28 +93,66 @@ Chaque flèche est un **contrat** testé. Si une flèche casse, un test le dit
 
 ---
 
-## 3. L'adresse stable : pourquoi Caddy
+## 3. L'adresse stable : l'accueil de la salle
 
 Les clients ne connaissent jamais les adresses physiques. Ils connaissent une
-seule entrée :
+seule entrée, **l'accueil de la salle** : le Caddy du Raspberry Pi du
+formateur, qui crée aussi le Wi-Fi.
 
 ```
-http://<CADDY_IP>/v1        → la gateway
-http://<CADDY_IP>/docling   → la chaîne documentaire
-http://<CADDY_IP>/status    → l'état de tout le système
+http://<REFERENCE_IP>/v1              → la passerelle LLM
+http://<REFERENCE_IP>/runtime/v1      → les runtimes (pour la passerelle, jamais les applications)
+http://<REFERENCE_IP>/docling         → la chaîne documentaire
+http://<REFERENCE_IP>/observability   → les traces OTLP
+http://<REFERENCE_IP>/status          → l'état de la salle
 ```
 
-`<CADDY_IP>` vient de `config/network.env` ; `scripts/dev-env.sh` en dérive
-`FARCI_GATEWAY_URL`, `FARCI_DOCLING_URL` et `FARCI_STATUS_URL`. Aucun autre
-fichier ne compose d'adresse.
+`REFERENCE_IP` et `ENTRY_PORT` viennent de `config/network.env` ;
+`scripts/dev-env.sh` en dérive `FARCI_GATEWAY_URL`, `FARCI_RUNTIME_URL`,
+`FARCI_DOCLING_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` et `FARCI_STATUS_URL`.
+Aucun autre fichier ne compose d'adresse.
 
-Conséquence directe : un client qui pointe vers Caddy fonctionne avec n'importe
-quelle implémentation de gateway, de runtime ou d'observabilité. C'est ce qui rend
-l'étape 3 possible sans toucher une ligne de code métier.
+### Une IP de machine + un port par service
 
-**Choix pédagogique assumé** : Caddy ne fait pas de répartition de charge entre
-les deux gateways. La bascule se fait en rechargeant sa configuration, ce qui rend
-la permutation visible en direct pendant l'atelier.
+```
+            portables des équipes (Wi-Fi du Pi, 192.168.50.0/24)
+   ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐
+   │ équipe 2           │  │ équipe 3           │  │ équipe 4           │
+   │ Ollama :11434      │  │ LiteLLM :4000      │  │ Docling :5001      │
+   └─────────▲──────────┘  └─────────▲──────────┘  └─────────▲──────────┘
+             │ 1er choix             │ 1er choix             │ 1er choix
+   ┌─────────┴───────────────────────┴───────────────────────┴──────────┐
+   │ Raspberry Pi 5 — REFERENCE_IP                                      │
+   │  accueil Caddy :80 ── 2e choix ──► pile de référence (🛟)          │
+   │                                    runtime rejoué, LiteLLM,        │
+   │                                    Phoenix, Open WebUI             │
+   └────────────────────────────────────────────────────────────────────┘
+```
+
+Une brique d'équipe est jointe par l'IP de la **machine** qui l'héberge et
+le **port publié** du service ; chaque service a son propre port, donc
+plusieurs briques peuvent cohabiter sur une machine. Le formateur déclare
+les machines sur le Pi (`./bin/farci room set <équipe> <ip>`) ; les postes
+étudiants ne connaissent que `REFERENCE_IP`.
+
+### Le repli : équipe d'abord, référence ensuite
+
+Pour chaque route, l'accueil essaie la brique de l'équipe, puis celle de la
+référence (`lb_policy first` : l'ordre est une décision, pas une
+répartition de charge). Une brique qui ne répond pas est écartée 20
+secondes. Le tableau dit qui rend le service : `✅` l'équipe, `🛟` la
+référence. Le formateur peut aussi **forcer** la référence
+(`./bin/farci rescue <brique>`) quand une brique répond mal ; le chaos
+utilise le même mécanisme (`docs/CHAOS.md`).
+
+Conséquence directe : un client qui pointe vers l'accueil fonctionne avec
+n'importe quelle implémentation de passerelle, de runtime ou
+d'observabilité — et même quand une équipe n'a rien livré. C'est ce qui
+rend l'étape 3 possible sans toucher une ligne de code métier.
+
+**Plan C, sans aucun réseau** : `./bin/farci extract --replay` démarre un
+runtime rejoué dans le processus même ; `./bin/farci replay` en lance un
+sur le poste. Mêmes réponses, même contrat.
 
 ---
 
@@ -124,7 +162,7 @@ la permutation visible en direct pendant l'atelier.
 |---|---|---|
 | Runtime d'inférence | « qui calcule ? » | Ollama, llama.cpp, oMLX |
 | Passerelle LLM | « qui décide, qui réessaie, qui mesure ? » | LiteLLM, Bifrost |
-| Reverse proxy | « par où on entre ? » | Caddy |
+| Reverse proxy | « par où on entre, et qui répond ? » | Caddy (accueil de la salle et de l'équipe 1) |
 | Chaîne documentaire | « comment lire un document, et que cacher au modèle ? » | Docling, pseudonymisation |
 | Observabilité | « qu'est-ce qui s'est passé ? » | Phoenix, Langfuse |
 | Évaluation | « est-ce que c'est bon ? » | MLflow + métriques |

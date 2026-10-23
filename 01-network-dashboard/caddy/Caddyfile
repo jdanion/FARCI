@@ -1,63 +1,73 @@
-# FARCI — Caddy reverse proxy (FARCI §12)
+# FARCI — l'accueil (reverse proxy Caddy, FARCI §12)
 #
-# Routage des services internes. HTTP only (air-gap prime sur TLS, §61.1).
-# handle_errors renvoie un JSON explicite pour débogage.
+# Ce même fichier sert DEUX accueils identiques :
+#   - celui de la salle, sur le Pi du formateur (reference/docker-compose.yml) ;
+#   - celui que monte l'équipe 1 (01-network-dashboard/docker-compose.yml).
 #
-# Aucune adresse ici : Caddy lit ses variables d'environnement avec la
-# syntaxe {$NOM} (et non ${NOM}). Elles sont transmises par
-# docker-compose.yml depuis config/network.env.
+# Aucune adresse ici. Caddy lit ses variables d'environnement avec {$NOM},
+# AVANT de lire le fichier : une variable peut donc contenir plusieurs amonts.
+# Les variables UP_* sont construites par `scripts/services.py upstreams` à
+# partir de config/network.env (et de config/rescue.env) : « brique de
+# l'équipe, puis brique de la référence ». Caddy essaie la première ; si
+# elle ne répond pas, il passe à la suivante et l'écarte 20 secondes.
+#
+# HTTP seulement : l'air-gap prime sur TLS (§61.1).
 
-:{$CADDY_INTERNAL_PORT} {
-    # Sonde de Caddy LUI-MÊME : ne dépend d'aucun autre service, sinon Caddy
-    # paraîtrait en panne dès que l'agrégateur l'est.
+(repli) {
+    lb_policy first
+    lb_try_duration 4s
+    lb_try_interval 250ms
+    fail_duration 20s
+    max_fails 1
+    unhealthy_status 5xx
+    transport http {
+        dial_timeout 2s
+    }
+}
+
+:80 {
+    # Vivacité de Caddy LUI-MÊME : ne dépend d'aucun autre service.
     handle /livez {
         respond "ok" 200
     }
 
-    # Santé globale du pipeline et état détaillé (health-aggregator)
+    # État du pipeline (agrégateur de santé, dans la même compose)
     handle /healthz {
-        reverse_proxy {$HEALTH_AGGREGATOR_IP}:{$HEALTH_AGGREGATOR_PORT}
+        reverse_proxy health-aggregator:8081
     }
     handle /status {
-        reverse_proxy {$HEALTH_AGGREGATOR_IP}:{$HEALTH_AGGREGATOR_PORT}
+        reverse_proxy health-aggregator:8081
     }
 
-    # LLM Gateway (OpenAI-compatible) : le seul point d'entrée des applications
+    # Passerelle LLM (API OpenAI) : le seul point d'entrée des applications
     handle /v1/* {
-        reverse_proxy {$GATEWAY_A_IP}:{$GATEWAY_PORT}
+        reverse_proxy {$UP_PASSERELLE} {
+            import repli
+        }
     }
 
-    # Docling (documents)
+    # Runtimes : utilisé par LiteLLM, jamais par les applications
+    handle_path /runtime/* {
+        reverse_proxy {$UP_INFERENCE} {
+            import repli
+            health_uri /v1/models
+            health_interval 10s
+        }
+    }
+
+    # Documents (Docling)
     handle_path /docling/* {
-        reverse_proxy {$DOCLING_IP}:{$DOCLING_PORT}
+        reverse_proxy {$UP_DOCUMENTS} {
+            import repli
+        }
     }
 
-    # Observabilité (Phoenix)
+    # Traces OTLP vers Phoenix : si l'observabilité tombe, la référence
+    # reçoit, et l'extraction ne s'en aperçoit pas (scénario 07).
     handle_path /observability/* {
-        reverse_proxy {$OBSERVABILITY_A_IP}:{$PHOENIX_PORT}
-    }
-
-    # MLflow (évaluation, bonus)
-    handle_path /mlflow/* {
-        reverse_proxy {$MLFLOW_IP}:{$MLFLOW_PORT}
-    }
-
-    # Uptime Kuma (tableau de bord, bonus)
-    handle_path /kuma/* {
-        reverse_proxy {$UPTIME_KUMA_IP}:{$UPTIME_KUMA_PORT}
-    }
-
-    # Applications clientes
-    handle_path /flowise/* {
-        reverse_proxy {$FLOWISE_IP}:{$FLOWISE_PORT}
-    }
-    handle_path /webui/* {
-        reverse_proxy {$OPEN_WEBUI_IP}:{$OPEN_WEBUI_PORT}
-    }
-
-    # Gitea (bonus)
-    handle_path /gitea/* {
-        reverse_proxy {$GITEA_IP}:{$GITEA_PORT}
+        reverse_proxy {$UP_OBSERVABILITE} {
+            import repli
+        }
     }
 
     # Erreurs JSON explicites

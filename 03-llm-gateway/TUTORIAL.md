@@ -31,10 +31,18 @@ applications dépendent de vous.
 
 ## Votre IP
 
-| Passerelle | Adresse | Port |
+Une brique est jointe par **l'IP de votre machine** et **le port publié** de
+ce service :
+
+| Passerelle | Adresse | Port publié |
 |---|---|---|
-| LiteLLM (A) | `GATEWAY_A_IP` | `GATEWAY_PORT` |
-| Bifrost (B, bonus) | `GATEWAY_B_IP` | `GATEWAY_PORT` |
+| LiteLLM (A) | `GATEWAY_A_IP` | `GATEWAY_A_PORT` |
+| Bifrost (B, bonus) | `GATEWAY_B_IP` | `GATEWAY_B_PORT` |
+
+`./bin/farci doctor` affiche l'IP de votre machine ; le formateur la déclare
+sur le Pi (`./bin/farci room set 3 <ip>`). Les applications appellent
+l'accueil de la salle (`REFERENCE_IP:ENTRY_PORT/v1`) : il vous sert dès que
+vous répondez, et sert la passerelle de la référence (🛟) sinon.
 
 ## Installation
 
@@ -43,15 +51,17 @@ Image `litellm` préchargée (`./bin/farci verify-images`).
 ## Configuration
 
 - `03-llm-gateway/litellm/config.yaml` : les alias. L'adresse du runtime n'y
-  figure pas : `api_base: os.environ/INFERENCE_A_URL`, construite par le
-  compose depuis `config/network.env`.
-- `.env` : `LITELLM_MASTER_KEY`, `GATEWAY_KEY_STANDARD`, `GATEWAY_KEY_PRIORITY`.
+  figure pas : `api_base: os.environ/FARCI_RUNTIME_URL`, c'est-à-dire
+  l'accueil de la salle (`/runtime/v1`), qui choisit le runtime de
+  l'équipe 2 ou celui de la référence. Vous ne changez rien quand l'équipe 2
+  arrive : c'est tout l'intérêt.
+- Clés virtuelles et quotas (bonus, scénario 03) : LiteLLM exige alors une
+  base PostgreSQL ; sans elle, la passerelle fonctionne sans clé.
 
 ## Démarrage
 
 ```bash
 ./bin/farci up 03-llm-gateway/litellm
-03-llm-gateway/litellm/bootstrap-keys.sh     # clés virtuelles standard / prioritaire
 ```
 
 Bonus (configuration à valider sur le matériel avant l'atelier) :
@@ -103,6 +113,6 @@ changer le client.
 
 | Symptôme | Cause probable | Commande |
 |---|---|---|
-| 401 | clé absente ou fausse | `03-llm-gateway/litellm/bootstrap-keys.sh` |
-| 500 « connection refused » | runtime (équipe 2) pas encore vert | `./bin/farci status` |
+| 500 « connection refused » | ni le runtime de l'équipe 2 ni celui de la référence ne répond | `./bin/farci status` ; prévenir le formateur |
+| 401 (bonus clés) | clé absente ou fausse | `03-llm-gateway/litellm/bootstrap-keys.sh` |
 | la passerelle ne démarre pas | erreur dans `config.yaml` | `./bin/farci logs 03-llm-gateway/litellm` |

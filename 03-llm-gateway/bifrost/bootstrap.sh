@@ -15,7 +15,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-BIFROST_URL="${GATEWAY_B_URL:?GATEWAY_B_IP/GATEWAY_PORT manquants : voir config/network.env}"
+BIFROST_URL="${GATEWAY_B_URL:?GATEWAY_B_IP/GATEWAY_B_PORT manquants : voir config/network.env}"
 
 section "FARCI — bootstrap Bifrost"
 

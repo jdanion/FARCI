@@ -16,7 +16,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-LITELLM_URL="${GATEWAY_A_URL:?GATEWAY_A_IP/GATEWAY_PORT manquants : voir config/network.env}"
+LITELLM_URL="${GATEWAY_A_URL:?GATEWAY_A_IP/GATEWAY_A_PORT manquants : voir config/network.env}"
 
 section "FARCI — bootstrap clés LiteLLM"
 

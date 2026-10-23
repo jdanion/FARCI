@@ -31,6 +31,7 @@ env	atelier	Afficher la configuration effective	env.sh
 env-check	atelier	Valider la configuration (adresses, sous-réseau)	env.sh
 services	atelier	Lister le registre des services	services.sh
 network-check	atelier	Vérifier cohérence registre <-> adresses	network-check.sh
+room	atelier	Qui héberge quoi ; room set <équipe> <ip> (sur le Pi)	room.sh
 
 preload	airgap	Précharger les artefacts air-gap (avec Internet)	preload.sh
 verify-airgap	airgap	Vérifier que le workshop fonctionne hors ligne	verify-airgap.sh
@@ -47,6 +48,10 @@ extract	dataset	Étape 2, parcours Python : extraire tous les dossiers	extract.s
 evaluate	dataset	Comparer les extractions au gold, classer les runs	evaluate.sh
 
 chaos	chaos	Étape 3 : list | scenario-NN | status | reset	chaos.sh
+
+rescue	secours	Basculer une brique sur la référence (sur le Pi)	rescue.sh
+reset-all	secours	Retour à un état propre connu (sur le Pi)	reset-all.sh
+replay	secours	Runtime rejoué sans Docker ni modèle (plan C)	replay.sh
 
 ci	qualité	Ce que la CI exécute (selftest, lint, tests, gold)	ci.sh
 selftest	qualité	Auto-tests de l'outillage (registre, parseurs, --help)	selftest.sh

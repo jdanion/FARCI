@@ -31,11 +31,8 @@ services:
       - ./gitea/app.ini:/etc/gitea/app.ini:ro
       - gitea-data:/data
     ports:
-      - "3000:3000"
+      - "${GITEA_PORT:?GITEA_PORT manquant (config/network.env)}:3000"
       - "2222:22"
-    networks:
-      farci:
-        ipv4_address: ${GITEA_IP:?GITEA_IP manquant (config/network.env)}
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,8 +47,6 @@ services:
       POSTGRES_PASSWORD: ${GITEA_DB_PASSWORD:?GITEA_DB_PASSWORD requis}
     volumes:
       - postgres-data:/var/lib/postgresql
-    networks:
-      - farci
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${GITEA_DB_USER:-gitea}"]
       interval: 5s
@@ -73,8 +68,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./runner/act_runner/config.yaml:/config.yaml:ro
       - act-runner-data:/data
-    networks:
-      - farci
     depends_on:
       - gitea
 
@@ -82,7 +75,3 @@ volumes:
   gitea-data:
   postgres-data:
   act-runner-data:
-
-networks:
-  farci:
-    external: true

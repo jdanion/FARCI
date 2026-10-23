@@ -8,7 +8,7 @@
 # Pourquoi ne pas taper `docker compose up` dans le dossier ? Parce que les
 # compose ne contiennent ni adresse ni version : elles viennent de
 # config/network.env, versions.env et .env. Ce script les charge (une seule
-# implémentation : scripts/dev-env.sh), crée le réseau `farci` s'il manque,
+# implémentation : scripts/dev-env.sh), calcule les amonts de l'accueil,
 # puis appelle docker compose. Il n'y a pas d'autre magie.
 
 set -euo pipefail
@@ -38,17 +38,15 @@ done
 need docker "Docker est requis pour démarrer une brique"
 docker info >/dev/null 2>&1 || die "Docker ne répond pas : est-il démarré ? (./bin/farci doctor)"
 
-ensure_network() {
-  local name="$FARCI_DOCKER_NETWORK"
-  docker network inspect "$name" >/dev/null 2>&1 && return 0
-  [[ -n "${FARCI_SUBNET:-}" ]] || die "FARCI_SUBNET manquant (config/network.env)"
-  info "création du réseau Docker $name ($FARCI_SUBNET)"
-  docker network create --subnet "$FARCI_SUBNET" "$name" >/dev/null
-}
+# Amonts de l'accueil (UP_*) : « brique de l'équipe, puis référence »,
+# calculés depuis config/network.env et config/rescue.env. Seules les
+# composes qui embarquent un Caddy les lisent ; les exporter ne coûte rien.
+while IFS= read -r line; do
+  [[ "$line" == UP_*=* ]] && export "${line?}"
+done < <(python3 "$FARCI_ROOT/scripts/services.py" upstreams)
 
 case "${FARCI_TARGET:-up}" in
   up)
-    ensure_network
     # Air-gap : une image absente est une erreur franche, jamais un
     # téléchargement silencieux (docs/AIRGAP.md). Préparation avec Internet :
     # FARCI_ALLOW_PULL=1 ./bin/farci up <dossier>

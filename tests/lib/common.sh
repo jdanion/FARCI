@@ -68,6 +68,18 @@ test_finish() {
   esac
 }
 
+# Brique d'une équipe : si son IP n'est pas déclarée dans config/network.env
+# (cas normal sur un poste étudiant, seul le Pi les connaît), on teste la
+# brique de CETTE machine, sur son port publié.
+#   test_local_default DOCLING_URL DOCLING_PORT
+test_local_default() {
+  local var="$1" port_var="$2"
+  if [[ -z "${!var:-}" && -n "${!port_var:-}" ]]; then
+    printf -v "$var" 'http://127.0.0.1:%s' "${!port_var}"
+    export "${var?}"
+  fi
+}
+
 # Vérifie qu'une URL dérivée de config/network.env existe et que le service
 # répond. Sinon : SKIP (ou FAIL en mode strict), et le test s'arrête.
 #   test_need_service DOCLING_URL /health

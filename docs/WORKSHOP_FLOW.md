@@ -83,14 +83,21 @@ vite.
 |---|---|---|---|
 | 1 Réseau | `./bin/farci up 01-network-dashboard` | Network | sondes Uptime Kuma (`scripts/uptime-kuma-seed.sh`) |
 | 2 Inférence | Ollama démarré, modèle importé (`02-inference/ollama/create-model.sh`) | Inference | llama.cpp sur le même GGUF, benchmark (`02-inference/bench/bench.sh`) |
-| 3 Passerelle | LiteLLM répond à `med-extraction` via Caddy | LLM Gateway | clés virtuelles et quota (`03-llm-gateway/litellm/bootstrap-keys.sh`), démo de repli |
+| 3 Passerelle | LiteLLM répond à `med-extraction` via l'accueil | LLM Gateway | démo de repli ; clés virtuelles et quota (PostgreSQL requis, `03-llm-gateway/litellm/bootstrap-keys.sh`) |
 | 4 Documents | Docling démarré + `./bin/farci test-unit -k deidentification` vert | Documents | conversion des PDF (`./bin/farci generate-dataset --pdf`) |
 | 5 Observabilité | Phoenix démarré | Observability | Langfuse sur le même flux OTLP |
 | 7 Applications | Open WebUI démarré, branché sur `/v1` | Open WebUI | premier dossier extrait par le parcours Python |
 
-**Bloqué depuis 10 minutes ?** On lève la main : le formateur fait servir la
-brique par sa machine de référence, l'équipe continue à comprendre et à
-réparer la sienne. Le tableau reste vert, la séance continue.
+**Au départ, tout est 🛟.** La pile de référence du formateur (le Raspberry
+Pi, `reference/README.md`) rend déjà chaque service : quand une équipe
+livre, le formateur déclare sa machine (`./bin/farci room set <n> <ip>`) et
+sa ligne passe de `🛟 REF` à `✅ UP`. Moment fort : la salle voit chaque
+brique **remplacer** la doublure.
+
+**Bloqué depuis 10 minutes ?** On lève la main. Rien à basculer : la
+référence sert déjà à la place de l'équipe, qui continue à comprendre et à
+réparer la sienne. Si la brique répond **mal** (trop lente), le formateur
+lance `./bin/farci rescue <brique>`. La séance continue.
 
 ---
 

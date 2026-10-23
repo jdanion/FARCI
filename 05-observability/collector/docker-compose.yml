@@ -15,12 +15,4 @@ services:
     volumes:
       - ./otel-collector.yaml:/etc/otel-collector.yaml:ro
     ports:
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
-    networks:
-      farci:
-        ipv4_address: ${OTEL_COLLECTOR_IP}
-
-networks:
-  farci:
-    external: true
+      - "${OTEL_COLLECTOR_PORT:?OTEL_COLLECTOR_PORT manquant (config/network.env)}:4318"   # OTLP HTTP

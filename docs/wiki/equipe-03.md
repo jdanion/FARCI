@@ -11,9 +11,8 @@
 ## Solution simple (scripts)
 
 ```bash
-# 1. Démarrer LiteLLM et créer les clés virtuelles
+# 1. Démarrer LiteLLM (sans clé : les clés virtuelles sont un bonus qui exige PostgreSQL)
 ./bin/farci up 03-llm-gateway/litellm
-03-llm-gateway/litellm/bootstrap-keys.sh
 
 # 2. Vérifier : ligne LLM Gateway verte, test gateway-contract PASS
 ./bin/farci status
@@ -35,7 +34,6 @@
 ```bash
 docker run -d \
   --name farci-litellm \
-  --network farci \
   -p 4000:4000 \
   -v $(pwd)/config.yaml:/app/config.yaml:ro \
   -v litellm-data:/data \
@@ -43,7 +41,7 @@ docker run -d \
   --config /app/config.yaml --port 4000
 ```
 
-### 2. Créer une clé API
+### 2. Créer une clé API (bonus : LiteLLM avec base PostgreSQL)
 
 ```bash
 curl -X POST $GATEWAY_A_URL/key/generate \
@@ -55,7 +53,7 @@ curl -X POST $GATEWAY_A_URL/key/generate \
   }'
 ```
 
-### 3. Tester l'authentification
+### 3. Tester l'authentification (bonus)
 
 ```bash
 # Sans clé → 401
@@ -70,7 +68,7 @@ curl -X POST $GATEWAY_A_URL/v1/chat/completions \
   -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'
 ```
 
-### 4. Tester le rate limiting
+### 4. Tester le rate limiting (bonus)
 
 ```bash
 # 12 requêtes rapides → certaines en 429
@@ -99,6 +97,6 @@ curl -X POST $GATEWAY_A_URL/v1/chat/completions \
 ## Vérifications
 
 - [ ] LiteLLM répond sur :4000
-- [ ] Authentification requise (401 sans clé)
-- [ ] Rate limiting actif (429 après 10 RPM)
+- [ ] (bonus) Authentification requise (401 sans clé)
+- [ ] (bonus) Rate limiting actif (429 après 10 RPM)
 - [ ] Fallback fonctionnel (200 + x-fallback-applied)

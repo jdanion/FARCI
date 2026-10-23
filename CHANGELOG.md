@@ -6,6 +6,49 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Lot 3 — plans B
+
+- **Adressage « une IP de machine + un port par service »**
+  (`config/network.env.example` réécrit) : plus de réseau Docker partagé ni
+  d'IP statique de conteneur. `REFERENCE_IP` (le Pi) est la seule adresse
+  utile sur un poste étudiant ; les IP d'équipe sont déclarées sur le Pi.
+  Chaque service a son propre port publié, vérifié unique par `network-check`.
+- **Pile de référence** `reference/` (Raspberry Pi 5, 8 Go, arm64) : accueil
+  Caddy de la salle, agrégateur, runtime rejoué, LiteLLM, Phoenix, Open WebUI ;
+  options Ollama (modèle 2B) et Docling. Guide : `reference/README.md`
+  (préparation, Wi-Fi en point d'accès, secours, ce qui reste à vérifier).
+  `./preload.sh --reference`, à lancer sur le Pi.
+- **Repli pédagogique** : l'accueil (même Caddyfile pour le Pi et l'équipe 1)
+  sert, pour chaque route, la brique de l'équipe puis celle de la référence
+  (`scripts/services.py upstreams`). Tableau : `✅ UP` (équipe) / `🛟 REF`
+  (référence), deux verdicts (pipeline des équipes, service rendu), ligne
+  « PANNE EN COURS ». Il montre ce que l'accueil **sert**, pas seulement ce
+  qui répond (`scripts/board.py`).
+- Nouvelles commandes : `./bin/farci room` (déclarer une machine ;
+  `room set reference <ip>` en cas de changement de réseau), `rescue
+  <brique>` / `rescue --off`, `reset-all`, `replay`.
+- **Plan C, runtime rejoué** (`reference/replay/`) : contrat OpenAI,
+  réponses enregistrées synthétiques (prompt v1 et v2, flux SSE,
+  `reasoning_content`), modèle `med-chaos` hors schéma pour le scénario 04.
+  `./bin/farci extract --replay` : extraction sans Docker, modèle ni réseau.
+  Client Python sans SDK obligatoire (repli `urllib`).
+- Runtimes : tous servent le nom logique `med-extraction` ;
+  `02-inference/ollama/create-model.sh principal|secours|auto` (modèle 2B
+  sous 16 Go de RAM). LiteLLM passe par l'accueil (`/runtime/v1`) et n'exige
+  plus de base ni de clé (clés et quotas : bonus PostgreSQL).
+- **Chaos à l'accueil** : `exclude` (la référence répond) ou `block`
+  (personne ne répond) d'une route, réversibles ; chaque scénario annonce son
+  attendu puis le **vérifie** (`ATTENDU` / `INATTENDU`, code de sortie).
+- `./bin/farci doctor` : Docker absent n'est plus bloquant (plan B indiqué),
+  section « Réseau de la salle ».
+- `docs/INSTRUCTOR_GUIDE.md` : table incident → symptôme → commande → temps
+  (Docker, RAM, lenteur, passerelle, port, IP, Wi-Fi, réseau absent, retard,
+  étudiant sans machine). `docs/ARCHITECTURE.md` § 3, `docs/CHAOS.md`,
+  `docs/AIRGAP.md` (arm64) et les TUTORIAL 01–03 alignés.
+- Tests : `tests/test_replay.py`, `tests/test_fallback.py` (amonts, rescue,
+  chaos, tableau contre de vrais serveurs HTTP). Les tests d'intégration
+  visent l'accueil, ou la brique locale si son IP n'est pas déclarée.
+
 ### Lot 2 — tenir en 4 h
 
 - `docs/WORKSHOP_FLOW.md` et `docs/INSTRUCTOR_GUIDE.md` réécrits sur 240 min :

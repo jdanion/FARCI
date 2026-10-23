@@ -35,7 +35,6 @@
 ```bash
 docker run -d \
   --name farci-ollama \
-  --network farci \
   -p 8080:8080 \
   -e OLLAMA_HOST=0.0.0.0:8080 \
   -e OLLAMA_KEEP_ALIVE=-1 \
@@ -69,7 +68,6 @@ curl -X POST $INFERENCE_A_URL/api/create \
 ```bash
 docker run -d \
   --name farci-llamacpp \
-  --network farci \
   -p 8081:8081 \
   -v /srv/farci/offline/models:/models:ro \
   -v $(pwd)/grammar:/app/grammar:ro \

@@ -36,7 +36,6 @@ python3 06-evaluation/gold-standard/validate_gold.py
 ```bash
 docker run -d \
   --name farci-mlflow \
-  --network farci \
   -p 5000:5000 \
   -v mlflow-data:/mlflow \
   ghcr.io/mlflow/mlflow:v3.16.1 \

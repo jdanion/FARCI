@@ -1,7 +1,7 @@
 # FARCI — Modelfile Ollama
 # Importe les poids GGUF locaux (jamais de pull distant)
 
-FROM /models/Ornith-1.5-9B-Q5_K_M.gguf
+FROM /gguf/Ornith-1.5-9B-Q5_K_M.gguf
 
 PARAMETER temperature 0
 PARAMETER num_ctx 8192

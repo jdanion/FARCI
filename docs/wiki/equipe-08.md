@@ -30,7 +30,6 @@
 ```bash
 docker run -d \
   --name farci-agent-ollama \
-  --network farci \
   -e TARGET_SERVICE=ollama \
   -e TARGET_URL=$INFERENCE_A_URL \
   -e CHECK_INTERVAL=30 \
@@ -44,7 +43,6 @@ docker run -d \
 ```bash
 docker run -d \
   --name farci-webhook-receiver \
-  --network farci \
   -p 9000:9000 \
   -e WEBHOOK_SECRET=mon-secret \
   -e GITOPS_SCRIPT=/app/gitops/gitops.sh \

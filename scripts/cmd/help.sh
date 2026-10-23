@@ -20,10 +20,11 @@ declare -A GROUP_TITLES=(
   [airgap]="Préchargement et air-gap"
   [dataset]="Données, extraction, évaluation"
   [chaos]="Pannes (étape 3)"
+  [secours]="Plans B (formateur)"
   [qualité]="Qualité"
   [nettoyage]="Nettoyage"
 )
-GROUP_ORDER=(atelier airgap dataset chaos qualité nettoyage)
+GROUP_ORDER=(atelier airgap dataset chaos secours qualité nettoyage)
 
 group_title() {
   local key="$1"

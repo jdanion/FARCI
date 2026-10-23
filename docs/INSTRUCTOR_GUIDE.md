@@ -9,7 +9,9 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 
 ## J-7 — Préparation avec Internet
 
-- [ ] Cloner le dépôt sur la machine de référence
+- [ ] Préparer le Pi (pile de référence et Wi-Fi de la salle) :
+      **`reference/README.md`**, dont `./preload.sh --reference` lancé **sur le Pi**
+- [ ] Cloner le dépôt sur une machine x86 pour préparer les postes étudiants
 - [ ] Vérifier Docker et Python : `./bin/farci doctor`
 - [ ] Les versions sont figées dans `versions.env` (tags vérifiés dans les registres)
 - [ ] `./preload.sh --core` (compter **une bonne demi-journée** selon le débit) :
@@ -41,11 +43,15 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 - [ ] Rejouer `./preload.sh --core --skip-existing` : doit être rapide (tout est là)
 - [ ] `./verify-airgap.sh --strict` doit passer
 - [ ] `./bin/farci ci` est vert (selftest, lint, tests unitaires, gold)
-- [ ] Les adresses de `config/network.env` correspondent au **vrai** réseau de la salle
-- [ ] Chaque équipe a une adresse attitrée (`./bin/farci network-check`)
+- [ ] `config/network.env` : `REFERENCE_IP` est l'adresse du Pi sur son point
+      d'accès (`./bin/farci network-check`) ; les IP d'équipe restent vides
 - [ ] Vérifier la RAM et le disque de chaque poste : `./bin/farci doctor`
-- [ ] La machine de référence fait tourner toute la chaîne cœur :
-      `./bin/farci status` affiche `CLINICAL PIPELINE READY`
+- [ ] Le Pi fait tourner la pile de référence : `./bin/farci status` affiche
+      tout en `🛟 REF` et « Service rendu (avec 🛟) READY »
+- [ ] Un portable branché sur le Wi-Fi du Pi : `./bin/farci test` →
+      `gateway-contract PASS` (la passerelle de la référence répond par l'accueil)
+- [ ] Les secours répétés une fois : `./bin/farci room set 2 <ip d'un portable>`,
+      `./bin/farci rescue inference`, `./bin/farci reset-all`
 - [ ] Une extraction de bout en bout : `./bin/farci extract --subset quick --run recette`
       puis `./bin/farci evaluate --subset quick`
 - [ ] Les 4 scénarios de l'étape 3 joués puis réparés (`./bin/farci chaos reset`)
@@ -54,9 +60,13 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 
 ## J0 — Dans la salle (avant l'arrivée des étudiants)
 
-- [ ] La machine de référence tourne, `CLINICAL PIPELINE READY` sur elle
-- [ ] L'écran de projection affiche `./bin/farci status --watch` **pointé sur la
-      salle** : tout est rouge, c'est **normal et voulu**
+- [ ] Le Pi crée le Wi-Fi (`sudo nmcli con up farci-ap`) et porte la pile de
+      référence (`./bin/farci up reference`)
+- [ ] L'écran de projection affiche `./bin/farci status --watch` lancé **sur le
+      Pi** : tout est `🛟 REF`, c'est **normal et voulu** — aucune équipe n'a
+      encore livré, la référence rend le service
+- [ ] L'adresse d'Open WebUI de la référence (`REFERENCE_IP:OPEN_WEBUI_PORT`)
+      est notée au tableau, pour qui n'a pas de machine utilisable
 - [ ] Les fiches d'équipe sont prêtes (`./bin/farci read <équipe>`)
 - [ ] La liste des équipes (sortie de `./bin/farci casting`) est affichée
 
@@ -68,8 +78,8 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 |---|---|---|---|
 | 0:00 – 0:20 | Accueil | les 3 étapes, `make` ≠ obligatoire, `git clone` ne suffit pas ; chacun lance `./bin/farci doctor` | passer le vocabulaire en 5 min, il revient à la clôture |
 | 0:20 – 0:30 | Étape 1 : lancement | chaque équipe lit sa fiche, objectif minimal annoncé | — |
-| 0:30 – 1:15 | Étape 1 : objectif minimal | faire applaudir chaque passage au vert | à **1:00**, toute équipe encore rouge passe sur la machine de référence |
-| ~1:30 | **CLINICAL PIPELINE READY** | moment clé : on le montre à tous | ne pas attendre au-delà de **1:40** : on bascule ce qui manque sur la référence |
+| 0:30 – 1:15 | Étape 1 : objectif minimal | déclarer chaque machine (`room set`) ; faire applaudir chaque passage de 🛟 à ✅ | à **1:00**, une équipe encore 🛟 continue à diagnostiquer, la référence sert à sa place : personne n'attend |
+| ~1:30 | **CLINICAL PIPELINE READY** | moment clé : on le montre à tous | ne pas attendre au-delà de **1:40** : la suite se joue avec ce que sert la salle (✅ ou 🛟) |
 | 1:35 – 1:50 | Bonus et démos | GitOps, Langfuse, MLflow, llama.cpp | **première marge** : supprimer les démos bonus |
 | 1:50 – 2:00 | Pause | — | **ne jamais la supprimer** : c'est là que le formateur répare |
 | 2:00 – 2:50 | Étape 2 | parcours Python sur le jeu rapide ; Open WebUI ; Flowise en démo 10 min | jeu rapide seulement (`--subset quick`), Flowise supprimée |
@@ -78,7 +88,8 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 | 3:45 – 4:00 | Clôture | chacun explique une notion avec ses mots | jamais coupée : c'est le critère de réussite |
 
 **Retard de 20 minutes** : on supprime les démos bonus (−15 min) et le scénario
-06/05 (−8 min), on garde la pause, l'évaluation et la clôture intactes.
+06/05 (−8 min), on garde la pause, l'évaluation et la clôture intactes. Les
+briques encore `🛟` y restent : la suite ne dépend pas d'elles.
 
 ---
 
@@ -114,23 +125,43 @@ le détail).
 
 ---
 
-## Si ça ne marche pas
+## Si ça ne marche pas : incident → symptôme → commande → temps
+
+Règle unique : **aucune équipe n'attend une réparation**. La référence sert
+pendant que l'équipe diagnostique. Toutes les commandes `room`, `rescue`,
+`reset-all` se lancent **sur le Pi**.
+
+| Incident | Symptôme | Commande de repli | Temps |
+|---|---|---|---|
+| Docker absent ou cassé sur un poste | `./bin/farci doctor` : docker absent / injoignable | rien à faire côté salle : la ligne reste `🛟 REF`. L'équipe travaille en binôme sur une autre machine, ou suit la brique sur l'Open WebUI de la référence | 1 min |
+| RAM insuffisante pour le 9B | conteneur Ollama tué, `out of memory`, ou doctor < 16 Go | `02-inference/ollama/create-model.sh secours` (même nom `med-extraction`, rien d'autre à changer) | 3 min |
+| Modèle trop lent (> 60 s par dossier) | extraction qui traîne, tableau ✅ mais salle bloquée | `./bin/farci rescue inference` ; plus tard `./bin/farci rescue --off inference` | 10 s |
+| Passerelle de l'équipe tombée | ligne `LLM Gateway` en `🛟 REF` | rien : l'accueil a basculé seul. Si elle répond mal : `./bin/farci rescue passerelle` | 0 / 10 s |
+| Conflit de port sur un poste | `port is already allocated` au `up` | `./bin/farci doctor` (section ports) ; arrêter le service qui occupe le port. Chaque service a son propre port (`config/network.env`) | 2 min |
+| Machine déclarée à la mauvaise IP | ligne restée `🛟 REF` alors que l'équipe est verte chez elle | `./bin/farci room` (IP déclarée) puis `./bin/farci room set <n> <ip>` | 1 min |
+| Wi-Fi de la salle tombé | plus aucun poste ne joint `REFERENCE_IP` | sur le Pi : `sudo nmcli con up farci-ap`. Sinon autre point d'accès et, sur chaque poste, `./bin/farci room set reference <ip du Pi>` (voir `reference/README.md`) | 1 / 5 min |
+| Plus de réseau du tout | idem, sans solution | chaque équipe continue sur sa machine (`./bin/farci test` vise la brique locale) ; étape 2 : `./bin/farci extract --replay` | 2 min |
+| Accueil de la salle (Pi) muet | `./bin/farci status` : tout DOWN | sur le Pi : `./bin/farci up reference` | 2 min |
+| Chaos qui ne revient pas au vert | `PANNE EN COURS` sous le tableau | `./bin/farci reset-all` | 30 s |
+| Image absente sur un poste | `démarrage impossible — image absente ?` | `./bin/farci verify-images`, puis `docker load -i offline/images/<image>.tar` (clé USB) | 3 min |
+| Étudiant sans machine utilisable | — | binôme, ou Open WebUI de la référence : `http://REFERENCE_IP:OPEN_WEBUI_PORT` | 0 |
+| **20 minutes de retard** | horloge | voir « Le minutage » : démos bonus et un scénario supprimés, les briques en 🛟 y restent | — |
+
+Les causes « de dépôt », plus rares :
 
 | Symptôme | Cause probable | À faire |
 |---|---|---|
 | `permission denied` sur un script | bit `+x` manquant | `chmod +x scripts/cmd/*.sh bin/farci` (le lint le signale) |
 | une cible n'apparaît pas dans `help` | registre `targets.def` mal formé | `./bin/farci selftest` dit exactement laquelle |
-| `CADDY_IP manquant` | `config/network.env` absent | `cp config/network.env.example config/network.env` |
-| `démarrage impossible — image absente ?` | préchargement incomplet sur ce poste | `./bin/farci verify-images`, puis `docker load -i offline/images/<image>.tar` |
+| `config/network.env` absent | première installation | `cp config/network.env.example config/network.env` |
+| `UP_PASSERELLE manquant` | `docker compose up` lancé à la main | toujours `./bin/farci up <brique>` |
 | `CLINICAL PIPELINE` reste `DEGRADED` | une exigence manque | le tableau affiche la liste « Il manque » ; `./bin/farci status --json` pour le détail |
-| le modèle ne démarre pas | RAM insuffisante | modèle de secours Qwen3.5-2B (`FARCI_MODEL_CI`, alias `med-extraction-lite`) |
-| une équipe est rouge depuis 10 min | n'importe laquelle des causes ci-dessus | la brique est servie par la machine de référence, l'équipe continue à diagnostiquer la sienne |
 
 ---
 
 ## Après l'atelier
 
-- [ ] `./bin/farci chaos reset` et vérifier le retour au vert
+- [ ] `./bin/farci reset-all` et vérifier le retour au vert
 - [ ] Récupérer les extractions : `datasets/extracted/`
 - [ ] Archiver le classement : `./bin/farci evaluate --report-dir datasets/reports`
 - [ ] Noter ce qui a fonctionné et ce qui a bloqué, moment par moment
@@ -144,4 +175,5 @@ le détail).
 - `docs/WORKSHOP_FLOW.md` — le déroulé des étapes et les objectifs par équipe
 - `docs/AIRGAP.md` — le préchargement en détail
 - `docs/CHAOS.md` — les scénarios et leur résultat attendu
+- `reference/README.md` — le Pi : pile de référence, Wi-Fi de la salle, secours
 - `CONTRIBUTING.md` — le flux Git du dépôt

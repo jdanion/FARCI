@@ -44,7 +44,6 @@ docker network create farci
 ```bash
 docker run -d \
   --name farci-postgres \
-  --network farci \
   -e POSTGRES_DB=gitea \
   -e POSTGRES_USER=gitea \
   -e POSTGRES_PASSWORD=mot-de-passe-db \
@@ -57,7 +56,6 @@ docker run -d \
 ```bash
 docker run -d \
   --name farci-gitea \
-  --network farci \
   -p 3000:3000 \
   -p 2222:22 \
   -e GITEA__database__DB_TYPE=postgres \
@@ -103,7 +101,6 @@ curl -X POST $GITEA_URL/api/v1/orgs/FARCI/repos \
 ```bash
 docker run -d \
   --name farci-act-runner \
-  --network farci \
   -e GITEA_INSTANCE_URL=$GITEA_URL/ \
   -e GITEA_RUNNER_REGISTRATION_TOKEN=token-runner \
   -v /var/run/docker.sock:/var/run/docker.sock \
