@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export FARCI_ROOT
 
 # shellcheck source=scripts/lib/common.sh
@@ -16,7 +16,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-GITEA_URL="${GITEA_ROOT_URL:-http://192.168.50.10:3000}"
+GITEA_URL="${GITEA_URL:?GITEA_IP/GITEA_PORT manquants : voir config/network.env}"
 GITEA_ADMIN_USER="${GITEA_ADMIN_USER:-farci-admin}"
 GITEA_ADMIN_PASSWORD="${GITEA_ADMIN_PASSWORD:?GITEA_ADMIN_PASSWORD requis}"
 GITEA_ADMIN_EMAIL="${GITEA_ADMIN_EMAIL:-admin@farci.local}"
@@ -24,22 +24,20 @@ GITEA_ADMIN_EMAIL="${GITEA_ADMIN_EMAIL:-admin@farci.local}"
 section "FARCI — bootstrap Gitea"
 
 info "attente de Gitea..."
-wait_http "$GITEA_URL/api/v1/version" 60 "Gitea"
+# /api/v1/* exige une connexion (REQUIRE_SIGNIN_VIEW) : on attend la sonde publique.
+wait_http "$GITEA_URL/api/healthz" 60 "Gitea"
 
-# Créer l'utilisateur admin
-info "création de l'utilisateur admin..."
-curl -sf -X POST "$GITEA_URL/api/v1/admin/users" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"username\": \"$GITEA_ADMIN_USER\",
-    \"password\": \"$GITEA_ADMIN_PASSWORD\",
-    \"email\": \"$GITEA_ADMIN_EMAIL\",
-    \"must_change_password\": false
-  }" || warn "utilisateur admin peut-être déjà existant"
+# Créer l'administrateur : l'API refuse cette création sans être déjà
+# authentifié, on passe donc par la CLI de Gitea dans son conteneur.
+info "création de l'administrateur..."
+docker exec -u git farci-gitea gitea admin user create --admin \
+  --username "$GITEA_ADMIN_USER" --password "$GITEA_ADMIN_PASSWORD" \
+  --email "$GITEA_ADMIN_EMAIL" --must-change-password=false >/dev/null 2>&1 \
+  || warn "administrateur peut-être déjà existant"
 
 # Créer l'organisation FARCI
 info "création de l'organisation FARCI..."
-curl -sf -X POST "$GITEA_URL/api/v1/orgs" \
+curl -sf -o /dev/null -X POST "$GITEA_URL/api/v1/orgs" \
   -H "Content-Type: application/json" \
   -u "$GITEA_ADMIN_USER:$GITEA_ADMIN_PASSWORD" \
   -d "{
@@ -50,7 +48,7 @@ curl -sf -X POST "$GITEA_URL/api/v1/orgs" \
 
 # Créer le dépôt farci
 info "création du dépôt farci..."
-curl -sf -X POST "$GITEA_URL/api/v1/orgs/FARCI/repos" \
+curl -sf -o /dev/null -X POST "$GITEA_URL/api/v1/orgs/FARCI/repos" \
   -H "Content-Type: application/json" \
   -u "$GITEA_ADMIN_USER:$GITEA_ADMIN_PASSWORD" \
   -d "{

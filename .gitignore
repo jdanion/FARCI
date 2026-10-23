@@ -34,6 +34,9 @@ offline
 # Les extractions des étudiants ne sont PAS commitées : elles sont volumineuses
 # etouraient chaque commit de plusieurs Mo (FARCI §33, §53).
 datasets/extracted/*
+# PDF de démonstration Docling (./bin/farci generate-dataset --pdf)
+datasets/pdf/
+datasets/reports/
 !datasets/extracted/.gitignore
 datasets/pseudonymized/*
 !datasets/pseudonymized/.gitignore

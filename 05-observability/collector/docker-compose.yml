@@ -4,10 +4,14 @@
 
 services:
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.120.0
+    image: otel/opentelemetry-collector-contrib:${OTEL_COLLECTOR_VERSION}
     container_name: farci-otel-collector
     restart: unless-stopped
     command: ["--config=/etc/otel-collector.yaml"]
+    environment:
+      # Destinations construites depuis config/network.env (aucune IP ici).
+      PHOENIX_URL: http://${OBSERVABILITY_A_IP:?OBSERVABILITY_A_IP manquant (config/network.env)}:${PHOENIX_PORT:?PHOENIX_PORT manquant}
+      LANGFUSE_URL: http://${OBSERVABILITY_B_IP:?OBSERVABILITY_B_IP manquant (config/network.env)}:${LANGFUSE_PORT:?LANGFUSE_PORT manquant}
     volumes:
       - ./otel-collector.yaml:/etc/otel-collector.yaml:ro
     ports:

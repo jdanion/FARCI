@@ -30,6 +30,9 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 source "$FARCI_ROOT/scripts/preload_lib.sh"
 
 farci_load_env
+farci_load_versions
+# shellcheck source=scripts/lib/images.sh
+source "$FARCI_ROOT/scripts/lib/images.sh"
 
 # --------------------------------------------------------------------------
 # Options

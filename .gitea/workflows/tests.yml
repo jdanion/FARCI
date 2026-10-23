@@ -1,36 +1,47 @@
+# FARCI — CI de chaque Pull Request, sur le runner de l'atelier (Gitea Actions).
+#
+# Une seule commande, la même qu'en local : ./bin/farci ci
+# (selftest, lint, tests unitaires, gold contre gold, gold reproductible).
+#
+# Air-gap : aucune action externe (pas de `uses:`), donc rien à télécharger
+# depuis github.com. Le dépôt est cloné depuis la forge locale avec le jeton
+# du job. Le label `farci` est déclaré par le runner (00-gitops) et pointe
+# vers une image préchargée (node:${CI_RUNNER_NODE_VERSION}, avec git et python3).
+
 name: tests
 
 on:
   pull_request:
+    branches: [main]
+  push:
     branches: [main]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ gitea.workflow }}-${{ gitea.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  ci:
+    runs-on: farci
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - name: Lint
-        run: ./bin/farci lint
+      - name: Récupérer le dépôt (forge locale, sans action externe)
+        env:
+          TOKEN: ${{ gitea.token }}
+          SERVER: ${{ gitea.server_url }}
+          REPO: ${{ gitea.repository }}
+          SHA: ${{ gitea.sha }}
+        run: |
+          set -eu
+          git init -q .
+          git -c http.extraHeader="Authorization: token ${TOKEN}" \
+            fetch -q --depth 1 "${SERVER}/${REPO}.git" "${SHA}"
+          git checkout -q FETCH_HEAD
 
-  unit-tests:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-      - name: Unit tests
-        run: pytest tests/ -v --ignore=tests/test_failover.sh
-
-  contract-tests:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-      - name: Contract tests (mocks)
-        run: pytest tests/test_structured_output.py tests/test_schema_parity.py -v
+      - name: ./bin/farci ci
+        env:
+          NO_COLOR: "1"
+        run: ./bin/farci ci

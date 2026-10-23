@@ -10,7 +10,7 @@ model_list:
   - model_name: med-extraction
     litellm_params:
       model: ollama/ornith-1.5-9b-q5km
-      api_base: http://192.168.50.20:8080
+      api_base: os.environ/INFERENCE_A_URL
       api_key: ollama
       num_retries: 2
       timeout: 60
@@ -18,13 +18,13 @@ model_list:
   - model_name: med-extraction-lite
     litellm_params:
       model: ollama/qwen3.5-2b-q4km
-      api_base: http://192.168.50.20:8080
+      api_base: os.environ/INFERENCE_A_URL
       api_key: ollama
 
   - model_name: med-extraction-max
     litellm_params:
       model: ollama/qwen3.8-27b-q4km
-      api_base: http://192.168.50.20:8080
+      api_base: os.environ/INFERENCE_A_URL
       api_key: ollama
 
 litellm_settings:

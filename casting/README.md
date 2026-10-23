@@ -12,13 +12,13 @@ Système de répartition des équipes en fonction du matériel des étudiants.
 
 ```bash
 # Avec un fichier JSON d'étudiants
-python casting/casting.py --students students.json --seed 42
+./bin/farci casting --students students.json --seed 42
 
 # Exemple par défaut
-python casting/casting.py
+./bin/farci casting
 
 # Sans les rôles optionnels
-python casting/casting.py --no-optional
+./bin/farci casting --no-optional
 ```
 
 ## Format du fichier étudiants
@@ -33,22 +33,32 @@ python casting/casting.py --no-optional
 
 ## Rôles et options
 
+Seules les options **fournies par le dépôt** (compose, configuration,
+TUTORIAL) sont proposées.
+
 | Rôle | Options (n°1 → n°2 → n°3) |
 |---|---|
-| GitOps | Gitea → GitLab |
-| Réseau | Caddy → Nginx → Traefik |
+| GitOps | Gitea |
+| Réseau | Caddy |
 | Inférence | Ollama → llama.cpp → oMLX (Mac) |
 | Gateway | LiteLLM → Bifrost |
-| Documents | Docling → PyMuPDF |
+| Documents | Docling (+ pseudonymisation) |
 | Observabilité | Phoenix → Langfuse |
-| Évaluation | MLflow → W&B |
+| Évaluation | MLflow |
 | Applications | Python → Open WebUI → Flowise |
-| Agents Arcane | Arcane → Portainer |
-| Chaos | Chaos |
+| Agents Arcane | Arcane |
+| Chaos (étape 3) | Chaos |
+
+Alternatives **non fournies** (souvent citées, volontairement absentes) :
+GitLab, Nginx, Traefik, PyMuPDF, Weights & Biases (service cloud, incompatible
+avec l'air-gap), Portainer. Les ajouter demande un compose, une image
+préchargée et un TUTORIAL : voir ci-dessous.
 
 ## Ajouter une option
 
-Pour ajouter une option à un rôle, modifier `casting/roles.py` :
+Une option n'entre dans `casting/roles.py` qu'une fois livrée : compose dans
+le dossier de l'équipe, image dans `scripts/lib/images.sh` et `versions.env`,
+section dans le TUTORIAL. Ensuite :
 
 ```python
 Role(

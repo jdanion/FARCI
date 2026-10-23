@@ -15,7 +15,7 @@ sans réseau.
 | Phase | Quand | Internet | Commande |
 |---|---|---|---|
 | **Préchargement** | J-7 à J-1 | oui | `./preload.sh --core` |
-| **Atelier** | J0 | **non** | `make core-up`, `make health`, … |
+| **Atelier** | J0 | **non** | `./bin/farci up <brique>`, `./bin/farci status`, … |
 
 Ce qui est téléchargé pendant la phase 1 est **figé** : ni le jour J, ni le mois
 suivant. Les empreintes SHA256 sont conservées pour le prouver.
@@ -39,9 +39,19 @@ Total selon le périmètre :
 
 | Groupe preload | Contenu | Taille |
 |---|---|---|
-| `--core` | gitops + dashboard + inference + gateway + observabilité + documents + évaluation + clients + wheels + modèle 9B | ~26 Go |
-| `--models-qwen38` | le modèle 27 Go | +17,5 Go |
+| `--core` | gitops + dashboard + inference + gateway + observabilité + documents + évaluation + clients + wheels + modèle 9B + modèle de secours 2B | ~28 Go |
+| `--only models_qwen38` | le modèle 27B | +17,5 Go |
+| `--models-ci` | le modèle de secours seul (Qwen3.5-2B) | ~1,2 Go |
 | `--all` | tout | ~57 Go |
+
+Chaque image est téléchargée **puis** sauvegardée en `.tar` dans
+`offline/images/` (liste unique : `scripts/lib/images.sh`). Sur un poste sans
+Internet, depuis la clé USB :
+
+```bash
+for f in offline/images/*.tar; do docker load -i "$f"; done
+./bin/farci verify-images
+```
 
 > `--core` suffit pour obtenir `CLINICAL PIPELINE READY`. Le modèle 27 Go est
 > réservé aux postes qui le justifient.
@@ -82,8 +92,8 @@ Concrètement, cela interdit :
 - un CDN, une police distante ou un script distant dans une application ;
 - un point d'entrée cloud obligatoire dans une chaîne locale.
 
-C'est le rôle de `scripts/cmd/lint.sh --only offline`, exécuté à chaque Pull
-Request, et de `verify-airgap.sh` avant le coupure.
+C'est le rôle de `./bin/farci lint-offline`, exécuté à chaque Pull
+Request, et de `verify-airgap.sh` avant la coupure.
 
 ---
 
@@ -97,6 +107,7 @@ Request, et de `verify-airgap.sh` avant le coupure.
 | `jq` absent | idem | les tests utilisent un parseur JSON maison sur la stdlib Python |
 | Un modèle « léger » demande 8 Go de RAM | le cahier des charges visait 1–4 Go, indisponibles dans les familles retenues | un modèle de 2 Go est prévu pour la CI et le développement, **exclu du score** |
 | `preload.sh --all` dépasse l'espace disque | ~57 Go | `--core` par défaut, et l'espace disponible est vérifié par `./bin/farci doctor` |
+| Deux images figées n'existaient pas (`ds4sd/docling-serve:0.5.1`, `mlflow/mlflow:3.16.1`) | noms recopiés sans vérification dans le registre | images corrigées (`docling-serve-cpu`, `ghcr.io/mlflow/mlflow`), tags vérifiés dans les registres le 2026-10-23 |
 
 ---
 
@@ -118,7 +129,7 @@ page qui s'affiche sans mise en forme.
 
 La cause la plus fréquente n'est pas un téléchargement : c'est une **ressource
 distante dans une page web** (police, script, feuille de style). Le contrôle 7
-la detecte.
+la détecte.
 
 ---
 

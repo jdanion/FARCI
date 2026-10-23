@@ -135,6 +135,42 @@ preload_docker_pull() {
   ok "image présente : $image"
 }
 
+# Télécharge une image de scripts/lib/images.sh PUIS la sauvegarde en .tar
+# dans offline/images/ : c'est ce .tar que l'on copie sur les postes sans
+# Internet (clé USB), où `docker load` la rend disponible.
+#   preload_image <clé>    (ex. preload_image docling)
+preload_image() {
+  local image file
+  image="$(farci_image "$1")" || return 1
+  file="$(printf '%s' "$image" | tr '/:' '__').tar"
+  preload_docker_pull "$image" || return 1
+  if [[ "${PRELOAD_SKIP_EXISTING:-0}" == "1" && -f "$FARCI_IMAGES_DIR/$file" ]]; then
+    debug "déjà sauvegardée : $file"
+    return 0
+  fi
+  preload_docker_save "$image" "$file"
+}
+
+# Télécharge les poids d'un modèle déclaré dans models/models.env.
+#   preload_model <PRÉFIXE>   (ex. ORNITH_1_5_9B_Q5KM -> _URL, _SHA256)
+# Le nom du fichier est celui de l'URL : c'est ce nom qu'attendent
+# llama.cpp, create-model.sh et verify-models.
+preload_model() {
+  local prefix="$1" url_var="${1}_URL" sha_var="${1}_SHA256" url sha dest
+  # shellcheck source=models/models.env
+  source "$FARCI_ROOT/models/models.env"
+  url="${!url_var:-}"
+  sha="${!sha_var:-}"
+  [[ -n "$url" ]] || { err "models/models.env : $url_var absent"; return 1; }
+  dest="$FARCI_MODELS_DIR/$(basename "$url")"
+  if [[ -f "$dest" && -z "$sha" && "${PRELOAD_SKIP_EXISTING:-0}" == "1" ]]; then
+    debug "déjà présent : $dest"
+    return 0
+  fi
+  [[ -n "$sha" ]] || warn "$sha_var vide : empreinte non vérifiée (elle sera inscrite au manifeste)"
+  preload_download "$url" "$dest" "$sha"
+}
+
 # Sauvegarde une image Docker dans le répertoire offline.
 #   preload_docker_save <image:tag> <nom_fichier>
 preload_docker_save() {
@@ -159,16 +195,18 @@ preload_docker_save() {
 
 group_gitops() {
   info "groupe : gitops"
-  preload_docker_pull "gitea/gitea:${GITEA_VERSION}"
-  preload_docker_pull "gitea/act_runner:${GITEA_ACT_RUNNER_VERSION}"
-  preload_docker_pull "postgres:${POSTGRES_VERSION}"
-  preload_docker_pull "redis:${REDIS_VERSION}"
+  preload_image gitea
+  preload_image act-runner
+  preload_image ci-runner
+  preload_image postgres
+  preload_image redis
 }
 
 group_dashboard() {
   info "groupe : dashboard"
-  preload_docker_pull "caddy:${CADDY_VERSION}"
-  preload_docker_pull "louislam/uptime-kuma:${UPTIME_KUMA_VERSION}"
+  preload_image caddy
+  preload_image python
+  preload_image uptime-kuma
 }
 
 group_build_llamacpp() {
@@ -215,38 +253,23 @@ group_build_llamacpp() {
 }
 
 group_models_ornith() {
-  info "groupe : models_ornith"
-  # Les URLs et sha256 sont dans models/models.env
-  # Pour l'instant, on vérifie juste que le fichier existe
-  if [[ ! -f "$FARCI_ROOT/models/models.env" ]]; then
-    warn "models/models.env absent — les URLs des poids ne sont pas encore définies"
-    return 0
-  fi
-  # Le téléchargement effectif sera fait par lock-models.sh en phase online
-  info "  → utiliser scripts/lock-models.sh pour télécharger les poids Ornith"
+  info "groupe : models_ornith (modèle principal, ~6,5 Go)"
+  preload_model ORNITH_1_5_9B_Q5KM
 }
 
 group_models_qwen38() {
-  info "groupe : models_qwen38"
-  if [[ ! -f "$FARCI_ROOT/models/models.env" ]]; then
-    warn "models/models.env absent — les URLs des poids ne sont pas encore définies"
-    return 0
-  fi
-  info "  → utiliser scripts/lock-models.sh pour télécharger les poids Qwen3.8"
+  info "groupe : models_qwen38 (gros postes uniquement, ~16,5 Go)"
+  preload_model QWEN3_8_27B_Q4KM
 }
 
 group_models_ci() {
-  info "groupe : models_ci"
-  if [[ ! -f "$FARCI_ROOT/models/models.env" ]]; then
-    warn "models/models.env absent — les URLs des poids ne sont pas encore définies"
-    return 0
-  fi
-  info "  → utiliser scripts/lock-models.sh pour télécharger les poids Qwen3.5-2B"
+  info "groupe : models_ci (modèle de secours et de CI, ~1,2 Go)"
+  preload_model QWEN3_5_2B_Q4KM
 }
 
 group_inference_ollama() {
   info "groupe : inference_ollama"
-  preload_docker_pull "ollama/ollama:${OLLAMA_VERSION}"
+  preload_image ollama
 }
 
 group_inference_llamacpp() {
@@ -257,38 +280,39 @@ group_inference_llamacpp() {
 
 group_gateway_litellm() {
   info "groupe : gateway_litellm"
-  preload_docker_pull "ghcr.io/berriai/litellm:${LITELLM_VERSION}"
+  preload_image litellm
 }
 
 group_gateway_bifrost() {
   info "groupe : gateway_bifrost"
-  preload_docker_pull "ghcr.com/MaximFaq/bifrost:${BIFROST_VERSION}"
+  preload_image bifrost
 }
 
 group_observability_phoenix() {
   info "groupe : observability_phoenix"
-  preload_docker_pull "arizephoenix/phoenix:${PHOENIX_VERSION}"
+  preload_image phoenix
 }
 
 group_observability_langfuse() {
   info "groupe : observability_langfuse"
-  preload_docker_pull "langfuse/langfuse:${LANGFUSE_VERSION}"
+  preload_image langfuse
+  preload_image otel-collector
 }
 
 group_documents() {
   info "groupe : documents"
-  preload_docker_pull "ds4sd/docling-serve:${DOCLING_SERVE_VERSION}"
+  preload_image docling
 }
 
 group_evaluation() {
   info "groupe : evaluation"
-  preload_docker_pull "mlflow/mlflow:${MLFLOW_VERSION}"
+  preload_image mlflow
 }
 
 group_clients() {
   info "groupe : clients"
-  preload_docker_pull "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}"
-  preload_docker_pull "flowiseai/flowise:${FLOWISE_VERSION}"
+  preload_image open-webui
+  preload_image flowise
 }
 
 group_wheels() {
@@ -311,7 +335,7 @@ group_manifest() {
     printf '  [dry-run] générer offline/MANIFEST.sha256\n'
     return 0
   fi
-  "$FARCI_ROOT/scripts/gen-manifest.sh"
+  "$FARCI_ROOT/scripts/cmd/gen-manifest.sh"
 }
 
 group_tools() {

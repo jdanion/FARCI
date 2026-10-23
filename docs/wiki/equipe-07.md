@@ -11,34 +11,44 @@
 ## Solution simple (scripts)
 
 ```bash
-# Parcours A — Python
-cd 07-applications/python
-pip install -r requirements.txt
-python run_pipeline.py --input ../datasets/raw --output ../datasets/extracted/python
+# Parcours A — Python (principal)
+pip install --no-index --find-links offline/wheels -r requirements.txt
+./bin/farci extract --subset quick --run python
+./bin/farci evaluate --subset quick
 
 # Parcours B — Open WebUI
-cd ../open-webui
-docker compose up -d
-./post-setup.sh
+./bin/farci up 07-applications/open-webui
+07-applications/open-webui/post-setup.sh
 
-# Parcours C — Flowise
-cd ../flowise
-docker compose up -d
+# Parcours C — Flowise : démonstration du formateur
+./bin/farci up 07-applications/flowise
 ```
 
 ## Solution from scratch
 
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
+
 ### Parcours A — Python
 
 ```python
-from common.pipeline import process_pdf
+# Depuis la racine du dépôt, après « source scripts/dev-env.sh && farci_load_env » :
+#   PYTHONPATH=07-applications python3
+from pathlib import Path
 
-output = process_pdf(
-    pdf_path=Path("datasets/raw/patient_001.pdf"),
+from common.farci_client import chat_completion
+from common.pipeline import run
+
+bilan = run(
+    raw_dir=Path("datasets/raw"),
     output_dir=Path("datasets/extracted/python"),
+    complete=lambda messages, model: chat_completion(messages, model=model),
     model="med-extraction",
     prompt_version="v1",
 )
+print(bilan)   # {'ecrits': ..., 'rejetes': ..., 'erreurs': ...}
 ```
 
 ### Parcours B — Open WebUI
@@ -48,7 +58,7 @@ docker run -d \
   --name farci-open-webui \
   --network farci \
   -p 8080:8080 \
-  -e OAI_API_BASE_URL=http://192.168.50.15/v1 \
+  -e OPENAI_API_BASE_URL=$FARCI_GATEWAY_URL \
   -e DEFAULT_MODEL=med-extraction \
   -v open-webui-data:/app/backend/data \
   ghcr.io/open-webui/open-webui:0.11.4

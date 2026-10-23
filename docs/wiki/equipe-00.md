@@ -11,29 +11,27 @@
 ## Solution simple (scripts)
 
 ```bash
-# 1. Démarrer Gitea + PostgreSQL + runner
-cd 00-gitops
-docker compose up -d
+# 1. Secrets : compléter .env (modèle : .env.example), puis démarrer
+./bin/farci up 00-gitops
 
-# 2. Attendre que Gitea soit prêt
-curl http://192.168.50.10:3000/api/v1/version
+# 2. Organisation, administrateur, dépôt
+00-gitops/gitea/bootstrap.sh
 
-# 3. Bootstrap (création org, admin, dépôt)
-export GITEA_ADMIN_PASSWORD="mot-de-passe-admin"
-export GITEA_DB_PASSWORD="mot-de-passe-db"
-export GITEA_SECRET_KEY="clef-secrete"
-export GITEA_INTERNAL_TOKEN="token-interne"
-export GITEA_RUNNER_TOKEN="token-runner"
-./gitea/bootstrap.sh
+# 3. Runner (label « farci ») et protection de main
+00-gitops/runner/register-runner.sh
+00-gitops/post-provision.sh
 
-# 4. Enregistrer le runner
-./runner/register-runner.sh
-
-# 5. Protéger la branche main
-./post-provision.sh
+# 4. Vérifier : ligne GitOps verte, test gitops PASS
+./bin/farci status
+./bin/farci test
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Créer le réseau Docker
 
@@ -74,7 +72,7 @@ docker run -d \
 ### 4. Créer l'utilisateur admin via l'API
 
 ```bash
-curl -X POST http://192.168.50.10:3000/api/v1/admin/users \
+curl -X POST $GITEA_URL/api/v1/admin/users \
   -H "Content-Type: application/json" \
   -d '{
     "username": "farci-admin",
@@ -88,13 +86,13 @@ curl -X POST http://192.168.50.10:3000/api/v1/admin/users \
 
 ```bash
 # Créer l'organisation
-curl -X POST http://192.168.50.10:3000/api/v1/orgs \
+curl -X POST $GITEA_URL/api/v1/orgs \
   -H "Content-Type: application/json" \
   -u "farci-admin:mot-de-passe-admin" \
   -d '{"username": "FARCI", "full_name": "FARCI Workshop"}'
 
 # Créer le dépôt
-curl -X POST http://192.168.50.10:3000/api/v1/orgs/FARCI/repos \
+curl -X POST $GITEA_URL/api/v1/orgs/FARCI/repos \
   -H "Content-Type: application/json" \
   -u "farci-admin:mot-de-passe-admin" \
   -d '{"name": "farci", "default_branch": "main"}'
@@ -106,7 +104,7 @@ curl -X POST http://192.168.50.10:3000/api/v1/orgs/FARCI/repos \
 docker run -d \
   --name farci-act-runner \
   --network farci \
-  -e GITEA_INSTANCE_URL=http://192.168.50.10:3000/ \
+  -e GITEA_INSTANCE_URL=$GITEA_URL/ \
   -e GITEA_RUNNER_REGISTRATION_TOKEN=token-runner \
   -v /var/run/docker.sock:/var/run/docker.sock \
   gitea/act_runner:0.6.1
@@ -115,7 +113,7 @@ docker run -d \
 ### 7. Protéger la branche main
 
 ```bash
-curl -X PATCH http://192.168.50.10:3000/api/v1/repos/FARCI/farci/branches/main/protection \
+curl -X PATCH $GITEA_URL/api/v1/repos/FARCI/farci/branches/main/protection \
   -H "Content-Type: application/json" \
   -u "farci-admin:mot-de-passe-admin" \
   -d '{
@@ -129,7 +127,7 @@ curl -X PATCH http://192.168.50.10:3000/api/v1/repos/FARCI/farci/branches/main/p
 
 ## Vérifications
 
-- [ ] Gitea accessible sur http://192.168.50.10:3000
+- [ ] Gitea accessible sur $GITEA_URL
 - [ ] Runner enregistré et actif
 - [ ] Push direct sur `main` rejeté
 - [ ] PR créée et workflow déclenché

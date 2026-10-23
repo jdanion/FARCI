@@ -1,22 +1,32 @@
 # FARCI — parcours Open WebUI
 
-## Démarrage
+Interface de chat branchée sur la passerelle via Caddy (`/v1`) : l'étudiant
+expérimente le prompt et les paramètres sans écrire de code. C'est aussi la
+porte d'entrée des étudiants sans machine utilisable (Open WebUI de la pile
+du formateur).
+
+## Démarrage (depuis la racine du dépôt)
 
 ```bash
-cd 07-applications/open-webui
-docker compose up -d
-./post-setup.sh
+./bin/farci up 07-applications/open-webui
+07-applications/open-webui/post-setup.sh
 ```
+
+L'adresse est `OPEN_WEBUI_IP:OPEN_WEBUI_PORT` (`config/network.env`), ou
+`/webui` derrière Caddy.
 
 ## Utilisation
 
-1. Ouvrir http://192.168.50.60:8080
-2. Se connecter avec `admin@farci.local` / `admin`
-3. Sélectionner le modèle `med-extraction`
-4. Coller le contenu d'un PDF et soumettre
+1. Se connecter (compte créé par `post-setup.sh`).
+2. Choisir le modèle `med-extraction`.
+3. Coller le prompt `07-applications/open-webui/prompt.md`, puis le contenu
+   d'un dossier patient (`datasets/raw/patient_<IPP>_*.txt`).
 
-## Export
+## Export vers l'évaluation
 
 ```bash
-./export-submissions.sh
+07-applications/open-webui/export-submissions.sh
 ```
+
+Les réponses JSON valides sont écrites dans `datasets/extracted/webui/` et
+évaluées comme les autres parcours (`./bin/farci evaluate`).

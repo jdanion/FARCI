@@ -11,21 +11,24 @@
 ## Solution simple (scripts)
 
 ```bash
-# 1. Démarrer LiteLLM
-cd 03-llm-gateway/litellm
-docker compose up -d
+# 1. Démarrer LiteLLM et créer les clés virtuelles
+./bin/farci up 03-llm-gateway/litellm
+03-llm-gateway/litellm/bootstrap-keys.sh
 
-# 2. Bootstrap des clés
-./bootstrap-keys.sh
+# 2. Vérifier : ligne LLM Gateway verte, test gateway-contract PASS
+./bin/farci status
+./bin/farci test
 
-# 3. Tester le contrat
-IMPL=litellm ./tests/test_gateway_contract.sh
-
-# 4. Tester le failover
-./failover/demo-failover.sh
+# 3. Démonstration du repli
+03-llm-gateway/failover/demo-failover.sh
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Démarrer LiteLLM
 
@@ -43,7 +46,7 @@ docker run -d \
 ### 2. Créer une clé API
 
 ```bash
-curl -X POST http://192.168.50.30:4000/key/generate \
+curl -X POST $GATEWAY_A_URL/key/generate \
   -H "Authorization: Bearer sk-priority-placeholder" \
   -H "Content-Type: application/json" \
   -d '{
@@ -56,12 +59,12 @@ curl -X POST http://192.168.50.30:4000/key/generate \
 
 ```bash
 # Sans clé → 401
-curl -X POST http://192.168.50.30:4000/v1/chat/completions \
+curl -X POST $GATEWAY_A_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'
 
 # Avec clé → 200
-curl -X POST http://192.168.50.30:4000/v1/chat/completions \
+curl -X POST $GATEWAY_A_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-standard-xxx" \
   -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'
@@ -73,7 +76,7 @@ curl -X POST http://192.168.50.30:4000/v1/chat/completions \
 # 12 requêtes rapides → certaines en 429
 for i in $(seq 1 12); do
   curl -s -o /dev/null -w '%{http_code}\n' \
-    -X POST http://192.168.50.30:4000/v1/chat/completions \
+    -X POST $GATEWAY_A_URL/v1/chat/completions \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer sk-standard-xxx" \
     -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}'
@@ -87,7 +90,7 @@ done
 docker stop farci-ollama
 
 # Le gateway doit répondre 200 avec x-fallback-applied: true
-curl -X POST http://192.168.50.30:4000/v1/chat/completions \
+curl -X POST $GATEWAY_A_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-standard-xxx" \
   -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'

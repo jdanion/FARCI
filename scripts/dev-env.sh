@@ -64,8 +64,69 @@ farci_load_env() {
   export FARCI_MANIFEST="${FARCI_OFFLINE_DIR}/MANIFEST.sha256"
   export FARCI_DOCKER_NETWORK="${FARCI_DOCKER_NETWORK:-farci}"
 
+  farci_derive_urls
+
   FARCI_ENV_LOADED=1
   export FARCI_ENV_LOADED
+}
+
+# Charge versions.env (tags figés) sans écraser l'environnement. Séparé de
+# farci_load_env : seuls les scripts qui démarrent ou vérifient des images en
+# ont besoin.
+farci_load_versions() {
+  local line key
+  while IFS= read -r line; do
+    key="${line%%=*}"
+    [[ -n "${!key+x}" ]] && continue
+    export "$line"
+  done < <(emit_env_file "$FARCI_ROOT/versions.env")
+}
+
+# URLs dérivées des adresses de config/network.env.
+# C'est le SEUL endroit où une URL de service est construite : les scripts,
+# les tests et le code Python lisent ces variables, ils ne recomposent jamais
+# « http://<adresse>:<port> » eux-mêmes, et n'ont AUCUNE adresse par défaut.
+# Une URL n'est dérivée que si son adresse ET son port sont connus ; une valeur
+# déjà présente dans l'environnement est conservée (surcharge manuelle).
+#   NOM_URL  <-  NOM_IP + port
+FARCI_URL_MAP=(
+  "GITEA_URL:GITEA_IP:GITEA_PORT"
+  "CADDY_URL:CADDY_IP:CADDY_INTERNAL_PORT"
+  "HEALTH_AGGREGATOR_URL:HEALTH_AGGREGATOR_IP:HEALTH_AGGREGATOR_PORT"
+  "UPTIME_KUMA_URL:UPTIME_KUMA_IP:UPTIME_KUMA_PORT"
+  "INFERENCE_A_URL:INFERENCE_A_IP:INFERENCE_PORT"
+  "INFERENCE_B_URL:INFERENCE_B_IP:INFERENCE_PORT"
+  "INFERENCE_C_URL:INFERENCE_C_IP:INFERENCE_PORT"
+  "GATEWAY_A_URL:GATEWAY_A_IP:GATEWAY_PORT"
+  "GATEWAY_B_URL:GATEWAY_B_IP:GATEWAY_PORT"
+  "DOCLING_URL:DOCLING_IP:DOCLING_PORT"
+  "PHOENIX_URL:OBSERVABILITY_A_IP:PHOENIX_PORT"
+  "LANGFUSE_URL:OBSERVABILITY_B_IP:LANGFUSE_PORT"
+  "MLFLOW_URL:MLFLOW_IP:MLFLOW_PORT"
+  "OPEN_WEBUI_URL:OPEN_WEBUI_IP:OPEN_WEBUI_PORT"
+  "FLOWISE_URL:FLOWISE_IP:FLOWISE_PORT"
+)
+
+farci_derive_urls() {
+  local entry name ip_var port_var
+  for entry in "${FARCI_URL_MAP[@]}"; do
+    IFS=: read -r name ip_var port_var <<< "$entry"
+    [[ -n "${!name:-}" ]] && continue
+    [[ -n "${!ip_var:-}" && -n "${!port_var:-}" ]] || continue
+    export "$name=http://${!ip_var}:${!port_var}"
+  done
+  # Points d'entrée stables, tous derrière Caddy (FARCI §12) : c'est ce que
+  # voient les applications. Elles ne connaissent jamais l'adresse d'un runtime.
+  if [[ -n "${CADDY_URL:-}" ]]; then
+    : "${FARCI_GATEWAY_URL:=${CADDY_URL}/v1}"
+    : "${FARCI_DOCLING_URL:=${CADDY_URL}/docling}"
+    : "${FARCI_STATUS_URL:=${CADDY_URL}/status}"
+    export FARCI_GATEWAY_URL FARCI_DOCLING_URL FARCI_STATUS_URL
+  fi
+  if [[ -n "${PHOENIX_URL:-}" ]]; then
+    : "${OTEL_EXPORTER_OTLP_ENDPOINT:=${PHOENIX_URL}/v1/traces}"
+    export OTEL_EXPORTER_OTLP_ENDPOINT
+  fi
 }
 
 # Variables sans lesquelles rien ne peut fonctionner. Volontairement court :
@@ -112,7 +173,7 @@ farci_check_env() {
   have make      || { warn "make absent : utilisez ./bin/farci <cible> (mêmes cibles)"; warn=1; }
   have curl      || { warn "curl absent : les sondes de santé échoueront"; warn=1; }
   have sha256sum || { warn "sha256sum absent : verify-airgap.sh ne pourra pas vérifier"; warn=1; }
-  (( warn )) && warn "certains outillages manquent : ./preload.sh --tools les installe"
+  (( warn )) && warn "certains outillages manquent : ./preload.sh --only tools les installe"
 
   (( failures == 0 )) || return 1
   return 0

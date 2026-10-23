@@ -6,42 +6,84 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
-### phases à venir
+### Lot 1 — remettre au vert
 
-Le dépôt est livré **phase par phase**. Chaque phase ajoute ses briques ; le
-plan complet est dans `PLAN.md`.
+L'outillage, la CI et la documentation décrivent enfin le même dépôt.
+Critère de sortie : `./bin/farci selftest`, `./bin/farci lint` et
+`./bin/farci ci` verts ; aucune doc ne cite une commande inexistante
+(contrôle `lint-commands`).
 
-- [ ] **Phase 1** — air-gap : `preload.sh`, `verify-airgap.sh`, manifeste
-- [ ] **Phase 2** — équipe 0 : Gitea, runner, GitOps
-- [ ] **Phase 3** — équipe 1 : Caddy, Uptime Kuma, `health-aggregator`
-- [ ] **Phase 4** — équipe 2 : Ollama, llama.cpp, oMLX
-- [ ] **Phase 5** — équipe 3 : LiteLLM, Bifrost
-- [ ] **Phase 6** — équipe 4 : Docling, pseudonymisation
-- [ ] **Phase 7** — équipe 5 : Phoenix, Langfuse
-- [ ] **Phase 8** — équipe 6 : MLflow, métriques
-- [ ] **Phase 9** — étape 2 : les trois parcours d'application
-- [ ] **Phase 10** — dataset synthétique et gold standard
-- [ ] **Phase 11** — étape 3 : scénarios de chaos
-- [ ] **Phase 12** — suite de tests et CI
-- [ ] **Phase 13** — documentation finale
-- [ ] **Phase 14** — recette bout-en-bout
+**Corrigé**
+- Registre des cibles : `preload`, `verify-airgap` et `casting` ont un script
+  dans `scripts/cmd/` ; les groupes affichés par `help` sont lus dans
+  `help.sh` (plus de liste en double) ; toutes les cibles répondent à `--help`.
+- 18 scripts sans bit exécutable dans l'index Git.
+- Plus aucune adresse IP hors de `config/network.env` : les URL de service
+  sont dérivées en un seul endroit (`scripts/dev-env.sh`), sans valeur par
+  défaut. Le contrôle couvre désormais aussi Caddyfile, `.ini`, `.example`.
+  Plusieurs adresses par défaut étaient fausses (Phoenix, Docling, Uptime Kuma).
+- `Caddyfile` : syntaxe d'environnement de Caddy (`{$VAR}`), ports lus dans
+  la configuration, préfixes retirés (`handle_path`) pour Docling et les UI.
+- Évaluation : typage des champs, normalisation, détection des runs
+  `datasets/extracted/<run>/`, F1 calculé sur tous les dossiers du gold,
+  conformité au schéma vérifiée sans dépendance. Gold contre gold = 1,00.
+- `validate_gold.py` lit `datasets/gold/` et valide contre le schéma.
+- Pseudonymisation : le NIR et les noms absents du dictionnaire passaient en
+  clair ; aucune fuite sur les 80 documents (test dédié).
+- Pipeline Python : un dossier par patient à partir des `.txt`, pseudonymisé,
+  validé ; un JSON non conforme n'est jamais écrit.
+- Pydantic aligné sur le schéma JSON (champs nullables requis).
+- `chaos/chaos.sh` : racine du dépôt, recherche des scénarios, `reset` qui
+  répare réellement et signale ce qu'il n'a pas pu réparer.
+- Images : `docling-serve` et `mlflow` pointaient vers des tags inexistants ;
+  liste unique `scripts/lib/images.sh` (cinq listes divergeaient).
+- `preload.sh` télécharge réellement les poids (`models/models.env`) et
+  sauvegarde chaque image en `.tar` pour les postes sans Internet.
+- Tests d'intégration : racine du dépôt, délais bornés, `SKIP` si la brique
+  est absente (`FARCI_TESTS_STRICT=1` pour la recette).
+
+**Ajouté**
+- Cibles `up`, `down`, `logs`, `extract`, `evaluate`, `chaos`, `ci`,
+  `test`, `test-unit`, `verify-manifest`, `gen-manifest`, `lint-commands`.
+- Tests unitaires (unittest, sans réseau ni GPU) : évaluation, parité du
+  schéma, sortie structurée, pseudonymisation.
+- `07-applications/common/observability.py` : traces OTLP du parcours
+  Python, sans jamais bloquer l'extraction.
+- CI exécutable : `.gitea/workflows/tests.yml` (runner label `farci`, sans
+  action externe) et `.github/workflows/ci.yml`, tous deux `./bin/farci ci`.
+- `01-network-dashboard/TUTORIAL.md` ; gabarit TUTORIAL complet (14 sections
+  du §45 + Dépannage) et TUTORIAL réécrits sur ce gabarit.
+
+**Retiré**
+- Options de casting non fournies (GitLab, Nginx, Traefik, PyMuPDF, W&B,
+  Portainer), désormais listées comme « non fournies ».
+- Workflows factices (`score.yml`, valeurs F1 écrites en dur dans `evaluate.yml`).
+- `06-evaluation/mlflow/Dockerfile` (inutilisé, image inexistante) et
+  `07-applications/open-webui/env.example` (doublon du compose).
+
+### Historique des phases
+
+Les phases 1 à 15 de `PLAN.md` ont été livrées (voir l'historique Git), mais
+**sans validation sur matériel réel** : le lot 1 en a corrigé l'outillage et
+la cohérence. Restent à valider sur les machines de l'atelier : démarrage de
+chaque brique, modèles, réseau de salle (voir la PR du lot 1).
 
 ## [0.1.0] — 2026-09-26
 
 ### Ajouté — phase 0, socle du dépôt
 
 **Outillage**
-- `bin/farci` : lanceur unique, 22 commandes, utilisable **sans `make`**.
+- `bin/farci` : lanceur unique, utilisable **sans `make`**.
 - `Makefile` : façade mince générée depuis `scripts/targets.def`, donc
   `make help` et `./bin/farci help` ne peuvent pas diverger.
 - `scripts/targets.def` : registre des cibles, source de vérité unique.
 - `bootstrap.sh` et `./bin/farci bootstrap` : préparation de machine idempotente
   (répertoires de données, lien `offline/`, fichiers `.env`, dépôt git, lint).
-- `scripts/lint.sh` : 8 contrôles (versions, IP, documentation, air-gap, marqueurs
+- `scripts/cmd/lint.sh` (`./bin/farci lint`) : 8 contrôles (versions, IP, documentation, air-gap, marqueurs
   de travail, bash, Python, taille), avec `PASS` / `FAIL` / `WARN` / `SKIP`.
-- `scripts/workshop-status.sh` : tableau de progression (§49), sondes parallèles,
+- `scripts/cmd/status.sh` (`./bin/farci status`) : tableau de progression (§49), sondes parallèles,
   mode `--watch` pour l'amphithéâtre.
-- `scripts/doctor` : diagnostic machine (Docker, Python, RAM, disque, réseau).
+- `scripts/cmd/doctor.sh` (`./bin/farci doctor`) : diagnostic machine (Docker, Python, RAM, disque, réseau).
 
 **Configuration**
 - `config/services.yaml` : registre déclaratif des 15 services, 7 groupes,

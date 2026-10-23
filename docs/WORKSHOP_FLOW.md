@@ -1,6 +1,8 @@
 # Déroulé du workshop
 
-Trois étapes, sept équipes. L'ordre compte : chaque étape dépend de la précédente.
+Trois étapes, neuf dossiers d'équipe (`00-gitops/` à `08-arcane-agents/`). L'étape 3
+(chaos) n'est pas une équipe : elle se joue ensemble. L'ordre compte : chaque
+étape dépend de la précédente.
 
 ---
 
@@ -25,18 +27,22 @@ Trois étapes, sept équipes. L'ordre compte : chaque étape dépend de la préc
 
 ---
 
-## Les sept équipes
+## Les équipes
 
 | Équipe | Dossier | Brique | Indispensable ? |
 |---|---|---|---|
-| 0 | `00-gitops/` | Gitea + runner + CI | oui |
-| 1 | `01-network-dashboard/` | Caddy, Uptime Kuma, agrégateur de santé | oui |
-| 2 | `02-inference/` | Ollama, llama.cpp, oMLX | oui (au moins un) |
-| 3 | `03-llm-gateway/` | LiteLLM, Bifrost | oui |
+| 0 | `00-gitops/` | Gitea + runner + CI | non (bonus) |
+| 1 | `01-network-dashboard/` | Caddy, agrégateur de santé (Uptime Kuma en bonus) | oui |
+| 2 | `02-inference/` | Ollama (llama.cpp, oMLX en bonus) | oui (au moins un runtime) |
+| 3 | `03-llm-gateway/` | LiteLLM (Bifrost en bonus) | oui |
 | 4 | `04-clinical-documents/` | Docling, pseudonymisation | oui |
-| 5 | `05-observability/` | Phoenix, Langfuse | oui |
-| 6 | `06-evaluation/` | MLflow, métriques | oui |
-| 7 | `07-applications/` | Python, Open WebUI, Flowise | non (à l'étape 2) |
+| 5 | `05-observability/` | Phoenix (Langfuse en bonus) | oui |
+| 6 | `06-evaluation/` | métriques (MLflow en bonus) | non : l'évaluation se fait en ligne de commande |
+| 7 | `07-applications/` | Python, Open WebUI, Flowise | à l'étape 2 |
+| 8 | `08-arcane-agents/` | agents de supervision, webhook GitOps | non (bonus) |
+
+`config/services.yaml` fait foi : la ligne `CLINICAL PIPELINE` ne dépend que
+des services marqués `critical: true`.
 
 Une équipe n'est **pas** terminée tant que sa sonde n'est pas verte sur le
 tableau de bord. Le tableau est projeté en plein écran : c'est lui qui montre à
@@ -104,7 +110,7 @@ le même schéma**. C'est ce qui rend la comparaison finale possible.
 ### Le résultat qui compte
 
 ```bash
-make evaluate
+./bin/farci evaluate        # ou : make evaluate
 ```
 
 Compare les extractions au gold standard et affiche : nombre de dossiers,
@@ -121,10 +127,10 @@ trace et le score racontent la même histoire de deux façons.
 Sept scénarios, chacun **réversible**. Voir `CHAOS.md` pour le détail.
 
 ```bash
-./chaos/chaos.sh list          # les scénarios disponibles
-./chaos/chaos.sh scenario-01   # on casse
-./chaos/chaos.sh status        # ce qui est encore cassé
-./chaos/chaos.sh reset         # on répare
+./bin/farci chaos list          # les scénarios disponibles
+./bin/farci chaos scenario-01   # on casse
+./bin/farci chaos status        # ce qui est encore cassé
+./bin/farci chaos reset         # on répare
 ```
 
 Le but n'est pas de tout casser : c'est de vérifier que **le pipeline continue

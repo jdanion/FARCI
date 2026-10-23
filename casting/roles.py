@@ -1,5 +1,9 @@
 """FARCI — définition des rôles et de leurs exigences.
 
+Règle : une option n'est listée que si le dépôt la FOURNIT (compose, config,
+TUTORIAL). Pas d'alternative « sur le papier » : un étudiant à qui l'on
+propose Nginx ou PyMuPDF doit trouver de quoi le faire tourner hors ligne.
+
 Chaque rôle a :
 - un nom
 - une liste d'options (la première = choix n°1, indispensable)
@@ -53,7 +57,6 @@ ROLES: list[Role] = [
         label="GitOps",
         options=[
             Option("gitea", "Gitea", min_ram_gb=2, description="Forge Git"),
-            Option("gitlab", "GitLab", min_ram_gb=4, description="Alternative à Gitea"),
         ],
         min_students=1,
         max_students=2,
@@ -67,8 +70,6 @@ ROLES: list[Role] = [
         label="Réseau & Dashboard",
         options=[
             Option("caddy", "Caddy", min_ram_gb=1, description="Reverse proxy"),
-            Option("nginx", "Nginx", min_ram_gb=1, description="Alternative à Caddy"),
-            Option("traefik", "Traefik", min_ram_gb=2, description="Alternative cloud-native"),
         ],
         min_students=1,
         max_students=2,
@@ -111,7 +112,6 @@ ROLES: list[Role] = [
         label="Documents cliniques",
         options=[
             Option("docling", "Docling", min_ram_gb=4, description="Conversion PDF"),
-            Option("pymupdf", "PyMuPDF", min_ram_gb=2, description="Alternative légère"),
         ],
         min_students=1,
         max_students=2,
@@ -139,7 +139,6 @@ ROLES: list[Role] = [
         label="Évaluation",
         options=[
             Option("mlflow", "MLflow", min_ram_gb=4, description="Suivi des runs"),
-            Option("wandb", "W&B", min_ram_gb=2, description="Alternative cloud"),
         ],
         min_students=1,
         max_students=2,
@@ -168,7 +167,6 @@ ROLES: list[Role] = [
         label="Agents Arcane",
         options=[
             Option("arcane", "Agents Arcane", min_ram_gb=2, description="Supervision"),
-            Option("portainer", "Portainer", min_ram_gb=2, description="Gestion Docker"),
         ],
         min_students=1,
         max_students=2,
@@ -176,7 +174,7 @@ ROLES: list[Role] = [
         description="Supervision + GitOps",
     ),
 
-    # --- Équipe 11 : Chaos engineering ---
+    # --- Étape 3 : chaos engineering (pilotée par le formateur) ---
     Role(
         name="chaos",
         label="Chaos engineering",

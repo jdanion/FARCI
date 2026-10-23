@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """FARCI — validation du registre des cibles (scripts/targets.def).
 
-Ce fichier est la source de vérité de deux_points d'entrée : la Makefile et
+Ce fichier est la source de vérité de deux points d'entrée : la Makefile et
 ./bin/farci. Une seule tabulation en trop suffisait à faire disparaître une
 cible SILENCIEUSEMENT (awk -F'\\t' voit alors 5 champs, le filtre les ignore).
 Ce contrôle existe pour que cette erreur ne puisse plus être silencieuse.
@@ -20,6 +20,15 @@ ROOT = os.environ.get("FARCI_ROOT", os.getcwd())
 DEFINITIONS = os.path.join(ROOT, "scripts", "targets.def")
 CMD_DIR = os.path.join(ROOT, "scripts", "cmd")
 NAME_RE = re.compile(r"[a-z][a-z0-9-]*")
+
+
+def help_groups() -> set[str]:
+    """Groupes que help.sh sait afficher : lus dans sa ligne GROUP_ORDER=(...),
+    pour qu'il n'existe qu'une seule liste."""
+    help_sh = os.path.join(CMD_DIR, "help.sh")
+    with open(help_sh, encoding="utf-8") as handle:
+        match = re.search(r"^GROUP_ORDER=\(([^)]*)\)", handle.read(), flags=re.MULTILINE)
+    return set(match.group(1).split()) if match else set()
 
 
 def main() -> int:
@@ -66,10 +75,10 @@ def main() -> int:
 
     # Les groupes déclarés ici doivent être ceux que help.sh sait afficher,
     # sinon des cibles seraient présentes mais invisibles.
-    known_groups = {"atelier", "qualité", "reseau", "nettoyage"}
+    known_groups = help_groups()
     for group in sorted(groups - known_groups):
         problems.append(
-            f"groupe inconnu {group!r} : ajouter son titre dans GROUP_TITLES (scripts/cmd/help.sh)"
+            f"groupe inconnu {group!r} : l'ajouter à GROUP_ORDER et GROUP_TITLES (scripts/cmd/help.sh)"
         )
 
     if problems:

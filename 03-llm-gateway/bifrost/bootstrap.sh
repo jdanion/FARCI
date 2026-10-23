@@ -15,12 +15,12 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-BIFROST_URL="${GATEWAY_B_IP:-192.168.50.31}:4001"
+BIFROST_URL="${GATEWAY_B_URL:?GATEWAY_B_IP/GATEWAY_PORT manquants : voir config/network.env}"
 
 section "FARCI — bootstrap Bifrost"
 
 info "vérification de Bifrost..."
-if curl -sf "http://$BIFROST_URL/health" >/dev/null 2>&1; then
+if curl -sf "$BIFROST_URL/health" >/dev/null 2>&1; then
   ok "Bifrost répond"
 else
   warn "Bifrost ne répond pas — vérifier le conteneur"
@@ -28,7 +28,7 @@ fi
 
 info "test des aliases..."
 for alias in med-extraction med-extraction-lite med-extraction-max; do
-  code=$(curl -s -o /dev/null -w '%{http_code}' "http://$BIFROST_URL/v1/models" \
+  code=$(curl -s -o /dev/null -w '%{http_code}' "$BIFROST_URL/v1/models" \
     -H "Authorization: Bearer sk-test" 2>/dev/null || echo "000")
   if [[ "$code" == "401" ]]; then
     ok "$alias : authentification requise (attendu)"

@@ -2,9 +2,9 @@
 # =============================================================================
 # Colonnes séparées par des TAB : nom, groupe, description, script.
 # Ce fichier est lu par DEUX consommateurs :
-#   - scripts/bin/farci  (le lanceur)  : ./bin/farci <nom>
+#   - bin/farci          (le lanceur)  : ./bin/farci <nom>
 #   - Makefile                          : make <nom>
-# Il est donc impossible que les deux proposed des listes différentes : c'est
+# Il est donc impossible que les deux proposent des listes différentes : c'est
 # l'un des moyens de garantir qu'un dépôt air-gappé reste utilisable même
 # sans `make` installé (beaucoup de postes étudiants n'ont pas make).
 #
@@ -12,27 +12,46 @@
 #   - une ligne par cible, aucune ligne sans script
 #   - le script doit exister et être exécutable, sinon `farci help` le signale
 #   - les noms sont kebab-case, sans espace
+#   - le groupe doit figurer dans GROUP_ORDER (scripts/cmd/help.sh)
 # =============================================================================
 
 help	atelier	Afficher cette aide	help.sh
-preload	atelier	Précharger les artefacts air-gap	../preload.sh
-verify-airgap	atelier	Vérifier que le workshop fonctionne hors ligne	../verify-airgap.sh
-verify-images	atelier	Vérifier les images Docker locales	verify-images.sh
-verify-models	atelier	Vérifier les poids de modèles	verify-models.sh
-verify-wheels	atelier	Vérifier les wheels Python	verify-wheels.sh
+doctor	atelier	Diagnostic de la machine (docker, python, RAM, disque)	doctor.sh
+bootstrap	atelier	Préparer la machine (hors ligne, .env, outils)	bootstrap.sh
+status	atelier	Tableau de progression du workshop (§49)	status.sh
+up	atelier	Démarrer une brique : up <dossier> (ex. 02-inference/ollama)	compose.sh
+down	atelier	Arrêter une brique : down <dossier>	compose.sh
+logs	atelier	Journaux d'une brique : logs <dossier>	compose.sh
+read	atelier	Lire le TUTORIAL d'une équipe	read.sh
+docs	atelier	Ouvrir la documentation (ARCHITECTURE, CONTRACTS...)	docs.sh
+checklist	atelier	Checklist formateur (INSTRUCTOR_GUIDE)	docs.sh
+casting	atelier	Répartition des équipes selon le matériel	casting.sh
 version	atelier	Versions figées du dépôt (versions.env)	version.sh
 env	atelier	Afficher la configuration effective	env.sh
 env-check	atelier	Valider la configuration (adresses, sous-réseau)	env.sh
 services	atelier	Lister le registre des services	services.sh
-network-check	atelier	Vérifier cohérence registré <-> adresses	network-check.sh
-status	atelier	Tableau de progression du workshop (§49)	status.sh
-doctor	atelier	Diagnostic de la machine (docker, python, RAM, disque)	doctor.sh
-bootstrap	atelier	Préparer la machine (hors ligne, .env, outils)	bootstrap.sh
-selftest	atelier	Auto-tests des parseurs internes (yaml, json)	selftest.sh
-read	atelier	Lire le TUTORIAL d'une équipe	read.sh
-docs	atelier	Ouvrir la documentation (ARCHITECTURE, CONTRACTS...)	docs.sh
-checklist	atelier	Checklist formateur (INSTRUCTOR_GUIDE)	docs.sh
+network-check	atelier	Vérifier cohérence registre <-> adresses	network-check.sh
 
+preload	airgap	Précharger les artefacts air-gap (avec Internet)	preload.sh
+verify-airgap	airgap	Vérifier que le workshop fonctionne hors ligne	verify-airgap.sh
+gen-manifest	airgap	Écrire offline/MANIFEST.sha256	gen-manifest.sh
+verify-manifest	airgap	Vérifier les empreintes contre le manifeste	verify-manifest.sh
+verify-images	airgap	Vérifier les images Docker locales	verify-images.sh
+verify-models	airgap	Vérifier les poids de modèles	verify-models.sh
+verify-wheels	airgap	Vérifier les wheels Python	verify-wheels.sh
+
+generate-dataset	dataset	Générer le dataset synthétique (.txt, --pdf pour Docling)	generate-dataset.sh
+build-gold	dataset	Générer le gold standard depuis le registre	build-gold.sh
+make-quick-set	dataset	Afficher le sous-ensemble quick (10 cas)	make-quick-set.sh
+extract	dataset	Étape 2, parcours Python : extraire tous les dossiers	extract.sh
+evaluate	dataset	Comparer les extractions au gold, classer les runs	evaluate.sh
+
+chaos	chaos	Étape 3 : list | scenario-NN | status | reset	chaos.sh
+
+ci	qualité	Ce que la CI exécute (selftest, lint, tests, gold)	ci.sh
+selftest	qualité	Auto-tests de l'outillage (registre, parseurs, --help)	selftest.sh
+test-unit	qualité	Tests unitaires Python (sans réseau ni GPU)	test-unit.sh
+test	qualité	Tests d'intégration des briques déployées	test.sh
 lint	qualité	Toute la batterie de contrôles	lint.sh
 lint-versions	qualité	Aucun tag flottant, versions épinglées	lint.sh
 lint-ips	qualité	Aucune adresse IP en dur hors configuration	lint.sh
@@ -41,9 +60,6 @@ lint-offline	qualité	Politique air-gap (pas de CDN, pas de pull)	lint.sh
 lint-todo	qualité	Ni TODO ni stub dans le code livré	lint.sh
 lint-shell	qualité	Syntaxe bash (+ shellcheck si disponible)	lint.sh
 lint-python	qualité	Syntaxe Python (compilation)	lint.sh
+lint-commands	qualité	Les docs ne citent que des commandes qui existent	lint.sh
 
-generate-dataset	dataset	Générer le dataset synthétique (PDF)	generate-dataset.sh
-build-gold	dataset	Générer le gold standard depuis le registre	build-gold.sh
-make-quick-set	dataset	Créer le sous-ensemble quick (10 cas)	make-quick-set.sh
-casting	dataset	Répartition des équipes selon le matériel	casting.sh
 clean	nettoyage	Supprimer les artefacts locaux (demande --yes)	clean.sh

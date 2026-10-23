@@ -112,7 +112,7 @@ derrière la même passerelle :
 |---|---|---|---|---|
 | Principal, commun à tous | **Ornith-1.5-9B** | ~5,9 Go | MIT | Ollama **et** llama.cpp **et** oMLX |
 | Gros poste / Mac ≥ 32 Go | **Qwen3.8-27B** | ~16,5 Go | Apache-2.0 | Ollama, llama.cpp, MLX |
-| Développement et CI | Qwen3.5-2B | ~1,2 Go | Apache-2.0 |idem |
+| Secours, développement et CI | Qwen3.5-2B | ~1,2 Go | Apache-2.0 | idem |
 
 L'application ne voit que le nom logique `med-extraction`. Changer de modèle ne
 demande **aucune** modification du code métier : c'est l'objet même de l'atelier.
@@ -129,14 +129,14 @@ demande **aucune** modification du code métier : c'est l'objet même de l'ateli
 
 | Chemin | Contenu |
 |---|---|
-| `00-gitops/` … `07-applications/` | une équipe par dossier, avec son `TUTORIAL.md` |
+| `00-gitops/` … `08-arcane-agents/` | une équipe par dossier, avec son `TUTORIAL.md` (`./bin/farci read <équipe>`) |
 | `config/services.yaml` | **source de vérité** : quels services existent, où, comment les sonder |
 | `config/network.env.example` | les adresses IP, seul endroit où elles apparaissent |
 | `versions.env` | toutes les versions figées, jamais `latest` |
 | `scripts/` | toute la logique ; `scripts/targets.def` liste les commandes |
-| `datasets/` | documents médicaux synthétiques + gold standard |
+| `datasets/` | dossiers médicaux synthétiques (texte) + gold standard |
 | `chaos/` | scénarios de panne réversibles |
-| `tests/` | tests contractuels (le test d'un brique vaut plus que sa documentation) |
+| `tests/` | tests unitaires (`./bin/farci test-unit`) et contractuels (`./bin/farci test`) |
 | `docs/` | architecture, contrats, air-gap, chaos, guide formateur |
 | `offline/` | lien symbolique vers les artefacts lourds (§ ci-dessus) |
 
@@ -161,10 +161,10 @@ demande **aucune** modification du code métier : c'est l'objet même de l'ateli
 
 | Vous êtes… | Lisez |
 |---|---|
-| en/trainant un formateur | `docs/INSTRUCTOR_GUIDE.md` |
+| formateur | `docs/INSTRUCTOR_GUIDE.md` |
 | responsable d'une équipe | `./bin/farci read <équipe>` |
 | curieux de l'architecture | `docs/ARCHITECTURE.md` |
-| Specialists des contrats | `docs/CONTRACTS.md` |
+| intéressé par les contrats | `docs/CONTRACTS.md` |
 | inquiet du fonctionnement hors ligne | `docs/AIRGAP.md` |
 
 Contribuer : `CONTRIBUTING.md`.

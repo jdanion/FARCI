@@ -11,19 +11,24 @@
 ## Solution simple (scripts)
 
 ```bash
-# 1. Démarrer Docling
-cd 04-clinical-documents/docling
-docker compose up -d
+# 1. Démarrer Docling et le tester
+./bin/farci up 04-clinical-documents/docling
+04-clinical-documents/docling/smoke.sh
 
-# 2. Smoke test
-./smoke.sh
+# 2. Pseudonymiser un document du dataset
+PYTHONPATH=04-clinical-documents python3 -m deidentification.cli \
+  datasets/raw/patient_1234567890123_cro.txt datasets/pseudonymized/patient_1234567890123_cro.txt
 
-# 3. Pseudonymiser un document
-cd ../deidentification
-python -m deidentification.cli input.txt output.txt --mapping mapping.json
+# 3. Vérifier : aucune fuite d'identifiant sur les 80 documents
+./bin/farci test-unit -k deidentification
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Démarrer Docling
 
@@ -35,14 +40,14 @@ docker run -d \
   -e DOCLING_DO_OCR=false \
   -e DOCLING_DO_TABLE_STRUCTURE=true \
   -v docling-cache:/root/.cache \
-  ds4sd/docling-serve:0.5.1
+  ghcr.io/docling-project/docling-serve-cpu:v1.35.0
 ```
 
 ### 2. Convertir un PDF
 
 ```bash
-curl -X POST http://192.168.50.40:5001/v1/convert/file \
-  -F "file=@document.pdf" \
+curl -X POST $DOCLING_URL/v1/convert/file \
+  -F "files=@document.pdf" \
   -F "to_formats=md,json" \
   -F "do_ocr=false" \
   -F "do_table_structure=true"

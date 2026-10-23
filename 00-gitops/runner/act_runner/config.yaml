@@ -1,19 +1,25 @@
-# FARCI — configuration act_runner
-# Le runner est configuré via variables d'environnement dans docker-compose.yml.
-# Ce fichier sert de documentation et de fallback.
+# FARCI — configuration act_runner (montée dans le conteneur, CONFIG_FILE).
+#
+# Les labels ne sont PAS ici : ils viennent de GITEA_RUNNER_LABELS
+# (00-gitops/docker-compose.yml), qui lit la version de l'image dans
+# versions.env. Une liste vide ici laisse act_runner utiliser ceux de
+# l'enregistrement.
 
 log:
   level: info
 
 runner:
-  name: farci-runner
-  labels:
-    - ubuntu-latest:docker://node:20-bookworm
+  file: /data/.runner
+  capacity: 2
+  labels: []
 
 container:
+  # Les jobs (tests d'intégration) doivent joindre les briques par leur
+  # adresse sur le réseau de l'atelier.
   network: farci
   privileged: false
+  # Air-gap : ne jamais tenter de retélécharger l'image d'un job.
+  force_pull: false
 
 cache:
-  enabled: true
-  port: 8080
+  enabled: false

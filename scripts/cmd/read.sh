@@ -31,7 +31,7 @@ if [[ -n "$EQUIPE" && "$EQUIPE" != "--list" && "$EQUIPE" != "-l" ]]; then
   target="$candidate/$FILE"
   if [[ ! -r "$target" ]]; then
     err "$target n'existe pas encore"
-    note "Cette équipe n'a pas encore livré son fichier (les phases arrivent progressivement)."
+    info "Cette équipe n'a pas encore livré ce fichier."
     printf '\n  Fichiers présents dans %s :\n' "$(basename "$candidate")" >&2
     find "$candidate" -maxdepth 1 -type f -printf '    %f\n' 2>/dev/null | sort >&2
     exit 1

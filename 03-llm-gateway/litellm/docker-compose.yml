@@ -18,6 +18,8 @@ services:
       farci:
         ipv4_address: ${GATEWAY_A_IP}
     environment:
+      # Adresse du runtime, construite depuis config/network.env (aucune IP ici).
+      INFERENCE_A_URL: http://${INFERENCE_A_IP:?INFERENCE_A_IP manquant (config/network.env)}:${INFERENCE_PORT:?INFERENCE_PORT manquant}
       LITELLM_LOG: "DEBUG"
       LITELLM_LOCAL_MODEL_COST_MAP: "True"
     healthcheck:

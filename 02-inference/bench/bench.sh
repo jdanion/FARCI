@@ -17,7 +17,7 @@ farci_load_env
 
 MODEL="${1:-ornith-1.5-9b-q5km}"
 QUANT="${2:-q5km}"
-BASE_URL="${3:-http://192.168.50.20:8080/v1}"
+BASE_URL="${3:-${INFERENCE_A_URL:?INFERENCE_A_IP/INFERENCE_PORT manquants : voir config/network.env}/v1}"
 
 section "FARCI — benchmark $MODEL ($QUANT)"
 

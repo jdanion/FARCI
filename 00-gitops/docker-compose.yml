@@ -16,14 +16,17 @@ services:
       GITEA__database__NAME: ${GITEA_DB_NAME:-gitea}
       GITEA__database__USER: ${GITEA_DB_USER:-gitea}
       GITEA__database__PASSWD: ${GITEA_DB_PASSWORD:?GITEA_DB_PASSWORD requis}
-      GITEA__server__DOMAIN: ${GITEA_DOMAIN:-192.168.50.10}
-      GITEA__server__ROOT_URL: ${GITEA_ROOT_URL:-http://192.168.50.10:3000/}
-      GITEA__server__SSH_DOMAIN: ${GITEA_SSH_DOMAIN:-192.168.50.10}
+      GITEA__server__DOMAIN: ${GITEA_IP:?GITEA_IP manquant (config/network.env)}
+      GITEA__server__ROOT_URL: http://${GITEA_IP:?GITEA_IP manquant (config/network.env)}:${GITEA_PORT:?GITEA_PORT manquant}/
+      GITEA__server__SSH_DOMAIN: ${GITEA_IP:?GITEA_IP manquant (config/network.env)}
       GITEA__service__DISABLE_REGISTRATION: "true"
       GITEA__service__REQUIRE_SIGNIN_VIEW: "true"
       GITEA__security__INSTALL_LOCK: "true"
       GITEA__security__SECRET_KEY: ${GITEA_SECRET_KEY:?GITEA_SECRET_KEY requis}
       GITEA__security__INTERNAL_TOKEN: ${GITEA_INTERNAL_TOKEN:?GITEA_INTERNAL_TOKEN requis}
+      # Jeton d'enregistrement du runner, fixé d'avance : le même est donné à
+      # act_runner ci-dessous, il n'y a rien à copier depuis l'interface.
+      GITEA_RUNNER_REGISTRATION_TOKEN: ${GITEA_RUNNER_TOKEN:?GITEA_RUNNER_TOKEN requis}
     volumes:
       - ./gitea/app.ini:/etc/gitea/app.ini:ro
       - gitea-data:/data
@@ -31,7 +34,8 @@ services:
       - "3000:3000"
       - "2222:22"
     networks:
-      - farci
+      farci:
+        ipv4_address: ${GITEA_IP:?GITEA_IP manquant (config/network.env)}
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,7 +49,7 @@ services:
       POSTGRES_USER: ${GITEA_DB_USER:-gitea}
       POSTGRES_PASSWORD: ${GITEA_DB_PASSWORD:?GITEA_DB_PASSWORD requis}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql
     networks:
       - farci
     healthcheck:
@@ -59,12 +63,15 @@ services:
     container_name: farci-act-runner
     restart: unless-stopped
     environment:
-      GITEA_INSTANCE_URL: ${GITEA_ROOT_URL:-http://192.168.50.10:3000/}
+      GITEA_INSTANCE_URL: http://${GITEA_IP:?GITEA_IP manquant (config/network.env)}:${GITEA_PORT:?GITEA_PORT manquant}/
       GITEA_RUNNER_REGISTRATION_TOKEN: ${GITEA_RUNNER_TOKEN:?GITEA_RUNNER_TOKEN requis}
       GITEA_RUNNER_NAME: farci-runner
-      GITEA_RUNNER_LABELS: ubuntu-latest:docker://node:20-bookworm
+      CONFIG_FILE: /config.yaml
+      # Label des workflows (.gitea/workflows : runs-on: farci) -> image préchargée.
+      GITEA_RUNNER_LABELS: farci:docker://node:${CI_RUNNER_NODE_VERSION:?CI_RUNNER_NODE_VERSION manquant (versions.env)}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./runner/act_runner/config.yaml:/config.yaml:ro
       - act-runner-data:/data
     networks:
       - farci

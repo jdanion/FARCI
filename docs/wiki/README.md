@@ -1,6 +1,9 @@
 # FARCI — Wiki des équipes
 
-Ce wiki contient un tutoriel pas à pas pour chaque équipe du workshop.
+Ce wiki contient un tutoriel pas à pas pour chaque équipe du workshop : neuf
+dossiers d'équipe (`00-gitops/` à `08-arcane-agents/`), plus l'étape 3 (chaos),
+qui n'est pas une équipe. Le TUTORIAL.md de chaque dossier est la référence
+technique ; ces pages sont le chemin guidé.
 
 ## Structure de chaque page
 
@@ -21,7 +24,7 @@ Ce wiki contient un tutoriel pas à pas pour chaque équipe du workshop.
 | 6 | Évaluation (MLflow, métriques) | [equipe-06](equipe-06.md) |
 | 7 | Applications (Python, Open WebUI, Flowise) | [equipe-07](equipe-07.md) |
 | 8 | Agents Arcane & GitOps | [equipe-08](equipe-08.md) |
-| 11 | Chaos engineering | [equipe-11](equipe-11.md) |
+| — | Étape 3 : chaos engineering (pas une équipe) | [chaos](chaos.md) |
 
 ## Utilisation
 
