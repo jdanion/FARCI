@@ -35,7 +35,6 @@ PYTHONPATH=04-clinical-documents python3 -m deidentification.cli \
 ```bash
 docker run -d \
   --name farci-docling \
-  --network farci \
   -p 5001:5001 \
   -e DOCLING_DO_OCR=false \
   -e DOCLING_DO_TABLE_STRUCTURE=true \

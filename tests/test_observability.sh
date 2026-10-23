@@ -6,6 +6,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
 
 TEST_NAME="observability"
 test_start
+test_local_default PHOENIX_URL PHOENIX_PORT
 test_need_service PHOENIX_URL /healthz
 
 if [[ "$(http_code "$PHOENIX_URL/healthz")" == "200" ]]; then

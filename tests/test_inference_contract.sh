@@ -10,6 +10,7 @@ source "$FARCI_TESTS_DIR/lib/json.sh"
 TEST_NAME="inference-contract"
 test_start
 if [[ -z "${BASE_URL:-}" ]]; then
+  test_local_default INFERENCE_A_URL INFERENCE_A_PORT
   test_need_service INFERENCE_A_URL /v1/models
   BASE_URL="$INFERENCE_A_URL/v1"
 fi

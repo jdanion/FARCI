@@ -62,7 +62,6 @@ farci_load_env() {
   export FARCI_IMAGES_DIR="${FARCI_OFFLINE_DIR}/images"
   export FARCI_WHEELS_DIR="${FARCI_OFFLINE_DIR}/wheels"
   export FARCI_MANIFEST="${FARCI_OFFLINE_DIR}/MANIFEST.sha256"
-  export FARCI_DOCKER_NETWORK="${FARCI_DOCKER_NETWORK:-farci}"
 
   farci_derive_urls
 
@@ -91,20 +90,23 @@ farci_load_versions() {
 #   NOM_URL  <-  NOM_IP + port
 FARCI_URL_MAP=(
   "GITEA_URL:GITEA_IP:GITEA_PORT"
-  "CADDY_URL:CADDY_IP:CADDY_INTERNAL_PORT"
+  "CADDY_URL:CADDY_IP:CADDY_PORT"
   "HEALTH_AGGREGATOR_URL:HEALTH_AGGREGATOR_IP:HEALTH_AGGREGATOR_PORT"
   "UPTIME_KUMA_URL:UPTIME_KUMA_IP:UPTIME_KUMA_PORT"
-  "INFERENCE_A_URL:INFERENCE_A_IP:INFERENCE_PORT"
-  "INFERENCE_B_URL:INFERENCE_B_IP:INFERENCE_PORT"
-  "INFERENCE_C_URL:INFERENCE_C_IP:INFERENCE_PORT"
-  "GATEWAY_A_URL:GATEWAY_A_IP:GATEWAY_PORT"
-  "GATEWAY_B_URL:GATEWAY_B_IP:GATEWAY_PORT"
+  "INFERENCE_A_URL:INFERENCE_A_IP:INFERENCE_A_PORT"
+  "INFERENCE_B_URL:INFERENCE_B_IP:INFERENCE_B_PORT"
+  "INFERENCE_C_URL:INFERENCE_C_IP:INFERENCE_C_PORT"
+  "GATEWAY_A_URL:GATEWAY_A_IP:GATEWAY_A_PORT"
+  "GATEWAY_B_URL:GATEWAY_B_IP:GATEWAY_B_PORT"
   "DOCLING_URL:DOCLING_IP:DOCLING_PORT"
   "PHOENIX_URL:OBSERVABILITY_A_IP:PHOENIX_PORT"
   "LANGFUSE_URL:OBSERVABILITY_B_IP:LANGFUSE_PORT"
   "MLFLOW_URL:MLFLOW_IP:MLFLOW_PORT"
   "OPEN_WEBUI_URL:OPEN_WEBUI_IP:OPEN_WEBUI_PORT"
   "FLOWISE_URL:FLOWISE_IP:FLOWISE_PORT"
+  "FARCI_ENTRY_URL:REFERENCE_IP:ENTRY_PORT"
+  "REFERENCE_REPLAY_URL:REFERENCE_IP:REPLAY_PORT"
+  "REFERENCE_WEBUI_URL:REFERENCE_IP:OPEN_WEBUI_PORT"
 )
 
 farci_derive_urls() {
@@ -115,17 +117,22 @@ farci_derive_urls() {
     [[ -n "${!ip_var:-}" && -n "${!port_var:-}" ]] || continue
     export "$name=http://${!ip_var}:${!port_var}"
   done
-  # Points d'entrée stables, tous derrière Caddy (FARCI §12) : c'est ce que
-  # voient les applications. Elles ne connaissent jamais l'adresse d'un runtime.
-  if [[ -n "${CADDY_URL:-}" ]]; then
-    : "${FARCI_GATEWAY_URL:=${CADDY_URL}/v1}"
-    : "${FARCI_DOCLING_URL:=${CADDY_URL}/docling}"
-    : "${FARCI_STATUS_URL:=${CADDY_URL}/status}"
-    export FARCI_GATEWAY_URL FARCI_DOCLING_URL FARCI_STATUS_URL
+  # L'accueil de la salle (Caddy du Pi, FARCI §12) : c'est tout ce que voient
+  # les applications. Sans Pi (travail seul), l'accueil de l'équipe 1 le
+  # remplace. Une application ne connaît jamais l'adresse d'un runtime.
+  if [[ -z "${FARCI_ENTRY_URL:-}" && -n "${CADDY_URL:-}" ]]; then
+    export FARCI_ENTRY_URL="$CADDY_URL"
   fi
-  if [[ -n "${PHOENIX_URL:-}" ]]; then
-    : "${OTEL_EXPORTER_OTLP_ENDPOINT:=${PHOENIX_URL}/v1/traces}"
-    export OTEL_EXPORTER_OTLP_ENDPOINT
+  if [[ -n "${FARCI_ENTRY_URL:-}" ]]; then
+    : "${FARCI_GATEWAY_URL:=${FARCI_ENTRY_URL}/v1}"
+    : "${FARCI_RUNTIME_URL:=${FARCI_ENTRY_URL}/runtime/v1}"
+    : "${FARCI_DOCLING_URL:=${FARCI_ENTRY_URL}/docling}"
+    : "${FARCI_STATUS_URL:=${FARCI_ENTRY_URL}/status}"
+    # Les traces passent aussi par l'accueil : si Phoenix tombe, la
+    # référence les reçoit, et rien ne bloque jamais l'extraction.
+    : "${OTEL_EXPORTER_OTLP_ENDPOINT:=${FARCI_ENTRY_URL}/observability/v1/traces}"
+    export FARCI_GATEWAY_URL FARCI_RUNTIME_URL FARCI_DOCLING_URL FARCI_STATUS_URL \
+      OTEL_EXPORTER_OTLP_ENDPOINT
   fi
 }
 
@@ -133,11 +140,8 @@ farci_derive_urls() {
 # mieux vaut un échec franc qu'un compose qui démarre à moitié.
 FARCI_REQUIRED_VARS=(
   FARCI_SUBNET
-  INFERENCE_A_IP INFERENCE_B_IP
-  GATEWAY_A_IP
-  DOCLING_IP
-  MLFLOW_IP
-  CADDY_IP
+  REFERENCE_IP
+  ENTRY_PORT
 )
 
 # farci_check_env valide la configuration.
@@ -196,8 +200,8 @@ farci_print_env() {
   printf '\n%s# dérivées%s\n' "$C_BOLD" "$C_RESET"
   printf 'FARCI_ROOT=%s\nFARCI_DATA_DIR=%s\nFARCI_OFFLINE_DIR=%s\n' \
     "$FARCI_ROOT" "$FARCI_DATA_DIR" "${FARCI_OFFLINE_DIR:-}"
-  printf 'FARCI_SUBNET=%s\nFARCI_DOCKER_NETWORK=%s\n' \
-    "${FARCI_SUBNET:-}" "${FARCI_DOCKER_NETWORK:-farci}"
+  printf 'FARCI_SUBNET=%s\nREFERENCE_IP=%s\nFARCI_ENTRY_URL=%s\n' \
+    "${FARCI_SUBNET:-}" "${REFERENCE_IP:-}" "${FARCI_ENTRY_URL:-}"
 }
 
 # Exécution directe : --print | --check | --paths

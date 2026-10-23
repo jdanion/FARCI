@@ -32,11 +32,20 @@ Le réseau (équipe 1). La passerelle (équipe 3) dépend de vous.
 
 ## Votre IP
 
-| Runtime | Adresse | Port |
+Une brique est jointe par **l'IP de votre machine** et **le port publié** de
+ce service :
+
+| Runtime | Adresse | Port publié |
 |---|---|---|
-| Ollama (primaire) | `INFERENCE_A_IP` | `INFERENCE_PORT` |
-| llama.cpp (secondaire, bonus) | `INFERENCE_B_IP` | `INFERENCE_PORT` |
-| oMLX (Mac, bonus) | `INFERENCE_C_IP` | `INFERENCE_PORT` |
+| Ollama (primaire) | `INFERENCE_A_IP` | `INFERENCE_A_PORT` |
+| llama.cpp (secondaire, bonus) | `INFERENCE_B_IP` | `INFERENCE_B_PORT` |
+| oMLX (Mac, bonus) | `INFERENCE_C_IP` | `INFERENCE_C_PORT` |
+
+`./bin/farci doctor` affiche l'IP de votre machine ; le formateur la déclare
+sur le Pi (`./bin/farci room set 2 <ip>`). Tous les runtimes servent le
+**même nom logique**, `med-extraction` : la passerelle ne sait pas lequel
+répond. Tant que le vôtre n'est pas monté, la ligne affiche 🛟 : le runtime
+rejoué de la référence répond à votre place.
 
 ## Installation
 
@@ -55,7 +64,8 @@ Le réseau (équipe 1). La passerelle (équipe 3) dépend de vous.
 
 ```bash
 ./bin/farci up 02-inference/ollama
-02-inference/ollama/create-model.sh       # importe les GGUF présents dans Ollama
+02-inference/ollama/create-model.sh       # auto : principal (9B) si ≥ 16 Go de RAM, sinon secours (2B)
+02-inference/ollama/create-model.sh secours   # forcer le modèle de secours (machine faible, réponses lentes)
 ```
 
 Bonus :
@@ -112,4 +122,5 @@ modèle, runtime différent.
 |---|---|---|
 | le conteneur s'arrête, `out of memory` | RAM insuffisante pour le 9B | utiliser le modèle de secours Qwen3.5-2B (`med-extraction-lite`) |
 | `create-model.sh` : GGUF manquant | poids non copiés | `./bin/farci verify-models` |
-| réponses très lentes (> 60 s) | CPU seul, gros modèle | modèle de secours, ou demander au formateur de basculer sur la pile de référence |
+| réponses très lentes (> 60 s) | CPU seul, gros modèle | `02-inference/ollama/create-model.sh secours` (même nom `med-extraction`, rien d'autre à changer) |
+| toujours trop lent, ou Docker inutilisable | machine trop faible | le formateur lance `./bin/farci rescue inference` : la référence sert, vous continuez la suite du parcours |

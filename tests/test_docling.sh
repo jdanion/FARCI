@@ -9,6 +9,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
 
 TEST_NAME="docling"
 test_start
+test_local_default DOCLING_URL DOCLING_PORT
 test_need_service DOCLING_URL /health
 
 TEST_PDF="$(find "$FARCI_ROOT/datasets/raw" -name '*.pdf' -print -quit 2>/dev/null || true)"

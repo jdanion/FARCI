@@ -43,6 +43,12 @@ groups:
 #   bonus  équipe volontaire ou démonstration du formateur ; jamais requis.
 # Phoenix est `core` mais pas critique : l'observabilité est hors du chemin
 # de production (scénario 07, ARCHITECTURE §7).
+#
+# `reference_port_var` : la pile de référence du formateur (reference/, sur
+# REFERENCE_IP) fournit ce service sur ce port. Quand la brique de l'équipe
+# ne répond pas, l'accueil de la salle sert celle de la référence, et le
+# tableau l'affiche avec 🛟. Les runtimes de référence sont le runtime rejoué
+# (REPLAY_PORT), ou le modèle de secours si le formateur l'a démarré.
 services:
   - id: gitea
     label: Gitea
@@ -66,7 +72,8 @@ services:
     compose: 01-network-dashboard
     group: CORE_INFRASTRUCTURE
     ip_var: CADDY_IP
-    port_var: CADDY_INTERNAL_PORT
+    port_var: CADDY_PORT
+    reference_port_var: ENTRY_PORT
     # /livez répond par Caddy seul ; /healthz est relayé à l'agrégateur.
     health_paths:
       - /livez
@@ -81,6 +88,7 @@ services:
     group: CORE_INFRASTRUCTURE
     ip_var: HEALTH_AGGREGATOR_IP
     port_var: HEALTH_AGGREGATOR_PORT
+    reference_port_var: HEALTH_AGGREGATOR_PORT
     # /livez et non /healthz : l'agrégateur se sonde lui-même, et /healthz
     # relancerait l'agrégation en boucle.
     health_paths:
@@ -95,7 +103,8 @@ services:
     compose: 02-inference
     group: AI_RUNTIMES
     ip_var: INFERENCE_A_IP
-    port_var: INFERENCE_PORT
+    port_var: INFERENCE_A_PORT
+    reference_port_var: REPLAY_PORT
     health_paths:
       - /v1/models
       - /api/tags
@@ -110,7 +119,8 @@ services:
     compose: 02-inference
     group: AI_RUNTIMES
     ip_var: INFERENCE_B_IP
-    port_var: INFERENCE_PORT
+    port_var: INFERENCE_B_PORT
+    reference_port_var: REPLAY_PORT
     health_paths:
       - /v1/models
       - /health
@@ -125,7 +135,8 @@ services:
     compose: 02-inference
     group: AI_RUNTIMES
     ip_var: INFERENCE_C_IP
-    port_var: INFERENCE_PORT
+    port_var: INFERENCE_C_PORT
+    reference_port_var: REPLAY_PORT
     health_paths:
       - /v1/models
       - /health
@@ -140,7 +151,8 @@ services:
     compose: 03-llm-gateway
     group: LLM_GATEWAYS
     ip_var: GATEWAY_A_IP
-    port_var: GATEWAY_PORT
+    port_var: GATEWAY_A_PORT
+    reference_port_var: GATEWAY_A_PORT
     health_paths:
       - /health/liveliness
       - /health
@@ -154,7 +166,7 @@ services:
     compose: 03-llm-gateway
     group: LLM_GATEWAYS
     ip_var: GATEWAY_B_IP
-    port_var: GATEWAY_PORT
+    port_var: GATEWAY_B_PORT
     health_paths:
       - /health
       - /api/health
@@ -169,6 +181,7 @@ services:
     group: DOCUMENT_PIPELINE
     ip_var: DOCLING_IP
     port_var: DOCLING_PORT
+    reference_port_var: DOCLING_PORT
     health_paths:
       - /health
       - /v1/health
@@ -183,6 +196,7 @@ services:
     group: OBSERVABILITY
     ip_var: OBSERVABILITY_A_IP
     port_var: PHOENIX_PORT
+    reference_port_var: PHOENIX_PORT
     health_paths:
       - /healthz
       - /
@@ -238,6 +252,7 @@ services:
     group: CLIENT_APPLICATIONS
     ip_var: OPEN_WEBUI_IP
     port_var: OPEN_WEBUI_PORT
+    reference_port_var: OPEN_WEBUI_PORT
     health_paths:
       - /health
     tier: core
@@ -256,6 +271,30 @@ services:
     tier: bonus
     critical: false
     phase: 9
+
+# Routes de l'ACCUEIL DE LA SALLE (Caddy du Pi, et celui de l'équipe 1).
+# Pour chaque route : les services d'équipe essayés dans l'ordre, puis le
+# service de la référence (son `reference_port_var` sur REFERENCE_IP).
+# `./bin/farci rescue <route>` retire les services d'équipe : la référence
+# sert seule. scripts/services.py (commande upstreams) construit les listes,
+# 01-network-dashboard/caddy/Caddyfile les lit (variables UP_*).
+routes:
+  - name: passerelle
+    var: UP_PASSERELLE
+    services: [gateway-litellm, gateway-bifrost]
+    reference: gateway-litellm
+  - name: inference
+    var: UP_INFERENCE
+    services: [inference-ollama, inference-llamacpp, inference-omlx]
+    reference: inference-ollama
+  - name: documents
+    var: UP_DOCUMENTS
+    services: [docling]
+    reference: docling
+  - name: observabilite
+    var: UP_OBSERVABILITE
+    services: [phoenix]
+    reference: phoenix
 
 # Lignes du tableau de progression projeté dans l'amphithéâtre (FARCI §49).
 # Les lignes `core` sont toujours affichées ; les lignes `bonus` sont résumées

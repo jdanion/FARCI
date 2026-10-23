@@ -1,33 +1,32 @@
 #!/usr/bin/env bash
-# FARCI — scénario 03 : rate limiting
+# FARCI — scénario 03 : limitation de débit (BONUS)
 #
-# Attendu : ≥1 × 429 + Retry-After ; sk-priority 200
+# Pré-requis : clés virtuelles LiteLLM (PostgreSQL), voir 03-llm-gateway/TUTORIAL.md.
+# Action     : 12 requêtes rapides avec la clé standard.
+# Attendu    : au moins un 429 avec Retry-After.
+# Leçon      : le débit est une propriété de la passerelle, pas du modèle.
 
-SCENARIO_TITLE="Limitation de débit (clé standard)"
+SCENARIO_TITLE="Limitation de débit (bonus : clés LiteLLM requises)"
+SCENARIO_ATTENDU="au moins un HTTP 429"
 
 chaos_scenario_apply() {
-  info "test de rate limiting (12 requêtes en 2s)..."
-
-  local count_429=0
-  local count_200=0
-
+  CHAOS_429=0
+  local i code
   for i in $(seq 1 12); do
-    code=$(curl -s --max-time 30 -o /dev/null -w '%{http_code}' \
-      -X POST "${FARCI_GATEWAY_URL:?CADDY_IP manquant (config/network.env)}/chat/completions" \
+    code="$(curl -s --noproxy '*' --max-time 30 -o /dev/null -w '%{http_code}' \
+      -X POST "${FARCI_GATEWAY_URL:?FARCI_GATEWAY_URL manquante (REFERENCE_IP)}/chat/completions" \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer ${GATEWAY_KEY_STANDARD:-}" \
-      -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}' 2>/dev/null || true)
-
-    if [[ "$code" == "429" ]]; then
-      count_429=$((count_429 + 1))
-    elif [[ "$code" == "200" ]]; then
-      count_200=$((count_200 + 1))
-    fi
+      -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}' || true)"
+    [[ "$code" == "429" ]] && CHAOS_429=$((CHAOS_429 + 1))
   done
+  info "429 reçus : $CHAOS_429 / 12"
+}
 
-  info "429: $count_429, 200: $count_200"
+chaos_scenario_check() {
+  chaos_expect "au moins un 429" test "${CHAOS_429:-0}" -gt 0
 }
 
 chaos_scenario_revert() {
-  ok "rate limit test terminé"
+  ok "rien à réparer : le quota se recharge seul"
 }

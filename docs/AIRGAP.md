@@ -42,6 +42,7 @@ Total selon le périmètre :
 | `--core` | gitops + dashboard + inference + gateway + observabilité + documents + évaluation + clients + wheels + modèle 9B + modèle de secours 2B | ~28 Go |
 | `--only models_qwen38` | le modèle 27B | +17,5 Go |
 | `--models-ci` | le modèle de secours seul (Qwen3.5-2B) | ~1,2 Go |
+| `--reference` | pile de référence (accueil, runtime rejoué, LiteLLM, Phoenix, Open WebUI, Ollama, Docling) + modèle de secours — **à lancer sur le Pi** | ~8 Go |
 | `--all` | tout | ~57 Go |
 
 Chaque image est téléchargée **puis** sauvegardée en `.tar` dans
@@ -55,6 +56,12 @@ for f in offline/images/*.tar; do docker load -i "$f"; done
 
 > `--core` suffit pour obtenir `CLINICAL PIPELINE READY`. Le modèle 27 Go est
 > réservé aux postes qui le justifient.
+
+> **Architecture** : `docker pull` tire l'image de l'architecture de la machine
+> qui la lance. Les `.tar` préparés sur un portable x86 (amd64) ne
+> fonctionnent pas sur le Raspberry Pi (arm64), et inversement : préparer le
+> Pi avec `./preload.sh --reference` **sur le Pi**, et ne pas mélanger les
+> deux répertoires `offline/images/` (`reference/README.md`).
 
 ---
 

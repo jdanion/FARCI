@@ -42,7 +42,6 @@ docker network create \
 ```bash
 docker run -d \
   --name farci-caddy \
-  --network farci \
   -p 80:80 \
   -v $(pwd)/caddy/Caddyfile:/etc/caddy/Caddyfile:ro \
   -v caddy-data:/data \
@@ -54,7 +53,6 @@ docker run -d \
 ```bash
 docker run -d \
   --name farci-uptime-kuma \
-  --network farci \
   -p 3001:3001 \
   -v uptime-kuma-data:/app/data \
   louislam/uptime-kuma:2.5.5
@@ -65,7 +63,6 @@ docker run -d \
 ```bash
 docker run -d \
   --name farci-health-aggregator \
-  --network farci \
   -p 8081:8081 \
   -v $(pwd)/health-aggregator:/app:ro \
   -v $(pwd)/../../config/services.yaml:/app/config/services.yaml:ro \

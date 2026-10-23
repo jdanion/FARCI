@@ -6,21 +6,15 @@
   "models": [
     {
       "alias": "med-extraction",
-      "backend": "ollama",
-      "url": "env.INFERENCE_A_URL",
-      "model": "ornith-1.5-9b-q5km"
+      "backend": "openai",
+      "url": "env.FARCI_RUNTIME_URL",
+      "model": "med-extraction"
     },
     {
       "alias": "med-extraction-lite",
-      "backend": "ollama",
-      "url": "env.INFERENCE_A_URL",
-      "model": "qwen3.5-2b-q4km"
-    },
-    {
-      "alias": "med-extraction-max",
-      "backend": "ollama",
-      "url": "env.INFERENCE_A_URL",
-      "model": "qwen3.8-27b-q4km"
+      "backend": "openai",
+      "url": "env.FARCI_RUNTIME_URL",
+      "model": "med-extraction-lite"
     }
   ],
   "fallbacks": {

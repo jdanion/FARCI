@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """FARCI — health-aggregator (FARCI §14).
 
-Sonde tous les services de config/services.yaml et applique LA règle de
-CLINICAL PIPELINE READY, celle de scripts/services.py (pipeline_state) : le
-tableau `./bin/farci status` et cet agrégateur ne peuvent donc pas diverger.
+Sonde tous les services de config/services.yaml (et leur doublure sur la
+pile de référence) avec scripts/services.py (room_state) : le tableau
+`./bin/farci status` et cet agrégateur ne peuvent donc pas diverger.
 
 Stdlib uniquement. Les adresses viennent de l'environnement (config/network.env,
 transmis par docker-compose.yml) ; le registre ne contient que des noms de
 variables.
 
 Endpoints (relayés par Caddy) :
-  GET /status   JSON : état de chaque service (tier, critique) + pipeline
-  GET /healthz  200 si le pipeline est READY, 503 sinon (sonde Uptime Kuma)
+  GET /status   JSON : chaque service (équipe, référence), pipeline des
+                équipes et service rendu à la salle
+  GET /healthz  200 si la salle peut travailler (équipes ou référence), 503 sinon
   GET /livez    200 si le processus répond : c'est la sonde de l'agrégateur
                 lui-même (sonder /healthz relancerait l'agrégation en boucle)
 """
@@ -22,9 +23,6 @@ import json
 import os
 import sys
 import time
-import urllib.error
-import urllib.request
-from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -39,7 +37,8 @@ for candidate in (HERE / "scripts", *(parent / "scripts" for parent in HERE.pare
 
 import services as registry  # noqa: E402
 
-PORT = int(os.environ.get("HEALTH_AGGREGATOR_PORT", "8081"))
+# Port d'écoute DANS le conteneur ; HEALTH_AGGREGATOR_PORT est le port publié.
+PORT = int(os.environ.get("AGGREGATOR_LISTEN_PORT", "8081"))
 TIMEOUT = float(os.environ.get("FARCI_HEALTH_TIMEOUT", "3"))
 # Le résultat est gardé quelques secondes : plusieurs écrans qui rafraîchissent
 # ne doivent pas multiplier les sondes.
@@ -47,49 +46,18 @@ CACHE_SECONDS = float(os.environ.get("FARCI_HEALTH_CACHE", "2"))
 _cache: tuple[float, dict] | None = None
 
 
-def probe(service: dict) -> dict:
-    """Essaie chaque chemin de santé dans l'ordre ; UP au premier 200."""
-    base = registry.base_url(service)
-    result = {
-        "id": service["id"],
-        "label": service.get("label"),
-        "tier": service.get("tier"),
-        "critical": bool(service.get("critical")),
-        "status": "unknown",
-        "latency_ms": None,
-    }
-    if base is None:
-        return result
-    result["status"] = "down"
-    started = time.monotonic()
-    for path in service.get("health_paths") or []:
-        try:
-            with urllib.request.urlopen(base + path, timeout=TIMEOUT) as response:
-                if response.status == 200:
-                    result["status"] = "up"
-                    break
-        except (urllib.error.URLError, OSError, ValueError):
-            continue
-    result["latency_ms"] = round((time.monotonic() - started) * 1000)
-    return result
-
-
 def aggregate_status() -> dict:
+    """État de la salle, mis en cache quelques secondes."""
     global _cache
     now = time.monotonic()
     if _cache and now - _cache[0] < CACHE_SECONDS:
         return _cache[1]
-    services = registry.services()
-    with ThreadPoolExecutor(max_workers=max(1, len(services))) as pool:
-        results = list(pool.map(probe, services))
-    states = {r["id"]: r["status"] == "up" for r in results}
-    pipeline = registry.pipeline_state(states)
+    room = registry.room_state(TIMEOUT)
     status = {
-        "status": "ready" if pipeline["state"] == "READY" else "degraded",
-        "pipeline": pipeline,
-        "services": results,
-        "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "version": "2",
+        # « ready » : la salle peut travailler (équipes, ou référence 🛟)
+        "status": "ready" if room["service_rendu"]["state"] == "READY" else "degraded",
+        **room,
+        "version": "3",
     }
     _cache = (now, status)
     return status
@@ -105,7 +73,11 @@ class HealthHandler(BaseHTTPRequestHandler):
         elif path == "/healthz":
             status = aggregate_status()
             code = 200 if status["status"] == "ready" else 503
-            self._send_json(code, {"status": status["status"], "missing": status["pipeline"]["missing"]})
+            self._send_json(code, {
+                "status": status["status"],
+                "equipes": status["pipeline"]["state"],
+                "missing": status["service_rendu"]["missing"],
+            })
         else:
             self._send_json(404, {"error": "not_found"})
 

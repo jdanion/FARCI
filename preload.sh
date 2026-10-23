@@ -9,6 +9,7 @@
 #   ./preload.sh --all              tout télécharger (~57 Go)
 #   ./preload.sh --core             strict nécessaire (~26 Go)
 #   ./preload.sh --models-ci        modèle CI uniquement (1.2 Go)
+#   ./preload.sh --reference        pile de référence, À LANCER SUR LE PI (arm64)
 #   ./preload.sh --only <groupe>     un seul groupe
 #   ./preload.sh --dry-run          simuler sans rien télécharger
 #   ./preload.sh --skip-existing    ignorer les fichiers déjà présents
@@ -52,6 +53,9 @@ Options :
   --all               Tout télécharger (~57 Go)
   --core              Strict nécessaire pour make health (~26 Go) [défaut]
   --models-ci         Modèle CI uniquement (Qwen3.5-2B, ~1.2 Go)
+  --reference         Pile de référence (reference/) : à lancer SUR la machine
+                      de référence (Pi 5, arm64), car une image se télécharge
+                      pour l'architecture de la machine qui la tire
   --only <groupe>     Exécuter un seul groupe (voir --list)
   --list              Lister les groupes disponibles
   --dry-run           Simuler sans rien télécharger
@@ -80,6 +84,7 @@ parse_args() {
       --all)       PRELOAD_MODE="all" ;;
       --core)      PRELOAD_MODE="core" ;;
       --models-ci) PRELOAD_MODE="models-ci" ;;
+      --reference) PRELOAD_MODE="reference" ;;
       --only)      PRELOAD_ONLY="${2:?--only requiert un nom de groupe}"; shift ;;
       --list)      list_groups; exit 0 ;;
       --dry-run)   PRELOAD_DRY_RUN=1 ;;
@@ -106,6 +111,9 @@ select_groups() {
       ;;
     models-ci)
       SELECTED_GROUPS=("models_ci")
+      ;;
+    reference)
+      SELECTED_GROUPS=("reference" "models_ci")
       ;;
     *)
       err "mode inconnu : $PRELOAD_MODE"

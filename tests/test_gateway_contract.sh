@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # FARCI — test du contrat gateway (FARCI §18)
 #
-# Passe par le point d'entrée stable (Caddy) : le client ne connaît que lui.
+# Passe par l'accueil de la salle (FARCI_ENTRY_URL) : le client ne connaît que
+# lui. La passerelle qui répond est celle de l'équipe 3, ou celle de la
+# référence (🛟) : le contrat est le même.
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
 
 TEST_NAME="gateway-contract"
 test_start
-test_need_service CADDY_URL /livez
+test_need_service FARCI_ENTRY_URL /livez
 
 API_KEY="${FARCI_API_KEY:-${GATEWAY_KEY_STANDARD:-}}"
 code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 \

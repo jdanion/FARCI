@@ -56,7 +56,6 @@ print(bilan)   # {'ecrits': ..., 'rejetes': ..., 'erreurs': ...}
 ```bash
 docker run -d \
   --name farci-open-webui \
-  --network farci \
   -p 8080:8080 \
   -e OPENAI_API_BASE_URL=$FARCI_GATEWAY_URL \
   -e DEFAULT_MODEL=med-extraction \
@@ -69,7 +68,6 @@ docker run -d \
 ```bash
 docker run -d \
   --name farci-flowise \
-  --network farci \
   -p 3000:3000 \
   -e FLOWISE_USERNAME=admin \
   -e FLOWISE_PASSWORD=farci-admin \

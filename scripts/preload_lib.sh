@@ -315,6 +315,21 @@ group_clients() {
   preload_image flowise
 }
 
+# Pile de référence (reference/docker-compose.yml) : à lancer sur le Pi
+# lui-même. `docker pull` tire l'architecture de la machine (arm64 sur un
+# Pi) : les .tar produits ici ne servent qu'au Pi, pas aux portables x86.
+group_reference() {
+  info "groupe : reference (machine du formateur, architecture $(uname -m))"
+  preload_image caddy
+  preload_image python
+  preload_image litellm
+  preload_image phoenix
+  preload_image open-webui
+  preload_image ollama
+  # Docling (profil documents) : image lourde, arm64 à vérifier sur le Pi.
+  preload_image docling || warn "Docling indisponible pour $(uname -m) : la route documents restera aux équipes"
+}
+
 group_wheels() {
   info "groupe : wheels"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then

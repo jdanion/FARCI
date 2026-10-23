@@ -35,11 +35,20 @@ dépendent de vous pour être exposées.
 
 | Service | Adresse | Port |
 |---|---|---|
-| Caddy | `CADDY_IP` | `CADDY_INTERNAL_PORT` (publié sur `CADDY_HTTP_PORT`) |
+Une brique est jointe par **l'IP de votre machine** et **le port publié** de
+ce service (un port par service, identique sur toutes les machines) :
+
+| Service | Adresse | Port publié |
+|---|---|---|
+| Caddy (votre accueil) | `CADDY_IP` | `CADDY_PORT` |
 | health-aggregator | `HEALTH_AGGREGATOR_IP` | `HEALTH_AGGREGATOR_PORT` |
 | Uptime Kuma (bonus) | `UPTIME_KUMA_IP` | `UPTIME_KUMA_PORT` |
 
-Les valeurs sont dans `config/network.env` (`./bin/farci env`).
+`./bin/farci doctor` affiche l'IP de votre machine : donnez-la au formateur,
+qui la déclare sur le Pi (`./bin/farci room set 1 <ip>`). L'accueil **de la
+salle** (`REFERENCE_IP:ENTRY_PORT`) est le Caddy du Pi : il utilise **le
+même Caddyfile que le vôtre**. Tant que vos briques ne sont pas montées, le
+tableau affiche 🛟 : la référence du formateur rend le service.
 
 ## Installation
 
@@ -49,8 +58,11 @@ Images `caddy`, `python` et `uptime-kuma` préchargées
 ## Configuration
 
 - `01-network-dashboard/caddy/Caddyfile` : les routes. Il ne contient aucune
-  adresse : Caddy lit `{$GATEWAY_A_IP}`, `{$DOCLING_IP}`… dans son
-  environnement, transmis par `01-network-dashboard/docker-compose.yml`.
+  adresse : Caddy lit `{$UP_PASSERELLE}`, `{$UP_INFERENCE}`… dans son
+  environnement. `./bin/farci up` les construit depuis `config/network.env` :
+  « brique de l'équipe, puis brique de la référence » (`./bin/farci
+  services upstreams` les affiche). Si la première ne répond pas, Caddy passe
+  à la suivante : c'est le **repli**.
 - `config/services.yaml` : la liste des services, leurs sondes et le champ
   `critical`. C'est la source de vérité du tableau.
 
@@ -111,6 +123,7 @@ Branche `feat/equipe-1/<sujet>`. Dans la description : la sortie de
 
 | Symptôme | Cause probable | Commande |
 |---|---|---|
-| `CADDY_IP manquant` au démarrage | `config/network.env` absent | `cp config/network.env.example config/network.env` |
-| `port is already allocated` | un autre service occupe le port 80 de la machine | changer `CADDY_HTTP_PORT` dans `.env`, puis `./bin/farci up 01-network-dashboard` |
-| `/v1` renvoie 502 | la passerelle (équipe 3) n'est pas encore là | normal tant que `LLM Gateway` est rouge |
+| `UP_PASSERELLE manquant` au démarrage | `docker compose up` lancé à la main | toujours démarrer avec `./bin/farci up 01-network-dashboard` |
+| `config/network.env` absent | première installation | `cp config/network.env.example config/network.env` |
+| `port is already allocated` | un autre service occupe `CADDY_PORT` sur la machine | `./bin/farci doctor` (section ports) ; arrêter l'autre service, ou demander au formateur un autre port |
+| `/v1` renvoie 502 | ni la passerelle de l'équipe 3 ni celle de la référence ne répond | `./bin/farci status` ; si la référence est DOWN, prévenir le formateur |

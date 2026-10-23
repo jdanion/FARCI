@@ -1,63 +1,34 @@
-# FARCI — Réseau, Caddy, dashboard, health-aggregator (FARCI §4, §12-§14)
+# FARCI — équipe 1 : l'accueil (Caddy) et l'agrégateur de santé (FARCI §12-§14)
+#
+# Le même Caddyfile et le même agrégateur tournent sur le Pi du formateur
+# (reference/docker-compose.yml) : c'est l'accueil de la salle. Celui de
+# l'équipe 1 est identique ; il est testé et projeté, mais la salle ne
+# dépend pas de lui.
+#
+#   ./bin/farci up 01-network-dashboard               Caddy + agrégateur
+#   ./bin/farci up 01-network-dashboard uptime-kuma   bonus : Uptime Kuma
+#
+# Les variables UP_* (amonts de chaque route) sont calculées par
+# `scripts/services.py upstreams` et exportées par ./bin/farci up.
 
 services:
   caddy:
     image: caddy:${CADDY_VERSION}
     container_name: farci-caddy
     restart: unless-stopped
-    # Le Caddyfile lit ces variables ({$NOM}) : toutes viennent de config/network.env.
     environment:
-      CADDY_INTERNAL_PORT: ${CADDY_INTERNAL_PORT:?CADDY_INTERNAL_PORT manquant (config/network.env)}
-      HEALTH_AGGREGATOR_IP: ${HEALTH_AGGREGATOR_IP:?HEALTH_AGGREGATOR_IP manquant (config/network.env)}
-      HEALTH_AGGREGATOR_PORT: ${HEALTH_AGGREGATOR_PORT:?HEALTH_AGGREGATOR_PORT manquant (config/network.env)}
-      GATEWAY_A_IP: ${GATEWAY_A_IP:?GATEWAY_A_IP manquant (config/network.env)}
-      GATEWAY_PORT: ${GATEWAY_PORT:?GATEWAY_PORT manquant (config/network.env)}
-      DOCLING_IP: ${DOCLING_IP:?DOCLING_IP manquant (config/network.env)}
-      DOCLING_PORT: ${DOCLING_PORT:?DOCLING_PORT manquant (config/network.env)}
-      OBSERVABILITY_A_IP: ${OBSERVABILITY_A_IP:?OBSERVABILITY_A_IP manquant (config/network.env)}
-      PHOENIX_PORT: ${PHOENIX_PORT:?PHOENIX_PORT manquant (config/network.env)}
-      MLFLOW_IP: ${MLFLOW_IP:?MLFLOW_IP manquant (config/network.env)}
-      MLFLOW_PORT: ${MLFLOW_PORT:?MLFLOW_PORT manquant (config/network.env)}
-      UPTIME_KUMA_IP: ${UPTIME_KUMA_IP:?UPTIME_KUMA_IP manquant (config/network.env)}
-      UPTIME_KUMA_PORT: ${UPTIME_KUMA_PORT:?UPTIME_KUMA_PORT manquant (config/network.env)}
-      FLOWISE_IP: ${FLOWISE_IP:?FLOWISE_IP manquant (config/network.env)}
-      FLOWISE_PORT: ${FLOWISE_PORT:?FLOWISE_PORT manquant (config/network.env)}
-      OPEN_WEBUI_IP: ${OPEN_WEBUI_IP:?OPEN_WEBUI_IP manquant (config/network.env)}
-      OPEN_WEBUI_PORT: ${OPEN_WEBUI_PORT:?OPEN_WEBUI_PORT manquant (config/network.env)}
-      GITEA_IP: ${GITEA_IP:?GITEA_IP manquant (config/network.env)}
-      GITEA_PORT: ${GITEA_PORT:?GITEA_PORT manquant (config/network.env)}
+      UP_PASSERELLE: ${UP_PASSERELLE:?UP_PASSERELLE manquant, démarrer avec ./bin/farci up}
+      UP_INFERENCE: ${UP_INFERENCE:?UP_INFERENCE manquant, démarrer avec ./bin/farci up}
+      UP_DOCUMENTS: ${UP_DOCUMENTS:?UP_DOCUMENTS manquant, démarrer avec ./bin/farci up}
+      UP_OBSERVABILITE: ${UP_OBSERVABILITE:?UP_OBSERVABILITE manquant, démarrer avec ./bin/farci up}
     ports:
-      - "${CADDY_HTTP_PORT:?CADDY_HTTP_PORT manquant (.env)}:${CADDY_INTERNAL_PORT}"
-      - "443:443"
+      - "${CADDY_PORT:?CADDY_PORT manquant (config/network.env)}:80"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
-    networks:
-      farci:
-        ipv4_address: ${CADDY_IP}
     healthcheck:
-      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  # Brique bonus : ne démarre que si on la nomme
-  #   ./bin/farci up 01-network-dashboard uptime-kuma
-  uptime-kuma:
-    profiles: [bonus]
-    image: louislam/uptime-kuma:${UPTIME_KUMA_VERSION}
-    container_name: farci-uptime-kuma
-    restart: unless-stopped
-    ports:
-      - "3001:3001"
-    volumes:
-      - uptime-kuma-data:/app/data
-    networks:
-      farci:
-        ipv4_address: ${UPTIME_KUMA_IP}
-    healthcheck:
-      test: ["CMD", "node", "extra/check-http.js", "http://localhost:3001"]
+      test: ["CMD", "wget", "-qO-", "http://localhost/livez"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -73,25 +44,33 @@ services:
       - ../config/network.env
     environment:
       FARCI_ROOT: /app
+      AGGREGATOR_LISTEN_PORT: "8081"
+    ports:
+      - "${HEALTH_AGGREGATOR_PORT:?HEALTH_AGGREGATOR_PORT manquant (config/network.env)}:8081"
     volumes:
       - ./health-aggregator/app.py:/app/app.py:ro
       - ../scripts/services.py:/app/scripts/services.py:ro
       - ../scripts/lib/miniyaml.py:/app/scripts/lib/miniyaml.py:ro
       - ../config/services.yaml:/app/config/services.yaml:ro
-    networks:
-      farci:
-        ipv4_address: ${HEALTH_AGGREGATOR_IP}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${HEALTH_AGGREGATOR_PORT}/livez', timeout=2)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/livez', timeout=2)"]
       interval: 10s
-      timeout: 6s
+      timeout: 5s
       retries: 5
+
+  # Brique bonus : ne démarre que si on la nomme
+  #   ./bin/farci up 01-network-dashboard uptime-kuma
+  uptime-kuma:
+    profiles: [bonus]
+    image: louislam/uptime-kuma:${UPTIME_KUMA_VERSION}
+    container_name: farci-uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "${UPTIME_KUMA_PORT:?UPTIME_KUMA_PORT manquant (config/network.env)}:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
 
 volumes:
   caddy-data:
   caddy-config:
   uptime-kuma-data:
-
-networks:
-  farci:
-    external: true

@@ -4,6 +4,8 @@
 # Ces fichiers sont CRÉÉS par ./bin/farci bootstrap à partir de leurs exemples.
 .env
 config/network.env
+# État des bascules forcées sur la référence (./bin/farci rescue), propre au Pi
+config/rescue.env
 config/workshop.env
 
 # ---------------------------------------------------------------------------

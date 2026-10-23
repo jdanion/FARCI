@@ -35,7 +35,6 @@
 ```bash
 docker run -d \
   --name farci-phoenix \
-  --network farci \
   -p 6006:6006 \
   -p 4317:4317 \
   -e PHOENIX_WORKING_DIR=/phoenix \
@@ -48,7 +47,6 @@ docker run -d \
 ```bash
 docker run -d \
   --name farci-langfuse \
-  --network farci \
   -p 3000:3000 \
   -e DATABASE_URL=postgresql://langfuse:langfuse@farci-langfuse-postgres:5432/langfuse \
   -e NEXTAUTH_SECRET=changeme \

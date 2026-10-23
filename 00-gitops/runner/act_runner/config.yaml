@@ -14,9 +14,9 @@ runner:
   labels: []
 
 container:
-  # Les jobs (tests d'intégration) doivent joindre les briques par leur
-  # adresse sur le réseau de l'atelier.
-  network: farci
+  # Réseau Docker par défaut : les jobs joignent les briques par l'IP de
+  # leur machine sur le réseau de la salle (config/network.env).
+  network: ""
   privileged: false
   # Air-gap : ne jamais tenter de retélécharger l'image d'un job.
   force_pull: false

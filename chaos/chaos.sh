@@ -58,6 +58,7 @@ main() {
       ;;
     scenario-*)
       chaos_apply "$cmd" "$@"
+      exit "${CHAOS_CHECK_RC:-0}"
       ;;
     revert)
       chaos_revert "${1:-}" || { err "usage : revert scenario-NN"; exit 64; }

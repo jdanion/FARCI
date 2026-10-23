@@ -19,16 +19,44 @@ pas du sabotage. Chaque scénario est **réversible**, **documenté**, et son r�
 ./bin/farci chaos reset                # tout réparer
 ```
 
-`./chaos/chaos.sh` accepte exactement les mêmes commandes.
+`./chaos/chaos.sh` accepte exactement les mêmes commandes. On les lance **sur
+le Pi**, qui porte l'accueil de la salle.
+
+## Comment une panne est provoquée : à l'accueil, pas dans les briques
+
+Un scénario n'arrête aucun conteneur d'étudiant. Il agit sur **l'accueil de
+la salle** (le Caddy du Pi), là où passe tout le trafic :
+
+| Action | Fichier d'état | Effet |
+|---|---|---|
+| `exclude <route>` | `.chaos/routes.env` (`FARCI_CHAOS_EXCLUDE`) | l'accueil saute la brique de l'équipe : la référence répond (🛟) |
+| `block <route>` | `.chaos/routes.env` (`FARCI_CHAOS_BLOCK`) | plus personne ne répond sur cette route (ni équipe, ni référence) |
+
+Routes : `inference`, `passerelle`, `documents`, `observabilite`. L'accueil
+se recharge en quelques secondes ; `revert` (ou `chaos reset`) efface la
+ligne et le recharge à nouveau. Pourquoi à l'accueil ? Parce que la panne
+est alors **identique pour toute la salle**, réversible en une commande, et
+qu'elle ne dépend pas de l'état de la machine d'une équipe.
+
+**Variante vivante** (si l'équipe concernée est prête) : c'est elle qui
+arrête sa brique (`./bin/farci down 02-inference/ollama`). L'accueil passe
+alors à la référence tout seul ; le scénario sert à **vérifier**.
+
+Chaque scénario annonce son **attendu** avant d'agir, applique la panne, puis
+**vérifie** cet attendu par une vraie requête (`ATTENDU` ou `INATTENDU`) : le
+code de sortie de `./bin/farci chaos scenario-0X` le reflète.
 
 ## Pendant la séance de 4 h : 4 scénarios, 35 minutes
 
 | Ordre | Scénario | Tableau attendu |
 |---|---|---|
-| 1 | 01 — runtime principal | `Inference` rouge, `CLINICAL PIPELINE` **READY** (un runtime suffit) |
-| 2 | 04 — JSON invalide | tout reste vert ; le dossier est refusé, rien n'est écrit |
-| 3 | 06 si Bifrost tourne, **sinon 05** | 06 : rien ne bouge côté client ; 05 : `Documents` rouge, pipeline **DEGRADED**, l'extraction texte continue |
-| 4 | 07 — observabilité | `Observability` rouge, `CLINICAL PIPELINE` **READY** |
+| 1 | 01 — runtime principal | `Inference` **🛟 REF**, service rendu **READY** : l'extraction répond toujours |
+| 2 | 04 — JSON invalide | rien ne bouge au tableau ; les dossiers sont refusés, rien n'est écrit |
+| 3 | 06 — passerelle de l'équipe (**ou 05**) | 06 : `LLM Gateway` **🛟 REF**, le client ne change pas d'adresse ; 05 : `Documents` **DOWN**, l'extraction texte continue |
+| 4 | 07 — observabilité | `Observability` **DOWN**, l'extraction réussit, service rendu **READY** |
+
+Sous le cadre, la ligne **PANNE EN COURS** rappelle ce qui est coupé tant
+que le scénario n'est pas réparé.
 
 Les scénarios 02 et 03 restent disponibles pour une séance plus longue.
 La règle de `CLINICAL PIPELINE` est unique (`scripts/services.py`) et ces cas
@@ -60,19 +88,16 @@ découverte.
 
 ### Scénario 01 — Panne du runtime principal
 
-**Action** : arrêter le runtime primaire (Ollama).
+**Action** : l'accueil saute le runtime de l'équipe 2 (`exclude inference`).
+Variante vivante : l'équipe 2 arrête Ollama.
 
-**Attendu** :
+**Assertion** : une requête `med-extraction` répond **200**, par la même
+adresse.
 
 ```
-Gateway      → 200, service rendu par le secondaire
 Client       → ne change pas d'adresse
-Tableau      → Inference 🔴   LLM Gateway 🟢   CLINICAL PIPELINE READY
-En-tête      → le repli est indiqué
+Tableau      → Inference 🛟 REF   LLM Gateway ✅   service rendu READY
 ```
-
-Pré-requis : un runtime secondaire tourne (llama.cpp, brique bonus, ou celui
-de la machine de référence).
 
 **Leçon** : la redondance n'est utile que si elle est **exercée**. Une
 architecture qui n'a jamais été testée dans son mode dégradé n'est pas
@@ -82,11 +107,11 @@ redondante, elle est théorique.
 
 ### Scénario 02 — Panne du runtime de secours
 
-**Action** : arrêter **aussi** le runtime secondaire.
+**Action** : plus **aucun** runtime, ni équipe ni référence (`block inference`).
 
-**Attendu** : `CLINICAL PIPELINE` passe à `DEGRADED` et le tableau affiche
-« Il manque : 1 runtime » ; la gateway renvoie une erreur **documentée** (503),
-et les journaux disent quelle cause.
+**Assertion** : la passerelle renvoie une **erreur** (pas 200), et le
+pipeline n'écrit rien. Le tableau passe `Inference` à `DOWN` et liste ce qui
+manque.
 
 **Leçon** : la résilience a une profondeur. Enchaîner deux pannes montre où
 s'arrête la protection — et l'étudiant doit être capable de l'expliquer.
@@ -94,6 +119,9 @@ s'arrête la protection — et l'étudiant doit être capable de l'expliquer.
 ---
 
 ### Scénario 03 — Limitation de débit
+
+**Bonus** : exige les clés virtuelles LiteLLM, donc une base PostgreSQL
+(`03-llm-gateway/TUTORIAL.md`). Sans elles, le scénario est sauté.
 
 **Action** : envoyer 12 requêtes en quelques secondes avec la clé **standard**
 (10 RPM), puis avec la clé **prioritaire** (120 RPM).
@@ -117,8 +145,11 @@ gouvernance, pas de performance.
 `ClinicalExtraction`, via un mécanisme réel (modèle de test déclaré non conforme
 auprès de la gateway — pas une fausse URL).
 
-**Attendu** : erreur de validation journalisée, **aucun fichier** écrit dans
-`datasets/extracted/`.
+Le modèle `med-chaos` n'existe que sur le runtime rejoué de la référence ;
+la passerelle l'y envoie directement, quel que soit le runtime de l'équipe.
+
+**Assertion** : 3 dossiers extraits avec `med-chaos` → **3 rejetés** par la
+validation, **aucun fichier** écrit dans `datasets/extracted/`.
 
 **Leçon** : une donnée produite par un LLM ne devient une donnée de recherche
 que si elle a été validée. Le point critique n'est pas l'appel réseau, c'est
@@ -128,11 +159,11 @@ l'écriture.
 
 ### Scénario 05 — Docling indisponible
 
-**Action** : arrêter Docling.
+**Action** : l'accueil coupe la route documents (`block documents`).
 
-**Attendu** : ligne `Documents` au rouge, `CLINICAL PIPELINE` en `DEGRADED`,
-passerelle et inférence toujours vertes. Le parcours texte de l'étape 2
-(`./bin/farci extract`) continue de fonctionner : il ne passe pas par Docling.
+**Assertion** : `/docling` ne répond plus **et** un dossier texte est
+extrait et écrit : le parcours texte de l'étape 2 ne passe pas par Docling.
+Tableau : `Documents` **DOWN**, service rendu **DEGRADED**.
 
 **Leçon** : les dépendances sont **partielles**. Savoir que le reste tient est
 aussi important que savoir que la partie cassée est tombée.
@@ -141,13 +172,12 @@ aussi important que savoir que la partie cassée est tombée.
 
 ### Scénario 06 — Passerelle A indisponible
 
-**Action** : arrêter la gateway A (LiteLLM).
+**Action** : l'accueil saute la passerelle de l'équipe 3 (`exclude
+passerelle`). Variante vivante : l'équipe 3 arrête LiteLLM.
 
-**Attendu** : la gateway B prend le relais, **sans que le client change d'adresse**,
-toujours via Caddy.
-
-Pré-requis : Bifrost (brique bonus) tourne et Caddy sait basculer vers lui.
-Sinon, jouer le scénario 05 à la place.
+**Assertion** : une requête répond **200** : Bifrost si l'équipe l'a monté,
+sinon la passerelle de la référence — **sans que le client change
+d'adresse**. Tableau : `LLM Gateway` **🛟 REF**.
 
 **Leçon** : le client ne connaît qu'un **point d'entrée logique**. C'est toute la
 valeur du contrat d'API.
@@ -156,10 +186,11 @@ valeur du contrat d'API.
 
 ### Scénario 07 — Observabilité indisponible
 
-**Action** : arrêter Phoenix (ou Langfuse).
+**Action** : l'accueil ne reçoit plus aucune trace (`block observabilite`).
 
-**Attendu** : l'extraction **réussit toujours**, seules les traces sont perdues ;
-`CLINICAL PIPELINE` reste **READY** (Phoenix n'en fait pas partie).
+**Assertion** : 2 dossiers extraits et écrits ; seules les traces sont
+perdues (l'échec d'export est journalisé, sans effet sur l'extraction).
+Service rendu **READY** : Phoenix n'en fait pas partie.
 
 **Leçon** : **l'observabilité n'est pas sur le chemin de production**. Si la
 coupure d'un outil de supervision arrête le soin, l'architecture est mal conçue.
@@ -172,8 +203,7 @@ Ce scénario doit rester **vert**, c'est un test bloquant.
 Toujours réparer :
 
 ```bash
-./bin/farci chaos reset
-./bin/farci status --strict     # doit repasser à READY
+./bin/farci reset-all           # chaos réparé, bascules levées, tableau affiché
 ```
 
 Si `reset` ne remet pas tout au vert, le remplacement a échoué : c'est un défaut
