@@ -6,6 +6,33 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Lot 4 — répéter et piloter
+
+- **`./bin/farci rehearse`** : répétition générale de J-1, moins de 15 min,
+  verdict PASS / FAIL. Poste (outillage, tests, configuration, images, plan C
+  noté contre le gold), salle (accueil, service rendu, contrat, extraction
+  réelle) et, sur le Pi, secours (rescue, scénarios 01-04-05-06-07,
+  reset-all). Budget et gravité par étape, piste de réparation, rapport dans
+  `datasets/reports/`.
+- **`./bin/farci forge-sync`** : GitHub source de vérité, Gitea `main` en
+  avance rapide seulement (`status`, `push`, `bundle`, `from-bundle`,
+  `rapatrier`) ; divergence refusée sans jamais forcer ; branche `seance`
+  pour les PR de la séance. `CONTRIBUTING.md`, « Deux forges ».
+- **`docs/PILOTAGE.md`** : la feuille imprimable du formateur (avant, minutage
+  et points de décision, commandes, incidents, les dix messages et leur moment).
+- **Fiches débutant** `docs/wiki/equipe-XX.md` et `chaos.md` : objectif, 5 à 8
+  étapes, sonde, « bloqué depuis 10 minutes ? », bonus. Les anciennes
+  solutions « from scratch » (réseau Docker partagé) sont retirées.
+- `./bin/farci bootstrap` installe les dépendances Python **hors ligne** dans
+  `.venv/` (pip refuse le Python système sur Raspberry Pi OS et Homebrew) ;
+  `bin/farci` l'utilise une fois l'installation réussie ; `doctor` le signale.
+  `./preload.sh --reference` télécharge aussi les wheels.
+- Corrigés : `env-check` plantait (`$1: unbound variable`) ; `FARCI_DATA_DIR`
+  de `.env` était toujours ignoré (valeur imposée avant la lecture) ;
+  `extract --replay` exportait encore des traces ; Open WebUI d'équipe
+  inaccessible (inscription fermée sans aucun compte) ; libellés de lignes
+  faux dans trois TUTORIAL ; `verify-images --reference`.
+
 ### Lot 3 — plans B
 
 - **Adressage « une IP de machine + un port par service »**

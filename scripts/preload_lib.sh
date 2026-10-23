@@ -320,12 +320,10 @@ group_clients() {
 # Pi) : les .tar produits ici ne servent qu'au Pi, pas aux portables x86.
 group_reference() {
   info "groupe : reference (machine du formateur, architecture $(uname -m))"
-  preload_image caddy
-  preload_image python
-  preload_image litellm
-  preload_image phoenix
-  preload_image open-webui
-  preload_image ollama
+  local key
+  for key in "${FARCI_IMAGES_REFERENCE[@]}" ollama; do
+    preload_image "$key" || return 1
+  done
   # Docling (profil documents) : image lourde, arm64 à vérifier sur le Pi.
   preload_image docling || warn "Docling indisponible pour $(uname -m) : la route documents restera aux équipes"
 }

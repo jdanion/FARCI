@@ -37,14 +37,20 @@ Caddy, la passerelle et un runtime (équipes 1, 2, 3) ; la pseudonymisation
 ## Votre IP
 
 Les applications n'ont pas d'adresse à connaître : elles utilisent
-`FARCI_GATEWAY_URL` (dérivée de `CADDY_IP`). Open WebUI : `OPEN_WEBUI_IP`,
+`FARCI_GATEWAY_URL`, l'accueil de la salle (`REFERENCE_IP`). Open WebUI : `OPEN_WEBUI_IP`,
 port `OPEN_WEBUI_PORT` ; Flowise : `FLOWISE_IP`, `FLOWISE_PORT`.
 
 ## Installation
 
 ```bash
-pip install --no-index --find-links offline/wheels -r requirements.txt
+./bin/farci bootstrap      # crée .venv/ et l'installe HORS LIGNE depuis offline/wheels/
+./bin/farci doctor         # « dépendances Python : ok »
 ```
+
+Ne pas lancer `pip install` dans le Python du système : sur Raspberry Pi OS,
+Debian récent ou avec le Python de Homebrew, il est refusé
+(« externally-managed-environment »). `./bin/farci` utilise `.venv/`
+automatiquement.
 
 ## Configuration
 
@@ -66,7 +72,7 @@ Parcours Open WebUI :
 
 ```bash
 ./bin/farci up 07-applications/open-webui
-07-applications/open-webui/post-setup.sh
+07-applications/open-webui/post-setup.sh   # vérifie, et donne l'adresse (aucun compte à créer)
 ```
 
 Coller le contenu d'un dossier (prompt : `07-applications/open-webui/prompt.md`),
@@ -88,7 +94,7 @@ schéma, Pydantic, les prompts et le gold disent la même chose.
 
 ## Vérification sur le tableau de bord
 
-Ligne `Client` verte si Open WebUI tourne. Le résultat qui compte est le
+Ligne `Open WebUI` verte si Open WebUI tourne. Le résultat qui compte est le
 classement de `./bin/farci evaluate`.
 
 ## Commit

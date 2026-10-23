@@ -3,10 +3,10 @@
 ## Mission
 
 Placer un petit agent de supervision à côté de chaque brique et déclencher un
-déploiement automatique quand `main` change (webhook Gitea → `gitops.sh`).
+déploiement automatique quand la branche `seance` change (webhook Gitea → `gitops.sh`).
 
 - **Objectif minimal** : les agents tournent et signalent l'état de leur brique.
-- **Bonus** : un push sur `main` redéploie une brique sans intervention.
+- **Bonus** : une PR fusionnée sur `seance` redéploie une brique sans intervention.
 
 Brique **bonus** : démonstration du formateur si personne ne la prend.
 
@@ -58,7 +58,7 @@ Chaque agent écrit l'état de sa brique toutes les 30 s.
 
 ## Test contractuel
 
-Pousser un commit sur `main` dans Gitea : `08-arcane-agents/gitops/webhook-handler.sh`
+Fusionner une PR sur la branche `seance` dans Gitea (jamais sur `main`, qui ne reçoit que GitHub : `CONTRIBUTING.md`) : `08-arcane-agents/gitops/webhook-handler.sh`
 doit apparaître dans les journaux du récepteur, suivi de `gitops.sh`.
 
 ## Vérification sur le tableau de bord

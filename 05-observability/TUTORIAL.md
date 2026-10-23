@@ -108,6 +108,6 @@ réel, latence, tokens.
 
 | Symptôme | Cause probable | Commande |
 |---|---|---|
-| aucune trace | SDK OpenTelemetry absent sur le poste | `pip install --no-index --find-links offline/wheels -r requirements.txt` |
+| aucune trace | SDK OpenTelemetry absent sur le poste | `./bin/farci bootstrap` (installe `.venv/` hors ligne) |
 | aucune trace | `FARCI_TRACE=off` | le retirer de `config/workshop.env` |
 | Phoenix ne démarre pas | port déjà pris | `./bin/farci logs 05-observability/phoenix` |

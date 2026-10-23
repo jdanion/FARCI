@@ -75,7 +75,7 @@ Dont le test « gold contre gold = score parfait ».
 
 ## Vérification sur le tableau de bord
 
-Ligne `Evaluation` verte si MLflow tourne (bonus). Le classement des runs est
+Ligne `MLflow` verte si MLflow tourne (bonus, `./bin/farci status --all`). Le classement des runs est
 projeté pendant la séance d'évaluation.
 
 ## Commit

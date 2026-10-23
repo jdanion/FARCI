@@ -47,7 +47,7 @@ def main() -> int:
         httpd = server.make_server(0, delay=0, host="127.0.0.1")
         threading.Thread(target=httpd.serve_forever, daemon=True).start()
         os.environ["FARCI_GATEWAY_URL"] = f"http://127.0.0.1:{httpd.server_address[1]}/v1"
-        os.environ.setdefault("FARCI_TRACE", "off")
+        os.environ["FARCI_TRACE"] = "off"  # sans réseau : pas d'export de traces
         os.environ["no_proxy"] = os.environ["NO_PROXY"] = "127.0.0.1"
         print("mode rejoué (plan C) : réponses enregistrées, aucun modèle\n")
 

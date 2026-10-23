@@ -1,88 +1,62 @@
-# Équipe 4 — Documents cliniques (Docling, pseudonymisation)
+# Équipe 4 — Documents cliniques
 
-## Attendus pédagogiques
+> Fiche débutant. La référence technique complète est
+> `04-clinical-documents/TUTORIAL.md` (`./bin/farci read 4`).
 
-- Comprendre le rôle d'un convertisseur de documents (PDF → markdown/JSON)
-- Comprendre la notion de pseudonymisation et son importance médicale
-- Comprendre la différence entre `null` et `0` dans un schéma
-- Comprendre pourquoi la pseudonymisation n'efface pas le risque de ré-identification
-- Savoir utiliser le schéma JSON Schema comme contrat
+## Votre objectif
 
-## Solution simple (scripts)
+Préparer les documents **avant** qu'un modèle ne les lise : la
+**pseudonymisation** (aucun nom, aucune date de naissance, aucun IPP ne part
+vers le modèle) et **Docling**, qui convertit les PDF en texte. La ligne
+`Documents` passe de `🛟 REF` (ou `DOWN`) à `✅ UP`.
 
-```bash
-# 1. Démarrer Docling et le tester
-./bin/farci up 04-clinical-documents/docling
-04-clinical-documents/docling/smoke.sh
+C'est le secret médical appliqué à la machine : le modèle reçoit le dossier,
+pas l'identité du patient.
 
-# 2. Pseudonymiser un document du dataset
-PYTHONPATH=04-clinical-documents python3 -m deidentification.cli \
-  datasets/raw/patient_1234567890123_cro.txt datasets/pseudonymized/patient_1234567890123_cro.txt
+## Les étapes
 
-# 3. Vérifier : aucune fuite d'identifiant sur les 80 documents
-./bin/farci test-unit -k deidentification
-```
+1. **Vérifier la machine** — `./bin/farci doctor` : notez « IP de cette
+   machine ». Docling demande ~3 Go de RAM.
+2. **Comprendre la pseudonymisation** — `./bin/farci test-unit -k deidentification` :
+   tous les tests passent. Lisez-en un dans `tests/test_deidentification.py`.
+3. **Pseudonymiser un document à la main** :
 
-## Solution from scratch
+   ```bash
+   PYTHONPATH=04-clinical-documents python3 -m deidentification.cli \
+     datasets/raw/patient_1234567890123_cro.txt /tmp/cro-pseudo.txt
+   ```
 
-> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
-> viennent de `config/network.env` : les charger d'abord avec
-> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
-> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
+   Comparez les deux fichiers : `[NOM_0]`, `[DATE_0]`, `[IPP_0]`.
+4. **Démarrer Docling** — `./bin/farci up 04-clinical-documents/docling`.
+   Le premier démarrage prend **plusieurs minutes** : c'est normal.
+5. **Tester Docling** — `04-clinical-documents/docling/smoke.sh`.
+6. **Vous déclarer** — donnez votre IP au formateur
+   (`./bin/farci room set 4 <votre-ip>` sur le Pi).
+7. **Regarder l'écran projeté** — la ligne `Documents` passe à `✅ UP`.
 
-### 1. Démarrer Docling
-
-```bash
-docker run -d \
-  --name farci-docling \
-  -p 5001:5001 \
-  -e DOCLING_DO_OCR=false \
-  -e DOCLING_DO_TABLE_STRUCTURE=true \
-  -v docling-cache:/root/.cache \
-  ghcr.io/docling-project/docling-serve-cpu:v1.35.0
-```
-
-### 2. Convertir un PDF
+## La sonde : comment savoir que c'est fini
 
 ```bash
-curl -X POST $DOCLING_URL/v1/convert/file \
-  -F "files=@document.pdf" \
-  -F "to_formats=md,json" \
-  -F "do_ocr=false" \
-  -F "do_table_structure=true"
+./bin/farci test-unit -k deidentification     # OK
+04-clinical-documents/docling/smoke.sh          # Docling répond
 ```
 
-### 3. Pseudonymiser un texte
+Et sur l'écran de la salle : `Documents ✅ UP`.
 
-```python
-from deidentification.rules import pseudonymize_text
-from deidentification.mapping import MappingStore
+## Bloqué depuis 10 minutes ?
 
-mapping = MappingStore()
-text = "Patient Jean Dupont, IPP 1234567890123, né le 15/03/1958"
-result = pseudonymize_text(text, mapping)
-print(result)
-# → "Patient [PRENOM_0] [NOM_0], IPP [IPP_0], né le [DATE_0]"
-```
+Levez la main. Le parcours de l'étape 2 utilise les dossiers **texte** :
+il ne dépend pas de Docling, rien n'attend votre équipe.
 
-### 4. Comprendre la règle null vs 0
+| Ce que vous voyez | À essayer |
+|---|---|
+| Docling ne répond pas après 5 min | `./bin/farci logs 04-clinical-documents/docling` : il charge encore ses modèles |
+| `ModuleNotFoundError: deidentification` | relancer la commande depuis la racine du dépôt, avec `PYTHONPATH=04-clinical-documents` |
+| `ModuleNotFoundError: pydantic` | `./bin/farci bootstrap` (environnement Python hors ligne) |
+| un nom reste en clair | c'est une vraie trouvaille : ajoutez la règle dans `rules.py` et un test |
 
-```python
-# null = information absente
-{"nodes_positive": null}  # → pas de ganglions examinés
+## Bonus
 
-# 0 = valeur réelle
-{"nodes_positive": 0}  # → ganglions examinés, aucun envahi
-```
-
-### 5. Gouvernance des données
-
-La pseudonymisation n'efface pas le risque de ré-identification par
-quasi-identifiants (âge + sexe + date). C'est un point important à documenter.
-
-## Vérifications
-
-- [ ] Docling répond sur :5001
-- [ ] Conversion PDF → markdown/JSON fonctionnelle
-- [ ] Pseudonymisation déterministe
-- [ ] Mapping réversible
+- Générer les PDF du jeu de données : `./bin/farci generate-dataset --pdf`,
+  puis `./bin/farci test` (ligne `docling` : `PASS`).
+- Comparer la sortie de Docling au texte d'origine d'un même dossier.

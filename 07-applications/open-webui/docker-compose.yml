@@ -12,9 +12,13 @@ services:
       # Point d'entrée stable (Caddy), construit depuis config/network.env.
       OPENAI_API_BASE_URL: ${FARCI_GATEWAY_URL:?FARCI_GATEWAY_URL manquante (REFERENCE_IP, config/network.env)}
       OPENAI_API_KEY: ${GATEWAY_KEY_STANDARD:?GATEWAY_KEY_STANDARD manquant (.env)}
-      DEFAULT_MODEL: med-extraction
-      ENABLE_SIGNUP: "false"
-      ENABLE_LOGIN_FORM: "true"
+      ENABLE_OLLAMA_API: "False"
+      DEFAULT_MODELS: med-extraction
+      # Une seule session partagée, sans compte (comme la référence) : données
+      # synthétiques, et l'inscription fermée sans compte existant bloquait
+      # tout le monde à la porte.
+      WEBUI_AUTH: "False"
+      OFFLINE_MODE: "True"
     volumes:
       - open-webui-data:/app/backend/data
     ports:

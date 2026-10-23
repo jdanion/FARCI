@@ -15,7 +15,10 @@
 #       charges restent donc valides, sans que le dépôt stocke des Go)
 #   4. crée .env et config/*.env à partir des exemples, sans écraser l'existant
 #   5. initialise git si nécessaire
-#   6. lance le lint
+#   6. corrige les permissions des scripts
+#   7. crée l'environnement Python .venv/ et l'installe HORS LIGNE depuis
+#      offline/wheels/ (pip refuse souvent d'installer dans le Python système)
+#   8. lance le lint
 #
 # Idempotent : peut être relancé sans risque.
 
@@ -182,7 +185,29 @@ else
   info "tous les scripts sont exécutables"
 fi
 
-section "7. lint"
+section "7. environnement Python (.venv)"
+# Hors ligne : uniquement depuis offline/wheels/ (préparé par preload.sh).
+REQ="$FARCI_ROOT/requirements.txt"
+[[ -r "$REQ" ]] || REQ="$FARCI_ROOT/requirements.in"
+WHEELS="$FARCI_ROOT/offline/wheels"
+# bin/farci n'utilise .venv/ qu'une fois le témoin .farci-ok posé : un .venv/
+# incomplet ne doit jamais masquer un Python système qui fonctionne.
+if [[ -f "$FARCI_ROOT/.venv/.farci-ok" ]]; then
+  info ".venv/ déjà équipé"
+elif python3 -c "import pydantic" 2>/dev/null && [[ ! -d "$FARCI_ROOT/.venv" ]]; then
+  info "le Python du système a déjà les dépendances : pas de .venv/ nécessaire"
+elif ! compgen -G "$WHEELS/*.whl" >/dev/null; then
+  warn "offline/wheels/ est vide : ./preload.sh --only wheels (avec Internet, sur CETTE machine)"
+elif ! { [[ -x "$FARCI_ROOT/.venv/bin/python3" ]] || python3 -m venv "$FARCI_ROOT/.venv"; }; then
+  warn "python3 -m venv a échoué : installer python3-venv AVANT l'atelier (sudo apt install python3-venv)"
+elif "$FARCI_ROOT/.venv/bin/python3" -m pip install -q --no-index --find-links "$WHEELS" -r "$REQ"; then
+  touch "$FARCI_ROOT/.venv/.farci-ok"
+  ok "dépendances Python installées hors ligne dans .venv/ ($(basename "$REQ"))"; changed
+else
+  warn "installation hors ligne incomplète : ./bin/farci verify-wheels"
+fi
+
+section "8. lint"
 if "$FARCI_ROOT/bin/farci" lint --quiet; then
   ok "dépôt conforme"
 else

@@ -9,6 +9,7 @@
 #   farci_images core     images de la chaîne cœur
 #   farci_images bonus    briques bonus et démos du formateur
 #   farci_images all      tout
+#   farci_images reference  pile de référence de base (reference/, sur le Pi)
 #   farci_image <clé>     une image (ex. farci_image docling)
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
@@ -39,6 +40,8 @@ declare -gA FARCI_IMAGE=(
   [flowise]="flowiseai/flowise:${FLOWISE_VERSION:-}"
 )
 FARCI_IMAGES_CORE=(caddy python ollama litellm docling phoenix open-webui)
+# Pile de référence de base ; Ollama et Docling y sont des options.
+FARCI_IMAGES_REFERENCE=(caddy python litellm phoenix open-webui)
 FARCI_IMAGES_BONUS=(gitea act-runner ci-runner postgres redis uptime-kuma bifrost langfuse otel-collector mlflow flowise)
 
 farci_image() { printf '%s\n' "${FARCI_IMAGE[$1]:?image inconnue : $1}"; }
@@ -49,7 +52,8 @@ farci_images() {
     core)  keys=("${FARCI_IMAGES_CORE[@]}") ;;
     bonus) keys=("${FARCI_IMAGES_BONUS[@]}") ;;
     all)   keys=("${FARCI_IMAGES_CORE[@]}" "${FARCI_IMAGES_BONUS[@]}") ;;
-    *)     echo "farci_images : core | bonus | all" >&2; return 64 ;;
+    reference) keys=("${FARCI_IMAGES_REFERENCE[@]}") ;;
+    *)     echo "farci_images : core | bonus | all | reference" >&2; return 64 ;;
   esac
   for key in "${keys[@]}"; do
     printf '%s\n' "${FARCI_IMAGE[$key]}"

@@ -40,6 +40,7 @@ verify-manifest	airgap	Vérifier les empreintes contre le manifeste	verify-manif
 verify-images	airgap	Vérifier les images Docker locales	verify-images.sh
 verify-models	airgap	Vérifier les poids de modèles	verify-models.sh
 verify-wheels	airgap	Vérifier les wheels Python	verify-wheels.sh
+forge-sync	airgap	GitHub → Gitea : main en avance rapide seulement (status, push, bundle)	forge-sync.sh
 
 generate-dataset	dataset	Générer le dataset synthétique (.txt, --pdf pour Docling)	generate-dataset.sh
 build-gold	dataset	Générer le gold standard depuis le registre	build-gold.sh
@@ -51,6 +52,7 @@ chaos	chaos	Étape 3 : list | scenario-NN | status | reset	chaos.sh
 
 rescue	secours	Basculer une brique sur la référence (sur le Pi)	rescue.sh
 reset-all	secours	Retour à un état propre connu (sur le Pi)	reset-all.sh
+rehearse	secours	Répétition générale J-1 (< 15 min) : PASS / FAIL	rehearse.sh
 replay	secours	Runtime rejoué sans Docker ni modèle (plan C)	replay.sh
 
 ci	qualité	Ce que la CI exécute (selftest, lint, tests, gold)	ci.sh

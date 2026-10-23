@@ -1,96 +1,58 @@
-# Étape 3 — Chaos engineering (piloté par le formateur)
+# Étape 3 — Chaos engineering (toute la salle)
 
-## Attendus pédagogiques
+> Fiche débutant. La référence complète est `docs/CHAOS.md`. Les commandes
+> se lancent **sur le Pi**, par le formateur ; la salle observe et parie.
 
-- Comprendre le chaos engineering et son intérêt
-- Comprender la notion de résilience et de redondance
-- Comprendre la différence entre un test de charge et un test de panne
-- Comprendre l'importance des healthchecks
-- Savoir interpréter les résultats d'un scénario de chaos
+## L'objectif
 
-## Solution simple (scripts)
+Casser le système **exprès**, une panne à la fois, et vérifier qu'il tient
+la promesse écrite **avant** la panne. Chaque scénario annonce son
+résultat attendu, provoque la panne, puis **vérifie** : `ATTENDU` ou
+`INATTENDU`.
 
-```bash
-# 1. Lister les scénarios
-./bin/farci chaos list
+C'est la simulation de crise : on ne découvre pas le plan blanc le jour de
+la catastrophe.
 
-# 2. Appliquer un scénario (puis observer ./bin/farci status)
-./bin/farci chaos scenario-01
+## Le déroulé de chaque scénario (5 à 8 minutes)
 
-# 3. Avec réparation automatique après 60 s
-./bin/farci chaos scenario-01 --duration 60
+1. **Annoncer** — le formateur lit le titre : « le runtime principal tombe ».
+2. **Parier** — chacun note : *survivra* ou *ne survivra pas* ? Pourquoi ?
+3. **Provoquer** — `./bin/farci chaos scenario-01` : la ligne `attendu` s'affiche.
+4. **Observer** — l'écran projeté (`./bin/farci status --watch`) : quelle
+   ligne change ? `✅` → `🛟` (la référence prend le relais) ou `DOWN`
+   (personne ne répond) ? La ligne `PANNE EN COURS` dit ce qui est coupé.
+5. **Vérifier** — le scénario affiche `ATTENDU` (la promesse est tenue) ou
+   `INATTENDU` (une vraie découverte : on en parle).
+6. **Réparer** — `./bin/farci chaos reset` : tout revient.
+7. **Retenir** — une phrase, la leçon du scénario (`docs/CHAOS.md`).
 
-# 4. Pannes actives, puis tout réparer
-./bin/farci chaos status
-./bin/farci chaos reset
-```
+## Les quatre scénarios de la séance
 
-## Solution from scratch
-
-> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
-> viennent de `config/network.env` : les charger d'abord avec
-> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
-> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
-
-### 1. Coupure manuelle d'un service
-
-```bash
-# Coupure d'Ollama
-docker stop farci-ollama
-
-# Vérifier que le gateway répond toujours
-curl -X POST $FARCI_GATEWAY_URL/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer sk-standard-xxx" \
-  -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'
-
-# Restaurer
-docker start farci-ollama
-```
-
-### 2. Test de rate limiting
-
-```bash
-# 12 requêtes rapides
-for i in $(seq 1 12); do
-  curl -s -o /dev/null -w '%{http_code}\n' \
-    -X POST $FARCI_GATEWAY_URL/chat/completions \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer sk-standard-xxx" \
-    -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}'
-done
-# → certaines doivent retourner 429
-```
-
-### 3. Test de JSON invalide
-
-```python
-from common.schemas import ClinicalExtraction
-
-# JSON valide
-ClinicalExtraction(**{"patient_id": "123", "age": 67, ...})
-
-# JSON invalide → ValidationError
-try:
-    ClinicalExtraction(**{"patient_id": "123"})  # champs manquants
-except ValidationError as e:
-    print(f"Validation échouée: {e}")
-```
-
-### 4. Interpréter les résultats
-
-| Scénario | Attendu | Interprétation |
+| Scénario | La panne | Ce qu'on doit voir |
 |---|---|---|
-| 01 | gateway 200 + fallback | redondance active |
-| 02 | pipeline 🔴 | dépendance critique |
-| 03 | 429 + Retry-After | rate limiting actif |
-| 04 | ValidationError | validation obligatoire |
-| 05 | document 🔴, gateway 🟢 | dépendance partielle |
-| 06 | bascule gateway | client inchangé |
-| 07 | extraction OK, traces perdues | observabilité ≠ production |
+| 01 | le runtime de l'équipe 2 ne répond plus | l'extraction répond toujours ; `Inference 🛟 REF` |
+| 04 | le modèle renvoie un JSON hors schéma | 3 dossiers refusés, **aucun** fichier écrit |
+| 06 (ou 05) | la passerelle de l'équipe 3 tombe (ou Docling) | le client ne change pas d'adresse (ou : le texte continue sans Docling) |
+| 07 | plus aucune trace n'arrive | l'extraction réussit quand même : l'observabilité n'est pas le soin |
 
-## Vérifications
+## La sonde : comment savoir que c'est fini
 
-- [ ] Les 7 scénarios sont documentés
-- [ ] Chaque scénario a un attendu vérifiable
-- [ ] Le reset fonctionne
+```bash
+./bin/farci reset-all     # pannes réparées, bascules levées, tableau affiché
+```
+
+Plus de ligne `PANNE EN COURS` sous le tableau.
+
+## Bloqué depuis 10 minutes ?
+
+| Ce que vous voyez | À faire |
+|---|---|
+| `INATTENDU` | ce n'est pas un échec de la séance : c'est la découverte du jour, on l'explique |
+| la panne ne se répare pas | `./bin/farci reset-all` |
+| on a pris du retard | garder 01, 04 et 07 (voir `docs/INSTRUCTOR_GUIDE.md`) |
+
+## Bonus
+
+- Variante vivante : c'est l'équipe 2 qui arrête **vraiment** son runtime
+  (`./bin/farci down 02-inference/ollama`) ; le scénario 01 sert à vérifier.
+- Scénario 02 : plus **aucun** runtime. Où s'arrête la protection ?

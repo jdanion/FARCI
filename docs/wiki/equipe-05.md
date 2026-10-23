@@ -1,102 +1,54 @@
-# Équipe 5 — Observabilité (Phoenix, Langfuse, OTel)
+# Équipe 5 — Observabilité
 
-## Attendus pédagogiques
+> Fiche débutant. La référence technique complète est
+> `05-observability/TUTORIAL.md` (`./bin/farci read 5`).
 
-- Comprendre ce qu'est OpenTelemetry (OTel) et pourquoi c'est un standard
-- Comprendre la notion de trace, span, et attribut
-- Comprendre la différence entre un collecteur et un backend
-- Comprendre pourquoi l'observabilité ne doit jamais bloquer le chemin critique
-- Savoir propager le header `traceparent`
+## Votre objectif
 
-## Solution simple (scripts)
+Rendre **visible** chaque appel au modèle : qui, quand, combien de temps,
+combien de mots, quelle erreur. Phoenix reçoit ces **traces** ; la ligne
+`Observability` passe de `🛟 REF` à `✅ UP`.
 
-```bash
-# 1. Démarrer Phoenix
-./bin/farci up 05-observability/phoenix
+C'est le dossier de soins de la machine : on ne se souvient pas de ce qui
+s'est passé, on le lit.
 
-# 2. Vérifier : ligne Observability verte, test observability PASS
-./bin/farci status
-./bin/farci test
+## Les étapes
 
-# 3. Bonus : Langfuse sur le même flux OTLP
-./bin/farci up 05-observability/langfuse
-05-observability/langfuse/bootstrap.sh
-```
+1. **Vérifier la machine** — `./bin/farci doctor` : notez « IP de cette
+   machine ».
+2. **Démarrer Phoenix** — `./bin/farci up 05-observability/phoenix`.
+3. **Ouvrir Phoenix** — dans un navigateur : `http://127.0.0.1:6006`.
+4. **Tester chez vous** — `./bin/farci test` : la ligne `observability` doit
+   être `PASS`.
+5. **Vous déclarer** — donnez votre IP au formateur
+   (`./bin/farci room set 5 <votre-ip>` sur le Pi). Les traces de toute la
+   salle arrivent maintenant chez vous.
+6. **Produire des traces** — `./bin/farci extract --subset quick --limit 2 --run equipe-5`.
+7. **Lire une trace** — dans Phoenix, ouvrez un span `chat.completion` :
+   modèle, latence, nombre de tokens.
 
-## Solution from scratch
-
-> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
-> viennent de `config/network.env` : les charger d'abord avec
-> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
-> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
-
-### 1. Démarrer Phoenix
+## La sonde : comment savoir que c'est fini
 
 ```bash
-docker run -d \
-  --name farci-phoenix \
-  -p 6006:6006 \
-  -p 4317:4317 \
-  -e PHOENIX_WORKING_DIR=/phoenix \
-  -v phoenix-data:/phoenix \
-  arizephoenix/phoenix:20.16.0
+./bin/farci test        # observability   PASS
 ```
 
-### 2. Démarrer Langfuse
+Dans Phoenix : des spans `chat.completion`. Sur l'écran : `Observability ✅ UP`.
 
-```bash
-docker run -d \
-  --name farci-langfuse \
-  -p 3000:3000 \
-  -e DATABASE_URL=postgresql://langfuse:langfuse@farci-langfuse-postgres:5432/langfuse \
-  -e NEXTAUTH_SECRET=changeme \
-  -e NEXTAUTH_URL=$LANGFUSE_URL \
-  -e LANGFUSE_ENABLE_EXPERIMENTAL_OTEL=true \
-  langfuse/langfuse:4.46.0
-```
+## Bloqué depuis 10 minutes ?
 
-### 3. Instrumenter une application
+Levez la main. Si Phoenix tombe, **l'extraction continue** (c'est même le
+scénario 07) : rien n'attend votre équipe.
 
-```python
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+| Ce que vous voyez | À essayer |
+|---|---|
+| aucune trace | `./bin/farci doctor` : « dépendances Python » ; sinon `./bin/farci bootstrap` |
+| aucune trace (bis) | `FARCI_TRACE=off` dans `config/workshop.env` ? le retirer |
+| Phoenix ne démarre pas | `./bin/farci logs 05-observability/phoenix` ; port 6006 déjà pris ? |
+| traces chez vous, pas celles de la salle | votre IP n'est pas déclarée : `./bin/farci room` sur le Pi |
 
-provider = TracerProvider()
-provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
-trace.set_tracer_provider(provider)
+## Bonus
 
-tracer = trace.get_tracer(__name__)
-
-with tracer.start_as_current_span("chat.completion") as span:
-    span.set_attribute("gen_ai.request.model", "med-extraction")
-    span.set_attribute("gen_ai.system", "ollama")
-    # ... appel LLM ...
-```
-
-### 4. Propager traceparent
-
-```python
-from opentelemetry.propagate import inject
-
-headers = {}
-inject(headers)
-# headers contient maintenant 'traceparent'
-```
-
-### 5. Non-régression
-
-```python
-# L'observabilité ne doit jamais bloquer le chemin critique
-import os
-os.environ["OTEL_TRACES_EXPORTER"] = "none"
-# → les spans sont ignorés, le pipeline continue
-```
-
-## Vérifications
-
-- [ ] Phoenix répond sur :6006
-- [ ] Langfuse répond sur :3000
-- [ ] Traces visibles avec gen_ai.request.model
-- [ ] Pipeline fonctionne avec observabilité coupée
+- Langfuse en second backend sur le **même** flux OpenTelemetry :
+  `./bin/farci up 05-observability/langfuse` puis `05-observability/langfuse/bootstrap.sh`.
+- Collecteur OpenTelemetry en éventail : `./bin/farci up 05-observability/collector`.

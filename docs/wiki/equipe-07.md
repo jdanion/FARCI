@@ -1,98 +1,54 @@
-# Équipe 7 — Applications (Python, Open WebUI, Flowise)
+# Équipe 7 — Applications
 
-## Attendus pédagogiques
+> Fiche débutant. La référence technique complète est
+> `07-applications/TUTORIAL.md` (`./bin/farci read 7`).
 
-- Comprendre le rôle d'une application cliente
-- Comprendre pourquoi l'application ne voit jamais le vrai modèle
-- Comprendre la notion de contrat commun (même schéma, même dataset, même alias)
-- Comprendre la différence entre les trois parcours (Python, Open WebUI, Flowise)
-- Savoir valider une sortie JSON avec Pydantic
+## Votre objectif
 
-## Solution simple (scripts)
+Brancher **Open WebUI**, l'interface de discussion, sur la passerelle de la
+salle : la ligne `Open WebUI` passe à `✅ UP`. C'est l'interface des
+camarades qui n'ont pas de machine utilisable à l'étape 2.
 
-```bash
-# Parcours A — Python (principal)
-pip install --no-index --find-links offline/wheels -r requirements.txt
-./bin/farci extract --subset quick --run python
-./bin/farci evaluate --subset quick
+## Les étapes
 
-# Parcours B — Open WebUI
-./bin/farci up 07-applications/open-webui
-07-applications/open-webui/post-setup.sh
+1. **Vérifier la machine** — `./bin/farci doctor` : notez « IP de cette
+   machine » et « dépendances Python ».
+2. **Démarrer** — `./bin/farci up 07-applications/open-webui`.
+3. **Configurer** — `07-applications/open-webui/post-setup.sh`.
+4. **Ouvrir l'interface** — dans un navigateur : `http://127.0.0.1:3080`.
+   Le modèle `med-extraction` est proposé.
+5. **Extraire un dossier à la main** — collez le prompt de
+   `07-applications/open-webui/prompt.md`, puis le contenu d'un fichier de
+   `datasets/raw/`. La réponse doit être un JSON.
+6. **Vous déclarer** — donnez votre IP au formateur
+   (`./bin/farci room set 7 <votre-ip>` sur le Pi).
+7. **Le même dossier en Python** —
+   `./bin/farci extract --subset quick --limit 1 --run equipe-7` : comparez
+   avec la réponse d'Open WebUI.
 
-# Parcours C — Flowise : démonstration du formateur
-./bin/farci up 07-applications/flowise
-```
-
-## Solution from scratch
-
-> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
-> viennent de `config/network.env` : les charger d'abord avec
-> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
-> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
-
-### Parcours A — Python
-
-```python
-# Depuis la racine du dépôt, après « source scripts/dev-env.sh && farci_load_env » :
-#   PYTHONPATH=07-applications python3
-from pathlib import Path
-
-from common.farci_client import chat_completion
-from common.pipeline import run
-
-bilan = run(
-    raw_dir=Path("datasets/raw"),
-    output_dir=Path("datasets/extracted/python"),
-    complete=lambda messages, model: chat_completion(messages, model=model),
-    model="med-extraction",
-    prompt_version="v1",
-)
-print(bilan)   # {'ecrits': ..., 'rejetes': ..., 'erreurs': ...}
-```
-
-### Parcours B — Open WebUI
+## La sonde : comment savoir que c'est fini
 
 ```bash
-docker run -d \
-  --name farci-open-webui \
-  -p 8080:8080 \
-  -e OPENAI_API_BASE_URL=$FARCI_GATEWAY_URL \
-  -e DEFAULT_MODEL=med-extraction \
-  -v open-webui-data:/app/backend/data \
-  ghcr.io/open-webui/open-webui:0.11.4
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080    # 200
 ```
 
-### Parcours C — Flowise
+Et sur l'écran de la salle : `Open WebUI ✅ UP`.
 
-```bash
-docker run -d \
-  --name farci-flowise \
-  -p 3000:3000 \
-  -e FLOWISE_USERNAME=admin \
-  -e FLOWISE_PASSWORD=farci-admin \
-  -v flowise-data:/root/.flowise \
-  flowiseai/flowise:3.1.4
-```
+## Bloqué depuis 10 minutes ?
 
-### Validation Pydantic
+Levez la main. L'Open WebUI de la référence (🛟), sur le Pi, sert la salle
+en attendant : `http://<REFERENCE_IP>:3080`.
 
-```python
-from common.schemas import ClinicalExtraction
+| Ce que vous voyez | À essayer |
+|---|---|
+| aucun modèle proposé | `./bin/farci test` : `gateway-contract` doit être `PASS` |
+| la page ne s'ouvre pas | `./bin/farci logs 07-applications/open-webui` ; le premier démarrage est long |
+| `ModuleNotFoundError` en Python | `./bin/farci bootstrap` |
+| beaucoup de `REJET` | le modèle ne respecte pas le schéma : essayez `--prompt v2` |
 
-# Valide un JSON
-data = {"patient_id": "123", "age": 67, ...}
-extraction = ClinicalExtraction(**data)
+## Bonus
 
-# JSON invalide → ValidationError
-try:
-    ClinicalExtraction(**{"patient_id": "123"})  # champs manquants
-except ValidationError as e:
-    print(f"Validation échouée: {e}")
-```
-
-## Vérifications
-
-- [ ] Les 3 parcours produisent le même schéma
-- [ ] `make evaluate` compare les 3 parcours
-- [ ] Aucun fichier invalide n'est écrit
+- Tout le jeu rapide en Python : `./bin/farci extract --subset quick --run equipe-7`,
+  puis `./bin/farci evaluate --subset quick`.
+- Exporter les extractions faites dans Open WebUI :
+  `07-applications/open-webui/export-submissions.sh`.

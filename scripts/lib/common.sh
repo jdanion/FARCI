@@ -16,8 +16,9 @@ FARCI_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FARCI_ROOT="${FARCI_ROOT:-$(cd "$FARCI_LIB_DIR/../.." && pwd)}"
 export FARCI_ROOT FARCI_LIB_DIR
 
-FARCI_DATA_DIR="${FARCI_DATA_DIR:-/srv/farci}"
-export FARCI_DATA_DIR
+# FARCI_DATA_DIR n'a PAS de valeur ici : farci_load_env (scripts/dev-env.sh)
+# la lit dans .env, puis applique /srv/farci par défaut. Une valeur posée ici
+# passerait pour « déjà dans l'environnement » et masquerait celle de .env.
 
 # Horodatage et couleur ------------------------------------------------------
 if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then
@@ -167,7 +168,7 @@ code_lines() {
 }
 
 # Emplacement de stockage lourd (§0.1 du plan).
-farci_data_dir() { printf '%s\n' "$FARCI_DATA_DIR"; }
+farci_data_dir() { printf '%s\n' "${FARCI_DATA_DIR:-/srv/farci}"; }
 
 # Vrai si la machine n'a normalement plus d'accès Internet.
 # best-effort : ne jamais échouer, ne jamais bloquer plus de 2s.
