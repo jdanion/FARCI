@@ -45,21 +45,10 @@ parse_args() {
 }
 
 # Liste des images à verrouiller (doit correspondre à versions.env)
-LOCK_IMAGES=(
-  "gitea/gitea:${GITEA_VERSION}"
-  "gitea/act_runner:${GITEA_ACT_RUNNER_VERSION}"
-  "postgres:${POSTGRES_VERSION}"
-  "redis:${REDIS_VERSION}"
-  "caddy:${CADDY_VERSION}"
-  "louislam/uptime-kuma:${UPTIME_KUMA_VERSION}"
-  "ollama/ollama:${OLLAMA_VERSION}"
-  "ghcr.io/berriai/litellm:${LITELLM_VERSION}"
-  "ds4sd/docling-serve:${DOCLING_SERVE_VERSION}"
-  "arizephoenix/phoenix:${PHOENIX_VERSION}"
-  "mlflow/mlflow:${MLFLOW_VERSION}"
-  "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}"
-  "flowiseai/flowise:${FLOWISE_VERSION}"
-)
+farci_load_versions
+# shellcheck source=scripts/lib/images.sh
+source "$FARCI_ROOT/scripts/lib/images.sh"
+mapfile -t LOCK_IMAGES < <(farci_images all)
 
 get_digest() {
   local image="$1"

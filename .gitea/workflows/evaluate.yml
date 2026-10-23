@@ -1,3 +1,9 @@
+# FARCI — évaluation de contrôle quand le dataset ou les métriques changent.
+#
+# Sans modèle ni GPU : le gold doit se valider contre le schéma, se
+# régénérer à l'identique, et obtenir 1,00 contre lui-même. Une régression
+# des métriques se voit ici avant l'atelier, pas devant la salle.
+
 name: evaluate
 
 on:
@@ -6,22 +12,33 @@ on:
     paths:
       - '06-evaluation/**'
       - 'datasets/**'
+      - '07-applications/common/**'
 
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   evaluate:
-    runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'gpu') || contains(github.event.pull_request.labels.*.name, 'full')
+    runs-on: farci
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - name: Evaluate
+      - name: Récupérer le dépôt (forge locale, sans action externe)
+        env:
+          TOKEN: ${{ gitea.token }}
+          SERVER: ${{ gitea.server_url }}
+          REPO: ${{ gitea.repository }}
+          SHA: ${{ gitea.sha }}
         run: |
-          echo "JSON validity       100 %"
-          echo "Extraction F1       0.84"
-          echo "Regression          none"
+          set -eu
+          git init -q .
+          git -c http.extraHeader="Authorization: token ${TOKEN}" \
+            fetch -q --depth 1 "${SERVER}/${REPO}.git" "${SHA}"
+          git checkout -q FETCH_HEAD
+
+      - name: Gold valide, reproductible, parfait contre lui-même
+        env:
+          NO_COLOR: "1"
+        run: |
+          python3 06-evaluation/gold-standard/validate_gold.py
+          ./bin/farci evaluate --extracted-dir datasets/gold
+          ./bin/farci test-unit -k evaluation

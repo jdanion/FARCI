@@ -9,7 +9,9 @@ services:
     container_name: farci-open-webui
     restart: unless-stopped
     environment:
-      OAI_API_BASE_URL: http://192.168.50.15/v1
+      # Point d'entrée stable (Caddy), construit depuis config/network.env.
+      OPENAI_API_BASE_URL: http://${CADDY_IP:?CADDY_IP manquant (config/network.env)}:${CADDY_INTERNAL_PORT:?CADDY_INTERNAL_PORT manquant}/v1
+      OPENAI_API_KEY: ${GATEWAY_KEY_STANDARD:?GATEWAY_KEY_STANDARD manquant (.env)}
       DEFAULT_MODEL: med-extraction
       ENABLE_SIGNUP: "false"
       ENABLE_LOGIN_FORM: "true"

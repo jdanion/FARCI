@@ -1,31 +1,27 @@
 #!/usr/bin/env bash
 # FARCI — test du contrat gateway (FARCI §18)
 #
-# Paramétrable par implémentation : IMPL=litellm|bifrost
+# Passe par le point d'entrée stable (Caddy) : le client ne connaît que lui.
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
 
 TEST_NAME="gateway-contract"
 test_start
+test_need_service CADDY_URL /healthz
 
-IMPL="${IMPL:-litellm}"
-GATEWAY_URL="${GATEWAY_URL:-http://192.168.50.15/v1}"
-API_KEY="${FARCI_API_KEY:-sk-standard-placeholder}"
-
-# Vérifier l'authentification
-code=$(curl -s -o /dev/null -w '%{http_code}' \
-  -X POST "$GATEWAY_URL/chat/completions" \
+API_KEY="${FARCI_API_KEY:-${GATEWAY_KEY_STANDARD:-}}"
+code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 \
+  -X POST "$FARCI_GATEWAY_URL/chat/completions" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $API_KEY" \
-  -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}' 2>/dev/null || echo "000")
+  -d "{\"model\":\"${FARCI_MODEL_ALIAS:-med-extraction}\",\"messages\":[{\"role\":\"user\",\"content\":\"test\"}],\"max_tokens\":1}" \
+  2>/dev/null || true)
 
-if [[ "$code" == "200" ]]; then
-  test_pass "$IMPL"
-elif [[ "$code" == "401" ]]; then
-  test_fail "authentification échouée"
-else
-  test_fail "code $code"
-fi
+case "$code" in
+  200) test_pass "med-extraction" ;;
+  401) test_fail "authentification refusée (clé GATEWAY_KEY_STANDARD)" ;;
+  *)   test_fail "code HTTP $code" ;;
+esac
 
 test_finish

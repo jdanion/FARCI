@@ -37,7 +37,7 @@ check() {
 
 # §4 IP modifiables
 check "§4 IP modifiables" \
-  "test \$(grep -R '192.168.50' --include='*.yml' --include='*.py' . | grep -v '^./config/' | wc -l) -eq 0"
+  "./bin/farci lint-ips"
 
 # §6 pas de latest
 check "§6 pas de latest" \
@@ -49,7 +49,7 @@ check "§7 air-gap" \
 
 # §14 agrégat
 check "§14 agrégat" \
-  "curl -sf http://192.168.50.15/status"
+  "curl -sf --max-time 5 \"\$FARCI_STATUS_URL\""
 
 # §16/§18 contrats
 check "§16/§18 contrats" \
@@ -61,11 +61,11 @@ check "§19 fallback" \
 
 # §28 structured output
 check "§28 structured output" \
-  "pytest tests/test_structured_output.py -v"
+  "./bin/farci test-unit"
 
 # §34 score
 check "§34 score" \
-  "python3 06-evaluation/metrics/evaluate.py"
+  "./bin/farci evaluate --extracted-dir datasets/gold"
 
 # §38 rate limit
 check "§38 rate limit" \
@@ -85,7 +85,7 @@ check "§51 manifeste" \
 
 # §52 aucun CDN
 check "§52 aucun CDN" \
-  "./scripts/check-offline-policy.sh"
+  "./bin/farci lint-offline"
 
 # §0.1 dépôt léger
 check "§0.1 dépôt léger" \
@@ -97,7 +97,7 @@ check "§0.2 poids partagés" \
 
 # Contrat reasoning
 check "contrat reasoning" \
-  "pytest tests/test_structured_output.py -v"
+  "./bin/farci test-unit"
 
 printf '\n'
 printf 'Résultat : %d passé(s), %d échoué(s)\n' "$passed" "$failed"

@@ -18,7 +18,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-GITEA_URL="${GITEA_ROOT_URL:-http://192.168.50.10:3000}"
+GITEA_URL="${GITEA_URL:?GITEA_IP/GITEA_PORT manquants : voir config/network.env}"
 GITEA_ADMIN_USER="${GITEA_ADMIN_USER:-farci-admin}"
 GITEA_ADMIN_PASSWORD="${GITEA_ADMIN_PASSWORD:?GITEA_ADMIN_PASSWORD requis}"
 

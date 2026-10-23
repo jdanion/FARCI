@@ -15,7 +15,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-LANGFUSE_URL="${LANGFUSE_URL:-http://192.168.50.52:3000}"
+LANGFUSE_URL="${LANGFUSE_URL:?OBSERVABILITY_B_IP/LANGFUSE_PORT manquants : voir config/network.env}"
 
 section "FARCI — bootstrap Langfuse"
 

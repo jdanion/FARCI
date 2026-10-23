@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# FARCI — test air-gap : images présentes, pas de pull
+# FARCI — test air-gap : images de la chaîne cœur présentes localement
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
@@ -7,24 +7,16 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
 TEST_NAME="airgap"
 test_start
 
-# Vérifier que les images requises sont présentes
-images=(
-  "gitea/gitea:${GITEA_VERSION}"
-  "ollama/ollama:${OLLAMA_VERSION}"
-  "caddy:${CADDY_VERSION}"
-)
+if ! have docker || ! docker info >/dev/null 2>&1; then
+  test_skip "docker indisponible"
+  test_finish
+  exit $?
+fi
 
-missing=0
-for img in "${images[@]}"; do
-  if ! docker image inspect "$img" >/dev/null 2>&1; then
-    missing=$((missing + 1))
-  fi
-done
-
-if [[ "$missing" -eq 0 ]]; then
+if "$FARCI_ROOT/scripts/cmd/verify-images.sh" >/dev/null 2>&1; then
   test_pass "images présentes"
 else
-  test_fail "$missing image(s) manquante(s)"
+  test_fail "images manquantes (./bin/farci verify-images)"
 fi
 
 test_finish

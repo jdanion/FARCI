@@ -199,8 +199,8 @@ cat <<'NEXT'
 
   Prochaines étapes selon votre rôle :
 
-    équipe 0 (GitOps)       cat 00-gitops/TUTORIAL.md      (arrive en phase 2)
-    préparation air-gap     ./preload.sh --core             (arrive en phase 1)
+    lire sa fiche d'équipe   ./bin/farci read <équipe>
+    préparation air-gap     ./preload.sh --core
     développement           ./bin/farci doctor
     suivre la construction  ./bin/farci status --watch
 

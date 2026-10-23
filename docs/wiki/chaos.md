@@ -1,4 +1,4 @@
-# Équipe 11 — Chaos engineering
+# Étape 3 — Chaos engineering (piloté par le formateur)
 
 ## Attendus pédagogiques
 
@@ -12,22 +12,25 @@
 
 ```bash
 # 1. Lister les scénarios
-./chaos/chaos.sh list
+./bin/farci chaos list
 
-# 2. Appliquer un scénario
-./chaos/chaos.sh scenario-01
+# 2. Appliquer un scénario (puis observer ./bin/farci status)
+./bin/farci chaos scenario-01
 
-# 3. Avec auto-revert
-./chaos/chaos.sh scenario-01 --duration 60
+# 3. Avec réparation automatique après 60 s
+./bin/farci chaos scenario-01 --duration 60
 
-# 4. Vérifier l'état
-./chaos/chaos.sh status
-
-# 5. Reset
-./chaos/chaos.sh reset
+# 4. Pannes actives, puis tout réparer
+./bin/farci chaos status
+./bin/farci chaos reset
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Coupure manuelle d'un service
 
@@ -36,7 +39,7 @@
 docker stop farci-ollama
 
 # Vérifier que le gateway répond toujours
-curl -X POST http://192.168.50.15/v1/chat/completions \
+curl -X POST $FARCI_GATEWAY_URL/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer sk-standard-xxx" \
   -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'
@@ -51,7 +54,7 @@ docker start farci-ollama
 # 12 requêtes rapides
 for i in $(seq 1 12); do
   curl -s -o /dev/null -w '%{http_code}\n' \
-    -X POST http://192.168.50.15/v1/chat/completions \
+    -X POST $FARCI_GATEWAY_URL/chat/completions \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer sk-standard-xxx" \
     -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}'

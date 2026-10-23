@@ -5,9 +5,12 @@
 
 services:
   bifrost:
-    image: ghcr.com/MaximFaq/bifrost:${BIFROST_VERSION}
+    image: maximhq/bifrost:v${BIFROST_VERSION}
     container_name: farci-bifrost
     restart: unless-stopped
+    environment:
+      # Adresse du runtime, construite depuis config/network.env (aucune IP ici).
+      INFERENCE_A_URL: http://${INFERENCE_A_IP:?INFERENCE_A_IP manquant (config/network.env)}:${INFERENCE_PORT:?INFERENCE_PORT manquant}
     volumes:
       - ./config.json:/app/config.json:ro
       - bifrost-data:/data

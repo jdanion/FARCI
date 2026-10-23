@@ -2,11 +2,11 @@
 # FARCI — chaos engineering dispatcher (FARCI §43)
 #
 # Interface unique : apply et revert (idempotents)
-# État persisté dans .chaos/state.json
+# État persisté dans .chaos/state.json (liste des pannes actives)
 
 set -euo pipefail
 
-FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export FARCI_ROOT
 
 # shellcheck source=scripts/lib/common.sh
@@ -25,8 +25,9 @@ Usage : ./chaos/chaos.sh <commande> [options]
 Commandes :
   list                    Lister les scénarios
   scenario-NN             Appliquer le scénario NN
-  status                  Afficher l'état du chaos
-  reset                   Réinitialiser tous les scénarios
+  revert scenario-NN      Réparer un seul scénario
+  status                  Pannes actives
+  reset                   Réparer toutes les pannes actives
 
 Options :
   --duration <secondes>   Auto-revert après N secondes
@@ -43,6 +44,7 @@ USAGE
 main() {
   local cmd="${1:-list}"
   shift || true
+  [[ "$cmd" == -h || "$cmd" == --help || "$cmd" == help ]] && { usage; return 0; }
 
   case "$cmd" in
     list)
@@ -55,8 +57,10 @@ main() {
       chaos_reset
       ;;
     scenario-*)
-      local scenario="${cmd#scenario-}"
-      chaos_apply "$scenario" "$@"
+      chaos_apply "$cmd" "$@"
+      ;;
+    revert)
+      chaos_revert "${1:-}" || { err "usage : revert scenario-NN"; exit 64; }
       ;;
     -h|--help|help)
       usage

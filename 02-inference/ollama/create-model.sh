@@ -16,7 +16,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-OLLAMA_HOST="${OLLAMA_HOST:-http://192.168.50.20:8080}"
+OLLAMA_HOST="${OLLAMA_HOST:-${INFERENCE_A_URL:?INFERENCE_A_IP/INFERENCE_PORT manquants : voir config/network.env}}"
 MODELS_DIR="${FARCI_MODELS_DIR}"
 
 section "FARCI — import des modèles dans Ollama"

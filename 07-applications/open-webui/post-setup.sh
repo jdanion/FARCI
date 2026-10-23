@@ -15,8 +15,8 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-WEBUI_URL="${OPEN_WEBUI_URL:-http://192.168.50.60:8080}"
-GATEWAY_URL="${GATEWAY_URL:-http://192.168.50.15/v1}"
+WEBUI_URL="${OPEN_WEBUI_URL:?OPEN_WEBUI_IP/OPEN_WEBUI_PORT manquants : voir config/network.env}"
+GATEWAY_URL="${FARCI_GATEWAY_URL:?CADDY_IP/CADDY_INTERNAL_PORT manquants : voir config/network.env}"
 
 section "FARCI — post-setup Open WebUI"
 

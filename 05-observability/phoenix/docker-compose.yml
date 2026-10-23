@@ -18,7 +18,7 @@ services:
       - phoenix-data:/phoenix
     networks:
       farci:
-        ipv4_address: ${PHOENIX_IP}
+        ipv4_address: ${OBSERVABILITY_A_IP}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6006/health"]
       interval: 10s

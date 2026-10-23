@@ -1,22 +1,49 @@
+# FARCI — tests d'intégration sur la plateforme montée (après fusion, ou à la main).
+#
+# Le job tourne sur le runner de la salle, branché au réseau `farci` : il
+# sonde les briques réellement déployées. Une brique absente est SKIP ;
+# lancé à la main avec strict=oui, elle devient FAIL (recette J-1).
+
 name: integration
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Recette : une brique absente est un échec (oui/non)"
+        default: "non"
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ gitea.workflow }}-${{ gitea.ref }}
   cancel-in-progress: true
 
 jobs:
   integration:
-    runs-on: ubuntu-latest
+    runs-on: farci
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - name: Integration tests
+      - name: Récupérer le dépôt (forge locale, sans action externe)
+        env:
+          TOKEN: ${{ gitea.token }}
+          SERVER: ${{ gitea.server_url }}
+          REPO: ${{ gitea.repository }}
+          SHA: ${{ gitea.sha }}
         run: |
-          ./bin/farci lint
-          ./tests/run-all.sh
+          set -eu
+          git init -q .
+          git -c http.extraHeader="Authorization: token ${TOKEN}" \
+            fetch -q --depth 1 "${SERVER}/${REPO}.git" "${SHA}"
+          git checkout -q FETCH_HEAD
+
+      - name: Tests d'intégration
+        env:
+          NO_COLOR: "1"
+          FARCI_TESTS_STRICT: ${{ github.event.inputs.strict == 'oui' && '1' || '0' }}
+        run: |
+          cp -n config/network.env.example config/network.env
+          ./bin/farci test

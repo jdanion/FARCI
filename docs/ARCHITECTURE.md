@@ -47,40 +47,49 @@ Ce qui est enseigné n'est pas « Phoenix » ni « Langfuse », mais **OpenTelem
 ## 2. Le chemin complet d'un dossier patient
 
 ```
-  PDF médical synthétique
-        │  (datasets/raw/)
+  Dossier médical synthétique         datasets/raw/patient_<IPP>_{cro,crap,crscan,lettre}.txt
+        │  (4 documents texte par patient, versionnés)
         ▼
-     Docling                 mise en page, titres, tableaux
-        │  texte structuré
-        ▼
-  Pseudonymisation          [PATIENT_001], [DATE_001]…
+  Concaténation                     un dossier = les 4 documents, dans l'ordre clinique
         │
         ▼
-  LLM Gateway               alias med-extraction, clés virtuelles, quota
+  Pseudonymisation                  [IPP_0], [NOM_0], [DATE_0]…  (04-clinical-documents)
         │
         ▼
-  Runtime d'inférence       modèle local, aucun appel sortant
+  LLM Gateway (via Caddy /v1)       alias med-extraction, clés virtuelles, quota
         │
         ▼
-  Structured output         JSON conforme au schéma
+  Runtime d'inférence               modèle local, aucun appel sortant
         │
         ▼
-     Pydantic               validation stricte
+  Structured output                 JSON dans `content` (le raisonnement reste dans reasoning_content)
         │
         ▼
-  JSON / CSV                datasets/extracted/<équipe>/
+     Pydantic                       validation stricte — échec : RIEN n'est écrit
         │
         ▼
-  Gold standard             datasets/gold/
+  JSON                              datasets/extracted/<run>/patient_<IPP>.json (+ _meta)
         │
         ▼
-    Métriques               précision, rappel, F1, latence
+  Gold standard                     datasets/gold/  (écrit depuis le registre, jamais par un LLM)
         │
         ▼
-      MLflow                 une expérience par configuration
+    Métriques                       ./bin/farci evaluate : complétude, précision, rappel, F1, latence
+        │
+        ▼
+      MLflow (bonus)                une expérience par configuration
 ```
 
-Chaque flèche est un **contrat** testé. Si une flèche casse, un test le dit.
+**Pourquoi du texte et pas des PDF ?** Le dataset versionné est en `.txt` :
+c'est le parcours assumé de l'atelier. Il est déterministe, léger, lisible
+par tous, et ne dépend d'aucune brique lourde. Docling reste la brique de
+l'équipe 4 : il convertit les **PDF** produits à la demande par
+`./bin/farci generate-dataset --pdf` (dans `datasets/pdf/`, hors Git), ce
+qui permet de montrer la conversion d'un document mis en page et de jouer le
+scénario 05 (Docling tombe, le parcours texte continue).
+
+Chaque flèche est un **contrat** testé. Si une flèche casse, un test le dit
+(`./bin/farci test-unit`, `./bin/farci test`).
 
 ---
 
@@ -90,10 +99,14 @@ Les clients ne connaissent jamais les adresses physiques. Ils connaissent une
 seule entrée :
 
 ```
-http://192.168.50.15/v1        → la gateway
-http://192.168.50.15/docling   → la chaîne documentaire
-http://192.168.50.15/status    → l'état de tout le système
+http://<CADDY_IP>/v1        → la gateway
+http://<CADDY_IP>/docling   → la chaîne documentaire
+http://<CADDY_IP>/status    → l'état de tout le système
 ```
+
+`<CADDY_IP>` vient de `config/network.env` ; `scripts/dev-env.sh` en dérive
+`FARCI_GATEWAY_URL`, `FARCI_DOCLING_URL` et `FARCI_STATUS_URL`. Aucun autre
+fichier ne compose d'adresse.
 
 Conséquence directe : un client qui pointe vers Caddy fonctionne avec n'importe
 quelle implémentation de gateway, de runtime ou d'observabilité. C'est ce qui rend
@@ -112,7 +125,7 @@ la permutation visible en direct pendant l'atelier.
 | Runtime d'inférence | « qui calcule ? » | Ollama, llama.cpp, oMLX |
 | Passerelle LLM | « qui décide, qui réessaie, qui mesure ? » | LiteLLM, Bifrost |
 | Reverse proxy | « par où on entre ? » | Caddy |
-| Chaîne documentaire | « comment lire un PDF ? » | Docling |
+| Chaîne documentaire | « comment lire un document, et que cacher au modèle ? » | Docling, pseudonymisation |
 | Observabilité | « qu'est-ce qui s'est passé ? » | Phoenix, Langfuse |
 | Évaluation | « est-ce que c'est bon ? » | MLflow + métriques |
 | Registre | « quels services existe-t-il ? » | `config/services.yaml` |
@@ -188,6 +201,6 @@ l'apprend le jour où l'outil de supervision tombe pendant la production.
 
 - `CONTRACTS.md` — les trois contrats, côte à côte
 - `AIRGAP.md` — ce qui est préchargé et comment le vérifier
-- `CHAOS.md` — les sept scénarios et leur résultat attendu
+- `CHAOS.md` — les scénarios de panne et leur résultat attendu
 - `WORKSHOP_FLOW.md` — le déroulé des trois étapes
 - `PLAN.md` — le plan d'implémentation complet, phase par phase

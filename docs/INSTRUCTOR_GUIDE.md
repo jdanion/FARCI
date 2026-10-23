@@ -11,14 +11,15 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 - [ ] Vérifier Docker et Python : `./bin/farci doctor`
 - [ ] Fixer les versions : elles sont dans `versions.env`, déjà vérifiées
 - [ ] `./preload.sh --core` (compter **une bonne demi-journée** selon le débit)
-- [ ] `./preload.sh --models-qwen38` si des postes le justifient
-- [ ] `./scripts/lock-requirements.sh` pour verrouiller et télécharger les wheels
-- [ ] Vérifier les empreintes : `make verify-manifest`
-- [ ] `./verify-airgap.sh`
+- [ ] `./preload.sh --only models_qwen38` si des postes le justifient
+- [ ] `scripts/lock-requirements.sh` pour verrouiller et télécharger les wheels
+- [ ] Vérifier les empreintes : `./bin/farci verify-manifest`
+- [ ] `./bin/farci verify-airgap`
 - [ ] Répartir `$FARCI_DATA_DIR` (clé USB, disque, ou copie locale par poste)
 - [ ] Tester le démarrage sur **une** machine, complètement, une fois
-- [ ] Préparer le jeu de données si la phase 10 est déjà là :
-      `python3 datasets/tools/generate_dataset.py`
+- [ ] Le jeu de données est versionné (`datasets/raw/*.txt`, `datasets/gold/`) ;
+      pour la démonstration Docling : `./bin/farci generate-dataset --pdf`
+- [ ] `./bin/farci ci` est vert sur la machine de référence
 - [ ] Imprimer ou projeter `./bin/farci help` et le tableau de progression
 
 ### Les deux erreurs qui coûtent le plus de temps
@@ -61,7 +62,7 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 | Étape 1 | 2 h 30 | chaque équipe monte sa brique | faire applaudir chaque passage au vert |
 | Bascule | 15 min | `CLINICAL PIPELINE READY` | **moment clé**, tout le monde le voit |
 | Étape 2 | 1 h 30 | extraction clinique, 3 parcours | insister sur la validation |
-| Évaluation | 20 min | `make evaluate` | comparer les parcours entre eux |
+| Évaluation | 20 min | `./bin/farci evaluate` | comparer les parcours entre eux |
 | Étape 3 | 1 h | les scénarios de chaos | le scénario 07 doit rester vert |
 | Clôture | 20 min | chacun explique une différence avec ses mots | c'est le critère de réussite |
 
@@ -84,20 +85,20 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 
 | Symptôme | Cause probable | À faire |
 |---|---|---|
-| `permission denied` sur un script | bit `+x` manquant | `chmod +x scripts/cmd/*.sh bin/farci` |
+| `permission denied` sur un script | bit `+x` manquant | `chmod +x scripts/cmd/*.sh bin/farci` (le lint le signale) |
 | une cible n'apparaît pas dans `help` | registre `targets.def` mal formé | `./bin/farci selftest` dit exactement laquelle |
 | `adresse non résolue` | `config/network.env` absent | `cp config/network.env.example config/network.env` |
-| une image Docker manque | préchargement incomplet | `./preload.sh --core --verify` |
+| une image Docker manque | préchargement incomplet | `./bin/farci verify-images`, puis `docker load -i offline/images/<image>.tar` |
 | `CLINICAL PIPELINE` reste rouge | un `critical: true` est tombé | `./bin/farci status --json` pour voir lequel |
-| le modèle ne démarre pas | RAM insuffisante | `FARCI_MODEL_CI` (2 Go) pour les tests |
+| le modèle ne démarre pas | RAM insuffisante | modèle de secours Qwen3.5-2B (`FARCI_MODEL_CI`, alias `med-extraction-lite`) |
 
 ---
 
 ## Après l'atelier
 
-- [ ] `./chaos/chaos.sh reset` et vérifier le retour au vert
+- [ ] `./bin/farci chaos reset` et vérifier le retour au vert
 - [ ] Récupérer les extractions : `datasets/extracted/`
-- [ ] Comparer les scores des trois parcours : `make evaluate`
+- [ ] Comparer les scores des trois parcours : `./bin/farci evaluate --report-dir datasets/reports`
 - [ ] Noter ce qui a fonctionné et ce qui a bloqué, phase par phase
 - [ ] Conserver `versions.env` et le manifeste : c'est ce qui rendra l'atelier
       reproductible l'année prochaine

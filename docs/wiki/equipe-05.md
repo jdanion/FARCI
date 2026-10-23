@@ -12,19 +12,23 @@
 
 ```bash
 # 1. Démarrer Phoenix
-cd 05-observability/phoenix
-docker compose up -d
+./bin/farci up 05-observability/phoenix
 
-# 2. Démarrer Langfuse
-cd ../langfuse
-cp .env.example .env
-docker compose up -d
+# 2. Vérifier : ligne Observability verte, test observability PASS
+./bin/farci status
+./bin/farci test
 
-# 3. Tester
-./tests/test_observability.sh
+# 3. Bonus : Langfuse sur le même flux OTLP
+./bin/farci up 05-observability/langfuse
+05-observability/langfuse/bootstrap.sh
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Démarrer Phoenix
 
@@ -48,7 +52,7 @@ docker run -d \
   -p 3000:3000 \
   -e DATABASE_URL=postgresql://langfuse:langfuse@farci-langfuse-postgres:5432/langfuse \
   -e NEXTAUTH_SECRET=changeme \
-  -e NEXTAUTH_URL=http://192.168.50.52:3000 \
+  -e NEXTAUTH_URL=$LANGFUSE_URL \
   -e LANGFUSE_ENABLE_EXPERIMENTAL_OTEL=true \
   langfuse/langfuse:4.46.0
 ```

@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# FARCI — test d'observabilité : Phoenix, Langfuse
+# FARCI — test d'observabilité : Phoenix joignable
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
 
 TEST_NAME="observability"
 test_start
+test_need_service PHOENIX_URL /healthz
 
-# Phoenix
-if curl -sf "http://192.168.50.51:6006/health" >/dev/null 2>&1; then
+if [[ "$(http_code "$PHOENIX_URL/healthz")" == "200" ]]; then
   test_pass "phoenix"
 else
-  test_fail "phoenix ne répond pas"
+  test_fail "phoenix ne répond pas 200 sur /healthz"
 fi
 
 test_finish

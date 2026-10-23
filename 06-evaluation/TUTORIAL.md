@@ -1,74 +1,106 @@
-# TUTORIAL — Équipe 6 : Évaluation & MLflow
+# TUTORIAL — Équipe 6 : Évaluation (MLflow en bonus)
 
-## Objectif
+## Mission
 
-Mettre en place l'évaluation des extractions LLM : métriques champ par champ,
-comparaison au gold standard, suivi des runs dans MLflow.
+Mesurer les extractions contre le **gold standard** et les classer.
+L'évaluation se fait en ligne de commande, pour tout le monde ; MLflow (suivi
+des expériences) est une brique **bonus**.
 
-## Architecture
+- **Objectif minimal** : `./bin/farci evaluate --extracted-dir datasets/gold`
+  donne un score parfait (contrôle), puis le classement des runs de l'étape 2.
+- **Bonus** : MLflow démarré (ligne `Evaluation` verte), une expérience par
+  configuration (modèle, prompt, runtime).
 
-```
-Extraction (JSON)
-    │
-    ▼
-┌─────────────┐
-│ evaluate.py │  ← compare au gold
-│             │  ← métriques micro/macro
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   MLflow    │  ← suivi des runs
-│   :5000     │
-└─────────────┘
-```
+## Ce que votre service apporte
+
+Un chiffre comparable. Sans référence, « F1 = 0,84 » ne veut rien dire ; avec
+le même gold, le même schéma et le même alias de modèle pour tous, les
+parcours deviennent comparables.
+
+## Ce que vous devez comprendre
+
+- **Évaluation = la revue de littérature** : on compare une méthode à une
+  référence connue.
+- **Le gold n'est jamais produit par un LLM** : il vient du registre des cas
+  (`datasets/tools/cases.py`).
+- **Règles de calcul** : un dossier absent ou non conforme au schéma compte
+  comme « tout manqué » ; `null` attendu et `null` prédit est une bonne
+  réponse ; `patient_id` n'est pas noté (clé pseudonymisée).
+
+## Vos dépendances
+
+Les extractions de l'étape 2 (`datasets/extracted/<run>/`).
+
+## Votre IP
+
+MLflow (bonus) : `MLFLOW_IP`, port `MLFLOW_PORT`.
+
+## Installation
+
+Rien pour l'évaluation (Python standard). MLflow : image préchargée
+(`./bin/farci verify-images --all`).
+
+## Configuration
+
+- `06-evaluation/metrics/normalize.py` : casse, accents, unités, booléens.
+- `datasets/schemas/clinical_extraction.schema.json` : le contrat.
 
 ## Démarrage
 
-### MLflow
+```bash
+./bin/farci evaluate --extracted-dir datasets/gold      # contrôle : 1.00 partout
+./bin/farci evaluate                                    # toutes les runs de l'étape 2
+./bin/farci evaluate --subset quick --report-dir datasets/reports
+```
+
+Bonus :
 
 ```bash
-cd 06-evaluation/mlflow
-docker compose up -d
+./bin/farci up 06-evaluation/mlflow
 ```
 
-### Évaluation
+## Test local
 
 ```bash
-# Tous les dossiers
-python 06-evaluation/metrics/evaluate.py
-
-# Sous-ensemble
-python 06-evaluation/metrics/evaluate.py --runs python flowise
+python3 06-evaluation/gold-standard/validate_gold.py
 ```
 
-## Axes expérimentaux
+## Test contractuel
 
-| Axe | Valeurs |
-|---|---|
-| `model` | ornith-1.5-9b / qwen3.8-27b |
-| `quant` | q4km / q5km / q8_0 |
-| `runtime` | ollama / llamacpp / omlx |
-| `thinking` | on / off |
-| `prompt_version` | v1 / v2 |
-| `schema_mode` | json_schema / prompt_strict / gbnf |
-
-## Détection de régression
-
+```bash
+./bin/farci test-unit -k evaluation
 ```
-JSON validity       100 %
-Extraction F1       0.84
-Regression          none
+
+Dont le test « gold contre gold = score parfait ».
+
+## Vérification sur le tableau de bord
+
+Ligne `Evaluation` verte si MLflow tourne (bonus). Le classement des runs est
+projeté pendant la séance d'évaluation.
+
+## Commit
+
+Le code de métriques et ses tests. Jamais `datasets/extracted/` ni
+`datasets/reports/` : ce sont des résultats d'expérience.
+
+## Pull Request
+
+Joindre le tableau de classement produit par `./bin/farci evaluate`.
+
+## Définition de DONE
+
+```text
+[ ] gold contre gold : F1 = 1.00
+[ ] classement des runs de l'étape 2 projeté
+[ ] tests d'évaluation verts
+[ ] documentation complétée
+[ ] Pull Request ouverte et relue
 ```
 
 ## Dépannage
 
-### MLflow ne démarre pas
-
-```bash
-docker logs farci-mlflow
-```
-
-### Pas de données dans MLflow
-
-Vérifier que les runs ont été lancés avec les bons paramètres.
+| Symptôme | Cause probable | Commande |
+|---|---|---|
+| « aucune extraction trouvée » | aucun `patient_*.json` sous `datasets/extracted/` | lancer l'étape 2 (`./bin/farci extract`) |
+| un dossier « invalide » | champ manquant ou hors énumération | lire la colonne d'erreur du rapport |
+| F1 bas mais exactitude haute | beaucoup de `null` bien reconnus | c'est normal : lire précision et rappel |

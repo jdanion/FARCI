@@ -6,6 +6,11 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  sed -n '2,/^$/p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'
+  exit 0
+fi
+
 FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export FARCI_ROOT
 
@@ -16,32 +21,16 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-# Charger versions.env (non inclus dans farci_env_files)
-if [[ -r "$FARCI_ROOT/versions.env" ]]; then
-  while IFS='=' read -r key value; do
-    [[ -z "$key" || "$key" == \#* ]] && continue
-    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
-    [[ -z "${!key+x}" ]] && export "$key=$value"
-  done < "$FARCI_ROOT/versions.env"
-fi
+farci_load_versions
+# shellcheck source=scripts/lib/images.sh
+source "$FARCI_ROOT/scripts/lib/images.sh"
 
 section "FARCI — vérification des images Docker"
 
-IMAGES=(
-  "gitea/gitea:${GITEA_VERSION}"
-  "gitea/act_runner:${GITEA_ACT_RUNNER_VERSION}"
-  "postgres:${POSTGRES_VERSION}"
-  "redis:${REDIS_VERSION}"
-  "caddy:${CADDY_VERSION}"
-  "louislam/uptime-kuma:${UPTIME_KUMA_VERSION}"
-  "ollama/ollama:${OLLAMA_VERSION}"
-  "ghcr.io/berriai/litellm:${LITELLM_VERSION}"
-  "ds4sd/docling-serve:${DOCLING_SERVE_VERSION}"
-  "arizephoenix/phoenix:${PHOENIX_VERSION}"
-  "mlflow/mlflow:${MLFLOW_VERSION}"
-  "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}"
-  "flowiseai/flowise:${FLOWISE_VERSION}"
-)
+# Par défaut la chaîne cœur ; --all pour inclure les briques bonus.
+scope=core
+[[ "${1:-}" == "--all" ]] && scope=all
+mapfile -t IMAGES < <(farci_images "$scope")
 
 missing=0
 present=0

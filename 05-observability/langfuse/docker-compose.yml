@@ -13,14 +13,14 @@ services:
     environment:
       DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD:-langfuse}@postgres:5432/langfuse
       NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:-changeme}
-      NEXTAUTH_URL: http://192.168.50.52:3000
+      NEXTAUTH_URL: http://${OBSERVABILITY_B_IP:?OBSERVABILITY_B_IP manquant (config/network.env)}:${LANGFUSE_PORT:?LANGFUSE_PORT manquant}
       SALT: ${LANGFUSE_SALT:-changeme}
       LANGFUSE_ENABLE_EXPERIMENTAL_OTEL: "true"
     volumes:
       - langfuse-data:/app/data
     networks:
       farci:
-        ipv4_address: ${LANGFUSE_IP}
+        ipv4_address: ${OBSERVABILITY_B_IP}
     depends_on:
       - postgres
     healthcheck:
@@ -38,7 +38,7 @@ services:
       POSTGRES_USER: langfuse
       POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse}
     volumes:
-      - langfuse-postgres-data:/var/lib/postgresql/data
+      - langfuse-postgres-data:/var/lib/postgresql
     networks:
       - farci
 

@@ -11,22 +11,19 @@
 ## Solution simple (scripts)
 
 ```bash
-# 1. Démarrer les agents + webhook
-cd 08-arcane-agents
-docker compose up -d
+# 1. Démarrer les agents et le récepteur de webhooks (WEBHOOK_SECRET dans .env)
+./bin/farci up 08-arcane-agents
 
-# 2. Vérifier les agents
-docker logs farci-agent-ollama
-docker logs farci-agent-gateway
-
-# 3. Tester le webhook
-curl -X POST http://192.168.50.60:9000/webhook \
-  -H "Content-Type: application/json" \
-  -H "X-Gitea-Signature: <signature>" \
-  -d '{"ref":"refs/heads/main"}'
+# 2. Lire ce que disent les agents
+./bin/farci logs 08-arcane-agents
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Démarrer un agent Arcane
 
@@ -35,7 +32,7 @@ docker run -d \
   --name farci-agent-ollama \
   --network farci \
   -e TARGET_SERVICE=ollama \
-  -e TARGET_URL=http://192.168.50.20:8080 \
+  -e TARGET_URL=$INFERENCE_A_URL \
   -e CHECK_INTERVAL=30 \
   -v $(pwd)/arcane-agent:/app:ro \
   python:3.13.15-slim-trixie \
@@ -60,7 +57,7 @@ docker run -d \
 ### 3. Configurer le webhook Gitea
 
 ```
-URL : http://192.168.50.60:9000/webhook
+URL : http://<adresse du récepteur>:9000/webhook
 Content type : application/json
 Secret : mon-secret
 Events : Push, Pull Request

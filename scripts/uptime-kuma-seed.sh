@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export FARCI_ROOT
 
 # shellcheck source=scripts/lib/common.sh
@@ -16,7 +16,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-KUMA_URL="${UPTIME_KUMA_URL:-http://192.168.50.16:3001}"
+KUMA_URL="${UPTIME_KUMA_URL:?UPTIME_KUMA_IP/UPTIME_KUMA_PORT manquants : voir config/network.env}"
 
 section "FARCI — seed Uptime Kuma"
 

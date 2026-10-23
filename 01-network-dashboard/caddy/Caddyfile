@@ -2,56 +2,56 @@
 #
 # Routage des services internes. HTTP only (air-gap prime sur TLS, §61.1).
 # handle_errors renvoie un JSON explicite pour débogage.
+#
+# Aucune adresse ici : Caddy lit ses variables d'environnement avec la
+# syntaxe {$NOM} (et non ${NOM}). Elles sont transmises par
+# docker-compose.yml depuis config/network.env.
 
-:80 {
-    # Health check rapide
+:{$CADDY_INTERNAL_PORT} {
+    # Santé globale du pipeline et état détaillé (health-aggregator)
     handle /healthz {
-        reverse_proxy ${HEALTH_AGGREGATOR_IP}:8081
+        reverse_proxy {$HEALTH_AGGREGATOR_IP}:{$HEALTH_AGGREGATOR_PORT}
     }
-
-    # Health aggregator (status détaillé)
     handle /status {
-        reverse_proxy ${HEALTH_AGGREGATOR_IP}:8081
+        reverse_proxy {$HEALTH_AGGREGATOR_IP}:{$HEALTH_AGGREGATOR_PORT}
     }
 
-    # LLM Gateway (OpenAI-compatible)
+    # LLM Gateway (OpenAI-compatible) : le seul point d'entrée des applications
     handle /v1/* {
-        reverse_proxy ${GATEWAY_A_IP}:4000
+        reverse_proxy {$GATEWAY_A_IP}:{$GATEWAY_PORT}
     }
 
     # Docling (documents)
-    handle /docling/* {
-        reverse_proxy ${DOCLING_IP}:5001
+    handle_path /docling/* {
+        reverse_proxy {$DOCLING_IP}:{$DOCLING_PORT}
     }
 
-    # Observabilité (Phoenix / Langfuse)
-    handle /observability/* {
-        reverse_proxy ${PHOENIX_IP}:6006
+    # Observabilité (Phoenix)
+    handle_path /observability/* {
+        reverse_proxy {$OBSERVABILITY_A_IP}:{$PHOENIX_PORT}
     }
 
-    # MLflow (évaluation)
-    handle /mlflow/* {
-        reverse_proxy ${MLFLOW_IP}:5000
+    # MLflow (évaluation, bonus)
+    handle_path /mlflow/* {
+        reverse_proxy {$MLFLOW_IP}:{$MLFLOW_PORT}
     }
 
-    # Uptime Kuma (dashboard)
-    handle /kuma/* {
-        reverse_proxy ${UPTIME_KUMA_IP}:3001
+    # Uptime Kuma (tableau de bord, bonus)
+    handle_path /kuma/* {
+        reverse_proxy {$UPTIME_KUMA_IP}:{$UPTIME_KUMA_PORT}
     }
 
-    # Flowise
-    handle /flowise/* {
-        reverse_proxy ${FLOWISE_IP}:3000
+    # Applications clientes
+    handle_path /flowise/* {
+        reverse_proxy {$FLOWISE_IP}:{$FLOWISE_PORT}
+    }
+    handle_path /webui/* {
+        reverse_proxy {$OPEN_WEBUI_IP}:{$OPEN_WEBUI_PORT}
     }
 
-    # Open WebUI
-    handle /webui/* {
-        reverse_proxy ${OPEN_WEBUI_IP}:8080
-    }
-
-    # Gitea
-    handle /gitea/* {
-        reverse_proxy ${GITEA_IP}:3000
+    # Gitea (bonus)
+    handle_path /gitea/* {
+        reverse_proxy {$GITEA_IP}:{$GITEA_PORT}
     }
 
     # Erreurs JSON explicites

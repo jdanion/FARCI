@@ -15,7 +15,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-DOCLING_URL="${DOCLING_URL:-http://192.168.50.40:5001}"
+DOCLING_URL="${DOCLING_URL:?DOCLING_IP/DOCLING_PORT manquants : voir config/network.env}"
 TEST_PDF="${1:-$FARCI_ROOT/datasets/raw/patient_1234567890123_cro.pdf}"
 
 section "FARCI — smoke test Docling"

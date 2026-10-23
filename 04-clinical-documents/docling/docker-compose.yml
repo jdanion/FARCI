@@ -5,7 +5,7 @@
 
 services:
   docling:
-    image: ds4sd/docling-serve:${DOCLING_SERVE_VERSION}
+    image: ghcr.io/docling-project/docling-serve-cpu:v${DOCLING_SERVE_VERSION}
     container_name: farci-docling
     restart: unless-stopped
     ports:

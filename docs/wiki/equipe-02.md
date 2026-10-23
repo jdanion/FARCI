@@ -11,22 +11,24 @@
 ## Solution simple (scripts)
 
 ```bash
-# 1. Démarrer Ollama
-cd 02-inference/ollama
-docker compose up -d
+# 1. Démarrer Ollama et importer les poids
+./bin/farci up 02-inference/ollama
+02-inference/ollama/create-model.sh
 
-# 2. Importer les modèles
-./create-model.sh
+# 2. Bonus : llama.cpp sur le même fichier de poids
+./bin/farci up 02-inference/llamacpp
 
-# 3. Démarrer llama.cpp
-cd ../llamacpp
-docker compose up -d
-
-# 4. Vérifier le contrat
-BASE_URL=http://192.168.50.20:8080/v1 ./tests/test_inference_contract.sh
+# 3. Vérifier : ligne Inference Primary verte, test inference-contract PASS
+./bin/farci status
+./bin/farci test
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Démarrer Ollama
 
@@ -54,7 +56,7 @@ PARAMETER num_ctx 8192
 EOF
 
 # Importer dans Ollama
-curl -X POST http://192.168.50.20:8080/api/create \
+curl -X POST $INFERENCE_A_URL/api/create \
   -H "Content-Type: application/json" \
   -d '{
     "name": "ornith-1.5-9b-q5km",
@@ -88,13 +90,13 @@ docker run -d \
 
 ```bash
 # Lister les modèles
-curl http://192.168.50.20:8080/api/tags
+curl $INFERENCE_A_URL/api/tags
 
 # Healthcheck
-curl http://192.168.50.21:8081/health
+curl $INFERENCE_B_URL/health
 
 # Complétion
-curl -X POST http://192.168.50.20:8080/v1/chat/completions \
+curl -X POST $INFERENCE_A_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "ornith-1.5-9b-q5km",
@@ -108,7 +110,7 @@ curl -X POST http://192.168.50.20:8080/v1/chat/completions \
 
 ```bash
 # Ollama : think: false
-curl -X POST http://192.168.50.20:8080/v1/chat/completions \
+curl -X POST $INFERENCE_A_URL/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "ornith-1.5-9b-q5km",

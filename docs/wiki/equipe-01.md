@@ -11,30 +11,29 @@
 ## Solution simple (scripts)
 
 ```bash
-# 1. Démarrer Caddy + Uptime Kuma + health-aggregator
-cd 01-network-dashboard
-docker compose up -d
+# 1. Démarrer Caddy + health-aggregator (+ Uptime Kuma, bonus)
+./bin/farci up 01-network-dashboard
 
-# 2. Vérifier Caddy
-curl http://192.168.50.15/healthz
+# 2. Vérifier : ligne Network verte, test network PASS
+./bin/farci status
+./bin/farci test
 
-# 3. Vérifier Uptime Kuma
-curl http://192.168.50.16:3001
-
-# 4. Vérifier health-aggregator
-curl http://192.168.50.15:8081/status
-
-# 5. Seeder les moniteurs Uptime Kuma
-./scripts/uptime-kuma-seed.sh
+# 3. Bonus : créer les sondes Uptime Kuma depuis le registre
+scripts/uptime-kuma-seed.sh
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Créer le réseau Docker avec sous-réseau
 
 ```bash
 docker network create \
-  --subnet=192.168.50.0/24 \
+  --subnet="$FARCI_SUBNET" \
   farci
 ```
 
@@ -87,20 +86,20 @@ Le Caddyfile définit les routes :
 
 ```bash
 # Via l'API REST
-curl -X POST http://192.168.50.16:3001/api/monitors \
+curl -X POST $UPTIME_KUMA_URL/api/monitors \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
     "name": "CLINICAL AI PIPELINE",
     "type": "http",
-    "url": "http://192.168.50.15/healthz",
+    "url": "$CADDY_URL/healthz",
     "interval": 30
   }'
 ```
 
 ## Vérifications
 
-- [ ] Caddy accessible sur http://192.168.50.15
-- [ ] Uptime Kuma accessible sur http://192.168.50.16:3001
+- [ ] Caddy accessible sur $CADDY_URL
+- [ ] Uptime Kuma accessible sur $UPTIME_KUMA_URL
 - [ ] health-aggregator répond sur /status
 - [ ] 14 moniteurs créés dans 7 groupes

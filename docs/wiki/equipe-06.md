@@ -11,18 +11,25 @@
 ## Solution simple (scripts)
 
 ```bash
-# 1. Démarrer MLflow
-cd 06-evaluation/mlflow
-docker compose up -d
+# 1. Contrôle : le gold comparé à lui-même donne 1.00 partout
+./bin/farci evaluate --extracted-dir datasets/gold
 
-# 2. Évaluer
-python 06-evaluation/metrics/evaluate.py
+# 2. Valider le gold contre le schéma
+python3 06-evaluation/gold-standard/validate_gold.py
 
-# 3. Valider le gold
-python 06-evaluation/gold-standard/validate_gold.py
+# 3. Après l'étape 2 : classer les runs
+./bin/farci evaluate
+
+# 4. Bonus : MLflow
+./bin/farci up 06-evaluation/mlflow
 ```
 
 ## Solution from scratch
+
+> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
+> viennent de `config/network.env` : les charger d'abord avec
+> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
+> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
 
 ### 1. Démarrer MLflow
 
@@ -32,7 +39,7 @@ docker run -d \
   --network farci \
   -p 5000:5000 \
   -v mlflow-data:/mlflow \
-  mlflow/mlflow:3.16.1 \
+  ghcr.io/mlflow/mlflow:v3.16.1 \
   mlflow server \
   --host 0.0.0.0 \
   --port 5000 \
@@ -68,7 +75,7 @@ normalize_value("venous_resection", "oui")  # → True
 ```python
 import mlflow
 
-mlflow.set_tracking_uri("http://192.168.50.50:5000")
+mlflow.set_tracking_uri("$MLFLOW_URL")
 mlflow.set_experiment("farci-evaluation")
 
 with mlflow.start_run():
@@ -83,7 +90,7 @@ with mlflow.start_run():
 ### 5. Comparer des runs
 
 ```bash
-# Dans l'UI MLflow : http://192.168.50.50:5000
+# Dans l'UI MLflow : $MLFLOW_URL
 # Sélectionner plusieurs runs → Compare
 ```
 

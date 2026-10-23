@@ -27,7 +27,7 @@ except ImportError:
 # Configuration
 # --------------------------------------------------------------------------
 
-KUMA_URL = os.environ.get("KUMA_URL", "http://192.168.50.16:3001")
+KUMA_URL = os.environ["UPTIME_KUMA_URL"]  # dérivée de config/network.env (scripts/dev-env.sh)
 KUMA_USER = os.environ.get("KUMA_USER", "admin")
 KUMA_PASSWORD = os.environ.get("KUMA_PASSWORD", "admin")
 
@@ -64,7 +64,7 @@ def generate_monitors(services: dict) -> list:
     monitors.append({
         "name": "CLINICAL AI PIPELINE",
         "type": "http",
-        "url": "http://192.168.50.15/healthz",
+        "url": os.environ["CADDY_URL"] + "/healthz",
         "interval": 30,
         "group": "Pipeline",
         "expected_status": 200,

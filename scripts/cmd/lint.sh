@@ -3,6 +3,7 @@
 #
 #   ./bin/farci lint                  tous les contrôles
 #   ./bin/farci lint --only ips docs  une sélection
+#     contrôles : versions ips todo docs commands offline shell python size
 #   ./bin/farci lint --quiet          seulement les erreurs
 #
 # Code de sortie : 0 si aucun contrôle n'a échoué (les avertissements
@@ -162,13 +163,13 @@ if wanted ips; then
     while IFS= read -r file; do
       code_lines "$file"
     done < <(tracked_files \
-      | grep -vE '^(config/|docs/|.*\.md$|PLAN\.md|FARCI\.md|\.env\.example$)' \
-      | grep -E '\.(py|sh|ya?ml|json|toml|env|def)$' \
+      | grep -vE '^(config/|docs/|.*\.md$)' \
+      | grep -E '\.(py|sh|ya?ml|json|toml|env|def|ini|conf|example)$|(^|/)(Caddyfile|Modelfile|Dockerfile)$' \
       | grep -v '^scripts/cmd/selftest\.sh$')
   } | grep -E '\b(192\.168\.[0-9]{1,3}\.[0-9]{1,3})\b' || true)"
   if [[ -n "$offenders" ]]; then
-    record FAIL ips "adresses en dur hors config/ :"
-    printf '%s\n' "$offenders" | head -10 | sed 's/^/        /' >&2
+    record FAIL ips "$(printf '%s\n' "$offenders" | wc -l | tr -d ' ') adresse(s) en dur hors config/ :"
+    printf '%s\n' "$offenders" | head -40 | sed 's/^/        /' >&2
     record FAIL ips "déplacer l'adresse dans config/network.env et utiliser \${VAR}"
   else
     record PASS ips "aucune adresse en dur hors config/ et documentation"
@@ -238,15 +239,15 @@ if wanted docs; then
       bad=0
       while IFS= read -r f; do
         for section in "${REQUIRED_SECTIONS[@]}"; do
-          grep -qF "# $section" "$FARCI_ROOT/$f" 2>/dev/null || {
-            record FAIL docs "$f : section manquante « $section »"
+          grep -qF "# $section" "$f" 2>/dev/null || {
+            record FAIL docs "${f#"$FARCI_ROOT"/} : section manquante « $section »"
             bad=1
           }
         done
       done < <(find "$FARCI_ROOT" -name TUTORIAL.md -not -path '*/.git/*' | sort)
       # §45 impose 14 sections ; le gabarit en ajoute une, « Dépannage », utile
       # en atelier mais qui n'est pas une exigence du cahier des charges.
-      (( bad )) || record PASS docs "TUTORIAL conformes (14 sections §45 + Dépannage)"
+      (( bad )) || record PASS docs "$(find "$FARCI_ROOT" -name TUTORIAL.md -not -path '*/.git/*' | wc -l | tr -d ' ') TUTORIAL conformes (14 sections §45 + Dépannage)"
     fi
   else
     record SKIP docs "gabarit TUTORIAL absent"
@@ -259,6 +260,19 @@ if wanted docs; then
     else
       record FAIL docs "README : le schéma ÉTAPE 1/2/3 doit figurer en tête (FARCI §44)"
     fi
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# 4 bis. commands — la doc ne cite que des commandes et fichiers existants
+# ---------------------------------------------------------------------------
+if wanted commands; then
+  cmd_out="$(python3 "$FARCI_ROOT/scripts/check_commands.py" 2>&1)"
+  if [[ -n "$cmd_out" ]]; then
+    record FAIL commands "$(printf '%s\n' "$cmd_out" | wc -l | tr -d ' ') commande(s) ou fichier(s) cités mais inexistants :"
+    printf '%s\n' "$cmd_out" | head -40 | sed 's/^/        /' >&2
+  else
+    record PASS commands "toutes les commandes citées par la documentation existent"
   fi
 fi
 
@@ -350,7 +364,7 @@ if wanted shell; then
       record PASS shell "shellcheck : aucun avertissement"
     fi
   else
-    record SKIP shell "shellcheck absent (recommandé : ./preload.sh --tools)"
+    record SKIP shell "shellcheck absent (recommandé : ./preload.sh --only tools)"
   fi
 fi
 

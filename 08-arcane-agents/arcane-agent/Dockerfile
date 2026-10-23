@@ -1,5 +1,6 @@
 # FARCI — Agent Arcane (stdlib Python uniquement)
-FROM python:3.13-slim-bookworm
+ARG PYTHON_IMAGE_TAG
+FROM python:${PYTHON_IMAGE_TAG}
 
 WORKDIR /app
 

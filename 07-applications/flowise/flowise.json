@@ -14,7 +14,7 @@
       "type": "httpRequest",
       "data": {
         "label": "Docling (via Caddy)",
-        "url": "http://192.168.50.15/docling/v1/convert/file",
+        "url": "{{FARCI_DOCLING_URL}}/v1/convert/file",
         "method": "POST",
         "body": "{{file_input}}"
       },

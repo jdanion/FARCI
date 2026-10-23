@@ -5,8 +5,29 @@ services:
     image: caddy:${CADDY_VERSION}
     container_name: farci-caddy
     restart: unless-stopped
+    # Le Caddyfile lit ces variables ({$NOM}) : toutes viennent de config/network.env.
+    environment:
+      CADDY_INTERNAL_PORT: ${CADDY_INTERNAL_PORT:?CADDY_INTERNAL_PORT manquant (config/network.env)}
+      HEALTH_AGGREGATOR_IP: ${HEALTH_AGGREGATOR_IP:?HEALTH_AGGREGATOR_IP manquant (config/network.env)}
+      HEALTH_AGGREGATOR_PORT: ${HEALTH_AGGREGATOR_PORT:?HEALTH_AGGREGATOR_PORT manquant (config/network.env)}
+      GATEWAY_A_IP: ${GATEWAY_A_IP:?GATEWAY_A_IP manquant (config/network.env)}
+      GATEWAY_PORT: ${GATEWAY_PORT:?GATEWAY_PORT manquant (config/network.env)}
+      DOCLING_IP: ${DOCLING_IP:?DOCLING_IP manquant (config/network.env)}
+      DOCLING_PORT: ${DOCLING_PORT:?DOCLING_PORT manquant (config/network.env)}
+      OBSERVABILITY_A_IP: ${OBSERVABILITY_A_IP:?OBSERVABILITY_A_IP manquant (config/network.env)}
+      PHOENIX_PORT: ${PHOENIX_PORT:?PHOENIX_PORT manquant (config/network.env)}
+      MLFLOW_IP: ${MLFLOW_IP:?MLFLOW_IP manquant (config/network.env)}
+      MLFLOW_PORT: ${MLFLOW_PORT:?MLFLOW_PORT manquant (config/network.env)}
+      UPTIME_KUMA_IP: ${UPTIME_KUMA_IP:?UPTIME_KUMA_IP manquant (config/network.env)}
+      UPTIME_KUMA_PORT: ${UPTIME_KUMA_PORT:?UPTIME_KUMA_PORT manquant (config/network.env)}
+      FLOWISE_IP: ${FLOWISE_IP:?FLOWISE_IP manquant (config/network.env)}
+      FLOWISE_PORT: ${FLOWISE_PORT:?FLOWISE_PORT manquant (config/network.env)}
+      OPEN_WEBUI_IP: ${OPEN_WEBUI_IP:?OPEN_WEBUI_IP manquant (config/network.env)}
+      OPEN_WEBUI_PORT: ${OPEN_WEBUI_PORT:?OPEN_WEBUI_PORT manquant (config/network.env)}
+      GITEA_IP: ${GITEA_IP:?GITEA_IP manquant (config/network.env)}
+      GITEA_PORT: ${GITEA_PORT:?GITEA_PORT manquant (config/network.env)}
     ports:
-      - "80:80"
+      - "${CADDY_HTTP_PORT:?CADDY_HTTP_PORT manquant (.env)}:${CADDY_INTERNAL_PORT}"
       - "443:443"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
@@ -46,7 +67,7 @@ services:
     command: python app.py
     volumes:
       - ./health-aggregator:/app:ro
-      - ../../config/services.yaml:/app/config/services.yaml:ro
+      - ../config/services.yaml:/app/config/services.yaml:ro
     ports:
       - "8081:8081"
     networks:

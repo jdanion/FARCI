@@ -155,8 +155,12 @@ def _render_txt(text: str, output_path: Path) -> None:
     output_path.write_text(text, encoding="utf-8")
 
 
-def render_case_pdfs(case, output_dir: Path) -> list[Path]:
-    """Génère les 4 documents d'un cas. Retourne les chemins créés."""
+def render_case_pdfs(case, output_dir: Path, fmt: str = "txt") -> list[Path]:
+    """Génère les 4 documents d'un cas au format « txt » (dataset versionné,
+    parcours de l'atelier) ou « pdf » (démonstration Docling, nécessite fpdf2).
+    Le format est toujours EXPLICITE : il ne dépend pas de ce qui est installé."""
+    if fmt == "pdf" and not HAS_FPDF:
+        raise SystemExit("fpdf2 absent : pip install --no-index --find-links offline/wheels fpdf2")
     data = _format_case(case)
     base = f"patient_{case.patient_id}"
 
@@ -169,7 +173,7 @@ def render_case_pdfs(case, output_dir: Path) -> list[Path]:
 
     created = []
     for suffix, text in documents.items():
-        if HAS_FPDF:
+        if fmt == "pdf":
             path = output_dir / f"{base}_{suffix}.pdf"
             _render_pdf(text, path)
         else:
