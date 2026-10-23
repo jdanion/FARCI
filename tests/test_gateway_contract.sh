@@ -16,7 +16,7 @@ code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $API_KEY" \
   -d "{\"model\":\"${FARCI_MODEL_ALIAS:-med-extraction}\",\"messages\":[{\"role\":\"user\",\"content\":\"test\"}],\"max_tokens\":1}" \
-  2>/dev/null || echo "000")
+  2>/dev/null || true)
 
 case "$code" in
   200) test_pass "med-extraction" ;;

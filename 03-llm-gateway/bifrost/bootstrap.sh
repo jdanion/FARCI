@@ -29,7 +29,7 @@ fi
 info "test des aliases..."
 for alias in med-extraction med-extraction-lite med-extraction-max; do
   code=$(curl -s -o /dev/null -w '%{http_code}' "$BIFROST_URL/v1/models" \
-    -H "Authorization: Bearer sk-test" 2>/dev/null || echo "000")
+    -H "Authorization: Bearer sk-test" 2>/dev/null || true)
   if [[ "$code" == "401" ]]; then
     ok "$alias : authentification requise (attendu)"
   elif [[ "$code" == "200" ]]; then

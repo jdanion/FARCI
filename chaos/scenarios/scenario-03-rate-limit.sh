@@ -16,7 +16,7 @@ chaos_scenario_apply() {
       -X POST "${FARCI_GATEWAY_URL:?CADDY_IP manquant (config/network.env)}/chat/completions" \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer ${GATEWAY_KEY_STANDARD:-}" \
-      -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}' 2>/dev/null || echo "000")
+      -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}' 2>/dev/null || true)
 
     if [[ "$code" == "429" ]]; then
       count_429=$((count_429 + 1))

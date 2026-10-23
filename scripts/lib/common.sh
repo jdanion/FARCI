@@ -71,8 +71,11 @@ retry() {
 # Code HTTP d'une URL, sans échouer si la connexion est refusée.
 #   http_code "$BASE_URL/health"   ->  200 | 000 | 503
 http_code() {
-  local url="$1" timeout="${2:-3}"
-  curl -s -o /dev/null -w '%{http_code}' --max-time "$timeout" "$url" 2>/dev/null || echo "000"
+  local url="$1" timeout="${2:-3}" code
+  # curl écrit déjà « 000 » quand la connexion échoue, PUIS sort en erreur :
+  # un « || echo 000 » produirait « 000000 », pris pour une réponse.
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time "$timeout" "$url" 2>/dev/null)" || true
+  printf '%s\n' "${code:-000}"
 }
 
 # Attend qu'une URL réponde 200.
