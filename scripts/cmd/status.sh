@@ -5,11 +5,14 @@
 #   ./bin/farci status --no-probe   n'interroge rien (utile hors ligne)
 #   ./bin/farci status --strict     sort en code 1 si le pipeline n'est pas READY
 #   ./bin/farci status --watch      rafraîchit en continu (écran de l'amphithéâtre)
-#   ./bin/farci status --json       une ligne par service, pour les scripts
+#   ./bin/farci status --all        détaille aussi les briques bonus
+#   ./bin/farci status --json       état de chaque service et du pipeline
 #
 # Les lignes du tableau viennent de config/services.yaml (champ status_rows) :
-# il n'existe pas de deuxième liste à maintenir. La ligne « CLINICAL PIPELINE »
-# est calculée à partir des services marqués critical: true (FARCI §14).
+# il n'existe pas de deuxième liste à maintenir. Les lignes « core » sont
+# affichées, les « bonus » résumées en une ligne. « CLINICAL PIPELINE » suit la
+# règle unique de scripts/services.py (pipeline_state), la même que le
+# health-aggregator : services critiques + au moins un runtime (FARCI §14).
 #
 # En l'état, un atelier qui démarre affiche volontairement tous les services en
 # rouge : c'est le point de départ du §13 (🔴 🔴 🔴 🔴 🔴 🔴 🔴).
@@ -26,10 +29,11 @@ PROBE=1
 STRICT=0
 WATCH=0
 JSON=0
+ALL=0
 TIMEOUT="${FARCI_HEALTH_TIMEOUT:-3}"
 
 usage() {
-  sed -n '2,17p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'
+  sed -n '2,19p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'
 }
 
 while (( $# > 0 )); do
@@ -38,6 +42,7 @@ while (( $# > 0 )); do
     --strict)   STRICT=1 ;;
     --watch)    WATCH=1 ;;
     --json)     JSON=1 ;;
+    --all)      ALL=1 ;;
     --timeout)  shift; TIMEOUT="${1:-3}" ;;
     -h|--help)  usage; exit 0 ;;
     *)          err "option inconnue : $1"; usage >&2; exit 64 ;;
@@ -139,30 +144,39 @@ snapshot() {
   rm -rf "$results"
 }
 
-print_json() {
-  local id state
-  printf '{\n'
-  local first=1
+states_json() {
+  local id first=1
+  printf '{'
   while IFS= read -r id; do
     [[ -z "$id" ]] && continue
-    state="${STATES[$id]:-UNKNOWN}"
-    (( first )) || printf ',\n'
+    (( first )) || printf ','
     first=0
-    printf '  "%s": "%s"' "$id" "$state"
+    printf '"%s":"%s"' "$id" "${STATES[$id]:-UNKNOWN}"
   done < <(python3 "$SERVICES_PY" ids)
-  printf '\n}\n'
+  printf '}'
+}
+
+# Lit l'état du pipeline calculé par services.py : PIPELINE_STATE, PIPELINE_MISSING.
+compute_pipeline() {
+  local result
+  result="$(states_json | python3 "$SERVICES_PY" pipeline)"
+  PIPELINE_STATE="$(printf '%s' "$result" | python3 -c 'import json,sys; print(json.load(sys.stdin)["state"])')"
+  PIPELINE_MISSING="$(printf '%s' "$result" | python3 -c 'import json,sys; print(" → ".join(json.load(sys.stdin)["missing"]))')"
+}
+
+print_json() {
+  local result
+  result="$(states_json | python3 "$SERVICES_PY" pipeline)"
+  printf '{"services": %s, "pipeline": %s}\n' "$(states_json)" "$result"
 }
 
 draw() {
-  local -a critical_ids
-  mapfile -t critical_ids < <(python3 "$SERVICES_PY" critical)
-
-  local pipeline_state pipeline_label
-  pipeline_state="$(row_state "${critical_ids[@]}")"
-  case "$pipeline_state" in
-    UP*)       pipeline_label="READY" ;;
-    DEGRADED*) pipeline_label="DEGRADED" ;;
-    *)         pipeline_label="NOT READY" ;;
+  compute_pipeline
+  local pipeline_colour
+  case "$PIPELINE_STATE" in
+    READY)    pipeline_colour="$C_GREEN" ;;
+    DEGRADED) pipeline_colour="$C_YELLOW" ;;
+    *)        pipeline_colour="$C_RED" ;;
   esac
 
   printf '\n'
@@ -170,31 +184,48 @@ draw() {
   boxed "FARCI WORKSHOP" "$(date '+%H:%M')"
   printf '╠%s╣\n' "$BAR"
 
-  local label raw state colour
-  while IFS=$'\t' read -r label raw; do
+  local label tier raw state colour bonus_up=0 bonus_total=0 bonus_names=""
+  while IFS=$'\t' read -r label tier raw; do
     [[ -z "$label" ]] && continue
     local -a ids
     IFS=',' read -r -a ids <<< "$raw"
     state="$(row_state "${ids[@]}")"
+    if [[ "$tier" == "bonus" && "$ALL" == "0" ]]; then
+      bonus_total=$(( bonus_total + 1 ))
+      if [[ "$state" == UP* ]]; then
+        bonus_up=$(( bonus_up + 1 ))
+        bonus_names+="${bonus_names:+, }$label"
+      fi
+      continue
+    fi
     colour="$(colour_for "$state")"
     printf '%s' "$colour"
+    [[ "$tier" == "bonus" ]] && label="$label (bonus)"
     boxed "$label" "$(label_for "$state")"
     printf '%s' "$C_RESET"
   done < <(python3 "$SERVICES_PY" status-rows)
 
+  if (( bonus_total > 0 )); then
+    printf '%s' "$C_DIM"
+    boxed "Bonus" "$bonus_up/$bonus_total UP"
+    printf '%s' "$C_RESET"
+  fi
+
   printf '╠%s╣\n' "$BAR"
-  printf '%s' "$(colour_for "$pipeline_state")"
-  boxed "CLINICAL PIPELINE" "$pipeline_label"
+  printf '%s' "$pipeline_colour"
+  boxed "CLINICAL PIPELINE" "$PIPELINE_STATE"
   printf '%s' "$C_RESET"
   printf '╚%s╝\n' "$BAR"
 
-  if [[ "$pipeline_state" != UP* ]]; then
-    printf '\n  Chaîne minimale incomplète. Enchaîner dans cet ordre :\n'
-    printf '    caddy → gateway → 1 runtime → docling → observabilité\n'
+  if [[ -n "$bonus_names" ]]; then
+    printf '  Bonus en service : %s\n' "$bonus_names"
+  fi
+  if [[ "$PIPELINE_STATE" != "READY" ]]; then
+    printf "\n  Il manque, dans l'ordre de montage :\n    %s\n" "$PIPELINE_MISSING"
   fi
   printf '\n'
 
-  [[ "$pipeline_state" == UP* ]]
+  [[ "$PIPELINE_STATE" == "READY" ]]
 }
 
 if (( WATCH )); then

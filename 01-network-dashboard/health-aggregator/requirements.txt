@@ -1,2 +1,0 @@
-# health-aggregator : stdlib uniquement, aucune dépendance externe
-# (FARCI §14 : l'agrégat de santé ne doit dépendre de rien)

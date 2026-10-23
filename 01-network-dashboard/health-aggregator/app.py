@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """FARCI — health-aggregator (FARCI §14).
 
-Agrège l'état de santé de tous les services requis et optionnels.
-Stdlib uniquement : http.server, urllib, json, yaml (PyYAML si dispo).
+Sonde tous les services de config/services.yaml et applique LA règle de
+CLINICAL PIPELINE READY, celle de scripts/services.py (pipeline_state) : le
+tableau `./bin/farci status` et cet agrégateur ne peuvent donc pas diverger.
 
-Endpoints :
-  GET /status  → JSON détaillé (required, optional, status global)
-  GET /healthz → 200 si tout est UP, 503 sinon (sonde Uptime Kuma)
+Stdlib uniquement. Les adresses viennent de l'environnement (config/network.env,
+transmis par docker-compose.yml) ; le registre ne contient que des noms de
+variables.
+
+Endpoints (relayés par Caddy) :
+  GET /status   JSON : état de chaque service (tier, critique) + pipeline
+  GET /healthz  200 si le pipeline est READY, 503 sinon (sonde Uptime Kuma)
+  GET /livez    200 si le processus répond : c'est la sonde de l'agrégateur
+                lui-même (sonder /healthz relancerait l'agrégation en boucle)
 """
 
 from __future__ import annotations
@@ -15,139 +22,90 @@ import json
 import os
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-# --------------------------------------------------------------------------
-# Configuration
-# --------------------------------------------------------------------------
+# scripts/ est monté à côté de l'application (docker-compose.yml) ; en local,
+# on le trouve à la racine du dépôt.
+HERE = Path(__file__).resolve().parent
+for candidate in (HERE / "scripts", *(parent / "scripts" for parent in HERE.parents)):
+    if (candidate / "services.py").is_file():
+        sys.path.insert(0, str(candidate))
+        os.environ.setdefault("FARCI_ROOT", str(candidate.parent))
+        break
 
-CONFIG_PATH = Path(__file__).parent / "config" / "services.yaml"
+import services as registry  # noqa: E402
+
 PORT = int(os.environ.get("HEALTH_AGGREGATOR_PORT", "8081"))
-
-# Services requis pour un statut "ready"
-REQUIRED_SERVICES = [
-    "caddy",
-    "gateway_a",
-    "runtime_ollama",
-    "docling",
-    "phoenix",
-]
-
-# Services optionnels
-OPTIONAL_SERVICES = [
-    "gitea",
-    "uptime_kuma",
-    "mlflow",
-    "open_webui",
-    "flowise",
-    "langfuse",
-]
-
-# --------------------------------------------------------------------------
-# Chargement de la configuration
-# --------------------------------------------------------------------------
-
-def load_services() -> dict:
-    """Charge config/services.yaml (source de vérité)."""
-    try:
-        import yaml
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
-    except ImportError:
-        # Fallback : parsing minimal sans PyYAML
-        services = {}
-        current = None
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and line.endswith(":"):
-                    current = line[:-1]
-                    services[current] = {}
-                elif current and ":" in line:
-                    key, value = line.split(":", 1)
-                    value = value.strip()
-                    if value.startswith("${") and value.endswith("}"):
-                        var_name = value[2:-1]
-                        value = os.environ.get(var_name, "")
-                    services[current][key.strip()] = value
-        return services
+TIMEOUT = float(os.environ.get("FARCI_HEALTH_TIMEOUT", "3"))
+# Le résultat est gardé quelques secondes : plusieurs écrans qui rafraîchissent
+# ne doivent pas multiplier les sondes.
+CACHE_SECONDS = float(os.environ.get("FARCI_HEALTH_CACHE", "2"))
+_cache: tuple[float, dict] | None = None
 
 
-# --------------------------------------------------------------------------
-# Health check
-# --------------------------------------------------------------------------
-
-def check_service(name: str, config: dict) -> dict:
-    """Vérique qu'un service répond."""
-    host = config.get("host", "")
-    port = int(config.get("port", 0))
-    path = config.get("health_path", "/healthz")
-
-    if not host or not port:
-        return {"name": name, "status": "unknown", "latency_ms": 0}
-
-    url = f"http://{host}:{port}{path}"
-    start = time.time()
-    try:
-        req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            latency = int((time.time() - start) * 1000)
-            return {
-                "name": name,
-                "status": "up" if resp.status == 200 else "degraded",
-                "http_status": resp.status,
-                "latency_ms": latency,
-            }
-    except urllib.error.HTTPError as e:
-        latency = int((time.time() - start) * 1000)
-        return {"name": name, "status": "down", "http_status": e.code, "latency_ms": latency}
-    except Exception:
-        latency = int((time.time() - start) * 1000)
-        return {"name": name, "status": "down", "http_status": 0, "latency_ms": latency}
+def probe(service: dict) -> dict:
+    """Essaie chaque chemin de santé dans l'ordre ; UP au premier 200."""
+    base = registry.base_url(service)
+    result = {
+        "id": service["id"],
+        "label": service.get("label"),
+        "tier": service.get("tier"),
+        "critical": bool(service.get("critical")),
+        "status": "unknown",
+        "latency_ms": None,
+    }
+    if base is None:
+        return result
+    result["status"] = "down"
+    started = time.monotonic()
+    for path in service.get("health_paths") or []:
+        try:
+            with urllib.request.urlopen(base + path, timeout=TIMEOUT) as response:
+                if response.status == 200:
+                    result["status"] = "up"
+                    break
+        except (urllib.error.URLError, OSError, ValueError):
+            continue
+    result["latency_ms"] = round((time.monotonic() - started) * 1000)
+    return result
 
 
 def aggregate_status() -> dict:
-    """Agrège l'état de tous les services."""
-    services = load_services()
-
-    required = {}
-    for name in REQUIRED_SERVICES:
-        config = services.get(name, {})
-        required[name] = check_service(name, config)
-
-    optional = {}
-    for name in OPTIONAL_SERVICES:
-        config = services.get(name, {})
-        optional[name] = check_service(name, config)
-
-    all_up = all(s["status"] == "up" for s in required.values())
-
-    return {
-        "status": "ready" if all_up else "degraded",
-        "required": required,
-        "optional": optional,
+    global _cache
+    now = time.monotonic()
+    if _cache and now - _cache[0] < CACHE_SECONDS:
+        return _cache[1]
+    services = registry.services()
+    with ThreadPoolExecutor(max_workers=max(1, len(services))) as pool:
+        results = list(pool.map(probe, services))
+    states = {r["id"]: r["status"] == "up" for r in results}
+    pipeline = registry.pipeline_state(states)
+    status = {
+        "status": "ready" if pipeline["state"] == "READY" else "degraded",
+        "pipeline": pipeline,
+        "services": results,
         "checked_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "version": "1",
+        "version": "2",
     }
+    _cache = (now, status)
+    return status
 
-
-# --------------------------------------------------------------------------
-# HTTP Server
-# --------------------------------------------------------------------------
 
 class HealthHandler(BaseHTTPRequestHandler):
-    """Handler HTTP pour /status et /healthz."""
-
     def do_GET(self):
-        if self.path == "/status":
+        path = self.path.split("?", 1)[0]
+        if path == "/livez":
+            self._send_json(200, {"status": "alive"})
+        elif path == "/status":
             self._send_json(200, aggregate_status())
-        elif self.path == "/healthz":
+        elif path == "/healthz":
             status = aggregate_status()
             code = 200 if status["status"] == "ready" else 503
-            self._send_json(code, {"status": status["status"]})
+            self._send_json(code, {"status": status["status"], "missing": status["pipeline"]["missing"]})
         else:
             self._send_json(404, {"error": "not_found"})
 
@@ -159,14 +117,13 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def log_message(self, format, *args):
-        # Silence les logs HTTP pour ne pas spammer
+    def log_message(self, format, *args):  # noqa: A002 — signature imposée
         pass
 
 
 def main():
     server = ThreadingHTTPServer(("0.0.0.0", PORT), HealthHandler)
-    print(f"health-aggregator listening on :{PORT}")
+    print(f"health-aggregator : écoute sur :{PORT}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

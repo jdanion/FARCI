@@ -1,7 +1,9 @@
 # Guide formateur
 
 Ce document est la logistique de l'atelier. Il ne contient pas de théorie : il
-contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
+contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
+**4 heures**, seul, sans panne bloquante. Le déroulé pédagogique est dans
+`docs/WORKSHOP_FLOW.md`.
 
 ---
 
@@ -9,18 +11,21 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 
 - [ ] Cloner le dépôt sur la machine de référence
 - [ ] Vérifier Docker et Python : `./bin/farci doctor`
-- [ ] Fixer les versions : elles sont dans `versions.env`, déjà vérifiées
-- [ ] `./preload.sh --core` (compter **une bonne demi-journée** selon le débit)
+- [ ] Les versions sont figées dans `versions.env` (tags vérifiés dans les registres)
+- [ ] `./preload.sh --core` (compter **une bonne demi-journée** selon le débit) :
+      images sauvegardées en `.tar`, modèle principal **et** modèle de secours 2B
 - [ ] `./preload.sh --only models_qwen38` si des postes le justifient
 - [ ] `scripts/lock-requirements.sh` pour verrouiller et télécharger les wheels
 - [ ] Vérifier les empreintes : `./bin/farci verify-manifest`
 - [ ] `./bin/farci verify-airgap`
 - [ ] Répartir `$FARCI_DATA_DIR` (clé USB, disque, ou copie locale par poste)
-- [ ] Tester le démarrage sur **une** machine, complètement, une fois
+- [ ] Tester le démarrage **de toute la chaîne cœur** sur une machine, une fois
 - [ ] Le jeu de données est versionné (`datasets/raw/*.txt`, `datasets/gold/`) ;
       pour la démonstration Docling : `./bin/farci generate-dataset --pdf`
 - [ ] `./bin/farci ci` est vert sur la machine de référence
-- [ ] Imprimer ou projeter `./bin/farci help` et le tableau de progression
+- [ ] Recueillir le matériel des étudiants (RAM, Mac, GPU) et lancer
+      `./bin/farci casting --students eleves.json` : la section « Briques cœur
+      sans équipe » dit ce que le formateur devra servir lui-même
 
 ### Les deux erreurs qui coûtent le plus de temps
 
@@ -33,38 +38,65 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 
 ## J-1 — Dernière vérification
 
-- [ ] Rejouer `./preload.sh --core` : doit être rapide (tout est là)
+- [ ] Rejouer `./preload.sh --core --skip-existing` : doit être rapide (tout est là)
 - [ ] `./verify-airgap.sh --strict` doit passer
-- [ ] `./bin/farci lint` est vert
-- [ ] `./bin/farci selftest` est vert
+- [ ] `./bin/farci ci` est vert (selftest, lint, tests unitaires, gold)
 - [ ] Les adresses de `config/network.env` correspondent au **vrai** réseau de la salle
-- [ ] Chaque équipe a une adresse attitrée
+- [ ] Chaque équipe a une adresse attitrée (`./bin/farci network-check`)
 - [ ] Vérifier la RAM et le disque de chaque poste : `./bin/farci doctor`
-- [ ] Avoir un plan B : une machine de secours avec les images déjà chargées
+- [ ] La machine de référence fait tourner toute la chaîne cœur :
+      `./bin/farci status` affiche `CLINICAL PIPELINE READY`
+- [ ] Une extraction de bout en bout : `./bin/farci extract --subset quick --run recette`
+      puis `./bin/farci evaluate --subset quick`
+- [ ] Les 4 scénarios de l'étape 3 joués puis réparés (`./bin/farci chaos reset`)
 
 ---
 
-## J0 — Dans la salle
+## J0 — Dans la salle (avant l'arrivée des étudiants)
 
-- [ ] L'écran de projection affiche `./bin/farci status --watch`
-- [ ] Chaque étudiant a lancé `./bin/farci doctor` et `./bin/farci bootstrap`
-- [ ] Chaque équipe a une branche créée
-- [ ] Le tableau de bord affiche `🔴 🔴 🔴 🔴 🔴 🔴 🔴` : c'est **normal et voulu**
-- [ ] Rappeler les 3 étapes à voix haute avant de commencer
+- [ ] La machine de référence tourne, `CLINICAL PIPELINE READY` sur elle
+- [ ] L'écran de projection affiche `./bin/farci status --watch` **pointé sur la
+      salle** : tout est rouge, c'est **normal et voulu**
+- [ ] Les fiches d'équipe sont prêtes (`./bin/farci read <équipe>`)
+- [ ] La liste des équipes (sortie de `./bin/farci casting`) est affichée
 
 ---
 
-## Déroulé conseillé
+## Le minutage, et ce qu'on coupe si on prend du retard
 
-| Moment | Durée | Activité | Point d'attention |
+| Horaire | Moment | À dire / à faire | Si on a du retard |
 |---|---|---|---|
-| Introduction | 30 min | les 3 étapes, le vocabulaire, le tableau de bord | ne pas montrer le code tout de suite |
-| Étape 1 | 2 h 30 | chaque équipe monte sa brique | faire applaudir chaque passage au vert |
-| Bascule | 15 min | `CLINICAL PIPELINE READY` | **moment clé**, tout le monde le voit |
-| Étape 2 | 1 h 30 | extraction clinique, 3 parcours | insister sur la validation |
-| Évaluation | 20 min | `./bin/farci evaluate` | comparer les parcours entre eux |
-| Étape 3 | 1 h | les scénarios de chaos | le scénario 07 doit rester vert |
-| Clôture | 20 min | chacun explique une différence avec ses mots | c'est le critère de réussite |
+| 0:00 – 0:20 | Accueil | les 3 étapes, `make` ≠ obligatoire, `git clone` ne suffit pas ; chacun lance `./bin/farci doctor` | passer le vocabulaire en 5 min, il revient à la clôture |
+| 0:20 – 0:30 | Étape 1 : lancement | chaque équipe lit sa fiche, objectif minimal annoncé | — |
+| 0:30 – 1:15 | Étape 1 : objectif minimal | faire applaudir chaque passage au vert | à **1:00**, toute équipe encore rouge passe sur la machine de référence |
+| ~1:30 | **CLINICAL PIPELINE READY** | moment clé : on le montre à tous | ne pas attendre au-delà de **1:40** : on bascule ce qui manque sur la référence |
+| 1:35 – 1:50 | Bonus et démos | GitOps, Langfuse, MLflow, llama.cpp | **première marge** : supprimer les démos bonus |
+| 1:50 – 2:00 | Pause | — | **ne jamais la supprimer** : c'est là que le formateur répare |
+| 2:00 – 2:50 | Étape 2 | parcours Python sur le jeu rapide ; Open WebUI ; Flowise en démo 10 min | jeu rapide seulement (`--subset quick`), Flowise supprimée |
+| 2:50 – 3:10 | Évaluation | classement projeté, une trace lue ensemble | une seule trace |
+| 3:10 – 3:45 | Étape 3 | 01, 04, 06 (ou 05), 07 ; pari de la salle avant chaque panne | **deuxième marge** : garder 01, 04 et 07 seulement |
+| 3:45 – 4:00 | Clôture | chacun explique une notion avec ses mots | jamais coupée : c'est le critère de réussite |
+
+**Retard de 20 minutes** : on supprime les démos bonus (−15 min) et le scénario
+06/05 (−8 min), on garde la pause, l'évaluation et la clôture intactes.
+
+---
+
+## Objectif minimal de chaque équipe
+
+| Équipe | Vert quand… | Commande clé |
+|---|---|---|
+| 1 Réseau | ligne Network | `./bin/farci up 01-network-dashboard` |
+| 2 Inférence | ligne Inference | `./bin/farci up 02-inference/ollama` puis `02-inference/ollama/create-model.sh` |
+| 3 Passerelle | ligne LLM Gateway | `./bin/farci up 03-llm-gateway/litellm` |
+| 4 Documents | ligne Documents + pseudonymisation testée | `./bin/farci up 04-clinical-documents/docling` |
+| 5 Observabilité | ligne Observability | `./bin/farci up 05-observability/phoenix` |
+| 7 Applications | ligne Open WebUI | `./bin/farci up 07-applications/open-webui` |
+
+Les briques bonus (GitOps, MLflow, Langfuse, Bifrost, Uptime Kuma, Flowise,
+oMLX, agents Arcane) n'entrent **jamais** dans `CLINICAL PIPELINE READY` : elles
+apparaissent sur la ligne « Bonus » du tableau (`./bin/farci status --all` pour
+le détail).
 
 ---
 
@@ -77,6 +109,7 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 | « Le modèle a-t-il inventé des données ? » | Peut-être : c'est un composant probabiliste. C'est pour cela qu'on valide avant d'écrire. |
 | « F1 de 0,84, c'est bon ? » | Sans gold standard, ce chiffre ne veut rien dire. Avec, il veut dire qu'il reste 16 % d'écart à expliquer. |
 | « Pourquoi ça marche sans Internet ? » | Parce que tout a été préchargé, et que rien dans la chaîne ne dépend d'un service distant. |
+| « Pourquoi Phoenix n'est pas dans READY ? » | Parce que l'observabilité n'est pas sur le chemin de production : si elle tombe, le soin continue. |
 | « C'est de l'IA de Supersante ? » | Non. C'est de l'ingénierie : contrats, versions, tests, mesure. L'IA n'en est qu'une brique. |
 
 ---
@@ -87,10 +120,11 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 |---|---|---|
 | `permission denied` sur un script | bit `+x` manquant | `chmod +x scripts/cmd/*.sh bin/farci` (le lint le signale) |
 | une cible n'apparaît pas dans `help` | registre `targets.def` mal formé | `./bin/farci selftest` dit exactement laquelle |
-| `adresse non résolue` | `config/network.env` absent | `cp config/network.env.example config/network.env` |
-| une image Docker manque | préchargement incomplet | `./bin/farci verify-images`, puis `docker load -i offline/images/<image>.tar` |
-| `CLINICAL PIPELINE` reste rouge | un `critical: true` est tombé | `./bin/farci status --json` pour voir lequel |
+| `CADDY_IP manquant` | `config/network.env` absent | `cp config/network.env.example config/network.env` |
+| `démarrage impossible — image absente ?` | préchargement incomplet sur ce poste | `./bin/farci verify-images`, puis `docker load -i offline/images/<image>.tar` |
+| `CLINICAL PIPELINE` reste `DEGRADED` | une exigence manque | le tableau affiche la liste « Il manque » ; `./bin/farci status --json` pour le détail |
 | le modèle ne démarre pas | RAM insuffisante | modèle de secours Qwen3.5-2B (`FARCI_MODEL_CI`, alias `med-extraction-lite`) |
+| une équipe est rouge depuis 10 min | n'importe laquelle des causes ci-dessus | la brique est servie par la machine de référence, l'équipe continue à diagnostiquer la sienne |
 
 ---
 
@@ -98,8 +132,8 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 
 - [ ] `./bin/farci chaos reset` et vérifier le retour au vert
 - [ ] Récupérer les extractions : `datasets/extracted/`
-- [ ] Comparer les scores des trois parcours : `./bin/farci evaluate --report-dir datasets/reports`
-- [ ] Noter ce qui a fonctionné et ce qui a bloqué, phase par phase
+- [ ] Archiver le classement : `./bin/farci evaluate --report-dir datasets/reports`
+- [ ] Noter ce qui a fonctionné et ce qui a bloqué, moment par moment
 - [ ] Conserver `versions.env` et le manifeste : c'est ce qui rendra l'atelier
       reproductible l'année prochaine
 
@@ -107,7 +141,7 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier**.
 
 ## Voir aussi
 
+- `docs/WORKSHOP_FLOW.md` — le déroulé des étapes et les objectifs par équipe
 - `docs/AIRGAP.md` — le préchargement en détail
-- `docs/WORKSHOP_FLOW.md` — le déroulé des étapes
 - `docs/CHAOS.md` — les scénarios et leur résultat attendu
 - `CONTRIBUTING.md` — le flux Git du dépôt

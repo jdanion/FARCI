@@ -6,7 +6,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)/common.sh"
 
 TEST_NAME="network"
 test_start
-test_need_service CADDY_URL /healthz
+test_need_service CADDY_URL /livez
 
 if curl -sf --max-time 5 "$FARCI_STATUS_URL" >/dev/null 2>&1; then
   test_pass "caddy + /status"

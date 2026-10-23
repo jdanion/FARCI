@@ -6,6 +6,29 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Lot 2 — tenir en 4 h
+
+- `docs/WORKSHOP_FLOW.md` et `docs/INSTRUCTOR_GUIDE.md` réécrits sur 240 min :
+  accueil 20, étape 1 90, pause 10, étape 2 50, évaluation 20, étape 3 35,
+  clôture 15 ; objectif minimal (< 45 min) et bonus par équipe ; ce qu'on
+  coupe en cas de retard.
+- `config/services.yaml` : champ `tier` (core / bonus) et `critical_group`.
+  `CLINICAL PIPELINE READY` = Caddy + agrégateur + LiteLLM + Docling + **au
+  moins un** runtime. Phoenix est cœur mais hors de READY (scénario 07).
+- Règle unique `pipeline_state` (`scripts/services.py`), utilisée par
+  `./bin/farci status` **et** le health-aggregator (réécrit : il lisait un
+  format de registre qui n'existe pas). Tests : `tests/test_pipeline_rule.py`.
+- Tableau : lignes cœur + une ligne « Bonus n/8 » (`--all` pour le détail),
+  liste « Il manque » dans l'ordre de montage, `--json` avec l'état du pipeline.
+- Sondes de vivacité qui ne dépendent de personne : `/livez` sur Caddy et sur
+  l'agrégateur (avant, Caddy paraissait en panne quand l'agrégateur l'était,
+  et l'agrégateur se sondait lui-même en boucle).
+- Uptime Kuma derrière un profil `bonus`.
+- Casting : rôles cœur / bonus alignés sur le registre ; les briques cœur sans
+  équipe sont listées (servies par le formateur).
+- `docs/CHAOS.md` : 4 scénarios en 35 min (01, 04, 06 ou 05, 07), résultats
+  attendus alignés sur la règle du pipeline.
+
 ### Lot 1 — remettre au vert
 
 L'outillage, la CI et la documentation décrivent enfin le même dépôt.
