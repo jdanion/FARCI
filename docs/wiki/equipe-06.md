@@ -1,101 +1,57 @@
-# Équipe 6 — Évaluation (MLflow, métriques)
+# Équipe 6 — Évaluation
 
-## Attendus pédagogiques
+> Fiche débutant. La référence technique complète est
+> `06-evaluation/TUTORIAL.md` (`./bin/farci read 6`).
 
-- Comprendre la notion de métrique d'évaluation (precision, recall, F1)
-- Comprendre la différence entre micro et macro
-- Comprendre pourquoi `null` attendu compte comme correct
-- Comprendre la notion de run MLflow et de paramétrage
-- Savoir comparer des runs entre eux
+## Votre objectif
 
-## Solution simple (scripts)
+**Mesurer** les extractions contre le **gold standard** (la vérité terrain,
+écrite à la main, jamais par un modèle) et **classer** les essais de la
+salle. Pas de ligne à faire passer au vert : votre résultat est le
+classement projeté pendant l'évaluation.
 
-```bash
-# 1. Contrôle : le gold comparé à lui-même donne 1.00 partout
-./bin/farci evaluate --extracted-dir datasets/gold
+C'est la revue de littérature : un chiffre seul ne veut rien dire, il se
+compare à une référence connue.
 
-# 2. Valider le gold contre le schéma
-python3 06-evaluation/gold-standard/validate_gold.py
+## Les étapes
 
-# 3. Après l'étape 2 : classer les runs
-./bin/farci evaluate
+1. **Vérifier la machine** — `./bin/farci doctor` (« dépendances Python » ok).
+2. **Contrôler le gold** — `python3 06-evaluation/gold-standard/validate_gold.py`.
+3. **Contrôle de l'outil** — `./bin/farci evaluate --extracted-dir datasets/gold` :
+   le gold comparé à lui-même donne **1.00** partout. Si ce n'est pas le
+   cas, l'outil est faux, pas le modèle.
+4. **Une première extraction** — `./bin/farci extract --replay --subset quick --run essai`
+   (réponses enregistrées, sans réseau).
+5. **L'évaluer** — `./bin/farci evaluate --subset quick` : lisez complétude,
+   précision, rappel, F1, et les champs les moins bien extraits.
+6. **Expliquer un écart** — ouvrez un `patient_*.json` de
+   `datasets/extracted/essai/` et le gold du même patient : quel champ
+   diffère, et pourquoi ?
+7. **Préparer le classement** — après l'étape 2 :
+   `./bin/farci evaluate --subset quick --report-dir datasets/reports`.
 
-# 4. Bonus : MLflow
-./bin/farci up 06-evaluation/mlflow
-```
-
-## Solution from scratch
-
-> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
-> viennent de `config/network.env` : les charger d'abord avec
-> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
-> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
-
-### 1. Démarrer MLflow
-
-```bash
-docker run -d \
-  --name farci-mlflow \
-  -p 5000:5000 \
-  -v mlflow-data:/mlflow \
-  ghcr.io/mlflow/mlflow:v3.16.1 \
-  mlflow server \
-  --host 0.0.0.0 \
-  --port 5000 \
-  --backend-store-uri sqlite:///mlflow.db \
-  --default-artifact-root /mlflow/artifacts
-```
-
-### 2. Calculer les métriques
-
-```python
-from metrics.metrics import compute_metrics
-
-gold = {"patient_id": "123", "age": 67, "sex": "M", ...}
-predicted = {"patient_id": "123", "age": 67, "sex": "M", ...}
-
-result = compute_metrics(gold, predicted)
-print(f"F1: {result['micro']['f1']:.4f}")
-```
-
-### 3. Normaliser les valeurs
-
-```python
-from metrics.normalize import normalize_value
-
-normalize_value("age", "67")        # → 67.0
-normalize_value("sex", "M")         # → "m"
-normalize_value("tumor_size_mm", "28 mm")  # → 28.0
-normalize_value("venous_resection", "oui")  # → True
-```
-
-### 4. Lancer un run MLflow
-
-```python
-import mlflow
-
-mlflow.set_tracking_uri("$MLFLOW_URL")
-mlflow.set_experiment("farci-evaluation")
-
-with mlflow.start_run():
-    mlflow.log_param("model", "ornith-1.5-9b")
-    mlflow.log_param("runtime", "llamacpp")
-    mlflow.log_param("prompt_version", "v1")
-    mlflow.log_metric("f1", 0.84)
-    mlflow.log_metric("precision", 0.82)
-    mlflow.log_metric("recall", 0.86)
-```
-
-### 5. Comparer des runs
+## La sonde : comment savoir que c'est fini
 
 ```bash
-# Dans l'UI MLflow : $MLFLOW_URL
-# Sélectionner plusieurs runs → Compare
+./bin/farci test-unit -k evaluation      # OK (dont « gold contre gold = 1.00 »)
+./bin/farci evaluate --subset quick       # un tableau de classement
 ```
 
-## Vérifications
+## Bloqué depuis 10 minutes ?
 
-- [ ] MLflow répond sur :5000
-- [ ] Métriques calculées (precision, recall, F1)
-- [ ] Runs comparables dans l'UI
-- [ ] Détection de régression fonctionnelle
+Levez la main.
+
+| Ce que vous voyez | À essayer |
+|---|---|
+| « aucune extraction trouvée » | aucune run encore : étape 4 ci-dessus |
+| un dossier « invalide » | le JSON ne respecte pas le schéma : lisez la colonne d'erreur |
+| F1 bas mais exactitude haute | beaucoup de `null` bien reconnus : lisez précision et rappel séparément |
+| `ModuleNotFoundError` | `./bin/farci bootstrap` |
+
+## Bonus
+
+- MLflow, une expérience par configuration (modèle, prompt, runtime) :
+  `./bin/farci up 06-evaluation/mlflow` (ligne `MLflow`, `./bin/farci status --all`).
+- Comparer le prompt v1 et le prompt v2 :
+  `./bin/farci extract --replay --subset quick --prompt v2 --run essai-v2`, puis
+  `./bin/farci evaluate --subset quick`.

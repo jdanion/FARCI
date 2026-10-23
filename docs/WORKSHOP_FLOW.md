@@ -10,7 +10,7 @@ on utilise, on casse. Ce document dit **quoi** se passe et **pourquoi** ;
 
 | Horaire | Durée | Moment | Ce qui doit être vrai à la fin |
 |---|---|---|---|
-| 0:00 – 0:20 | 20 min | **Accueil** : les 3 étapes, le vocabulaire, le tableau tout rouge | chaque étudiant sait dans quelle équipe il est et a lancé `./bin/farci doctor` |
+| 0:00 – 0:20 | 20 min | **Accueil** : les 3 étapes, le vocabulaire, le tableau tout en 🛟 | chaque étudiant sait dans quelle équipe il est et a lancé `./bin/farci doctor` |
 | 0:20 – 1:50 | 90 min | **Étape 1 — Construire** : équipes cœur seulement | `CLINICAL PIPELINE READY` sur le tableau |
 | 1:50 – 2:00 | 10 min | **Pause** | — |
 | 2:00 – 2:50 | 50 min | **Étape 2 — Utiliser** : parcours Python (principal) et Open WebUI ; Flowise en démo | chaque équipe a une run dans `datasets/extracted/` |
@@ -23,7 +23,7 @@ on utilise, on casse. Ce document dit **quoi** se passe et **pourquoi** ;
 
 | Horaire | Quoi |
 |---|---|
-| 0:20 – 0:30 | chaque équipe lit sa fiche (`./bin/farci read <équipe>`), le formateur rappelle l'objectif minimal |
+| 0:20 – 0:30 | chaque équipe lit sa fiche débutant (`docs/wiki/equipe-XX.md`), le formateur rappelle l'objectif minimal |
 | 0:30 – 1:15 | **objectif minimal** : sa ligne passe au vert sur le tableau (45 min max) |
 | 1:15 – 1:35 | objectif bonus, test contractuel, PR ; le formateur fait vivre le tableau |
 | ~1:30 | **moment clé** : `CLINICAL PIPELINE READY` |
@@ -37,9 +37,9 @@ réparation, leçon en une phrase. Détail : `docs/CHAOS.md`.
 
 | Ordre | Scénario | Pourquoi celui-là |
 |---|---|---|
-| 1 | **01** — runtime principal coupé | la redondance existe-t-elle vraiment ? Le pipeline reste READY |
+| 1 | **01** — runtime principal coupé | la redondance existe-t-elle vraiment ? L'extraction répond toujours (🛟) |
 | 2 | **04** — JSON invalide | une sortie de LLM n'est pas une donnée : rien n'est écrit |
-| 3 | **06** — passerelle A coupée (si Bifrost tourne), **sinon 05** — Docling coupé | point d'entrée stable / dépendance partielle |
+| 3 | **06** — passerelle de l'équipe coupée, **ou 05** — Docling coupé | point d'entrée stable / dépendance partielle |
 | 4 | **07** — observabilité coupée | l'observabilité n'est pas sur le chemin de production |
 
 ---

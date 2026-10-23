@@ -161,7 +161,8 @@ demande **aucune** modification du code métier : c'est l'objet même de l'ateli
 
 | Vous êtes… | Lisez |
 |---|---|
-| formateur | `docs/INSTRUCTOR_GUIDE.md` |
+| formateur | `docs/INSTRUCTOR_GUIDE.md`, et la feuille de séance `docs/PILOTAGE.md` |
+| étudiant débutant | sa fiche : `docs/wiki/equipe-XX.md` |
 | responsable d'une équipe | `./bin/farci read <équipe>` |
 | curieux de l'architecture | `docs/ARCHITECTURE.md` |
 | intéressé par les contrats | `docs/CONTRACTS.md` |

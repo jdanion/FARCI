@@ -38,25 +38,31 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 
 ---
 
-## J-1 — Dernière vérification
+## J-1 — La répétition générale : `./bin/farci rehearse`
 
-- [ ] Rejouer `./preload.sh --core --skip-existing` : doit être rapide (tout est là)
-- [ ] `./verify-airgap.sh --strict` doit passer
-- [ ] `./bin/farci ci` est vert (selftest, lint, tests unitaires, gold)
-- [ ] `config/network.env` : `REFERENCE_IP` est l'adresse du Pi sur son point
-      d'accès (`./bin/farci network-check`) ; les IP d'équipe restent vides
-- [ ] Vérifier la RAM et le disque de chaque poste : `./bin/farci doctor`
-- [ ] Le Pi fait tourner la pile de référence : `./bin/farci status` affiche
-      tout en `🛟 REF` et « Service rendu (avec 🛟) READY »
-- [ ] Un portable branché sur le Wi-Fi du Pi : `./bin/farci test` →
-      `gateway-contract PASS` (la passerelle de la référence répond par l'accueil)
-- [ ] Les secours répétés une fois : `./bin/farci room set 2 <ip d'un portable>`,
-      `./bin/farci rescue inference`, `./bin/farci reset-all`
-- [ ] Une extraction de bout en bout : `./bin/farci extract --subset quick --run recette`
-      puis `./bin/farci evaluate --subset quick`
-- [ ] Les 4 scénarios de l'étape 3 joués puis réparés (`./bin/farci chaos reset`)
+Une commande, moins de 15 minutes, un verdict **PASS / FAIL** :
 
----
+```bash
+./bin/farci rehearse          # sur le Pi : poste + salle + secours (rescue, chaos, reset-all)
+./bin/farci rehearse          # sur un portable branché au Wi-Fi du Pi : poste + salle
+```
+
+| Partie | Ce qui est vérifié |
+|---|---|
+| poste | outillage (selftest), tests unitaires, configuration, images (`--reference` sur le Pi), modèles, **plan C** (extraction rejouée + score ≥ 0,9) |
+| salle | accueil joignable, service rendu, Docling (avertissement), contrat de la passerelle, 3 dossiers extraits par l'accueil |
+| secours | `rescue inference` visible au tableau, scénarios 01, 04, 05, 06, 07 avec leur attendu, `reset-all` sans reste |
+
+Chaque étape en échec affiche ses dernières lignes et **la piste de
+réparation**. Le rapport est écrit dans `datasets/reports/rehearse-*.txt`.
+Un `FAIL` se corrige la veille, puis on relance.
+
+Reste à faire à la main :
+
+- [ ] `./verify-airgap.sh --strict` sur un poste étudiant type
+- [ ] la RAM et le disque de chaque poste connu : `./bin/farci doctor`
+- [ ] si la forge est jouée : `./bin/farci forge-sync bundle farci.bundle` sur la clé USB
+- [ ] imprimer `docs/PILOTAGE.md`
 
 ## J0 — Dans la salle (avant l'arrivée des étudiants)
 
@@ -67,7 +73,7 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
       encore livré, la référence rend le service
 - [ ] L'adresse d'Open WebUI de la référence (`REFERENCE_IP:OPEN_WEBUI_PORT`)
       est notée au tableau, pour qui n'a pas de machine utilisable
-- [ ] Les fiches d'équipe sont prêtes (`./bin/farci read <équipe>`)
+- [ ] Les fiches d'équipe sont prêtes (`docs/wiki/equipe-XX.md`, `./bin/farci read <équipe>`)
 - [ ] La liste des équipes (sortie de `./bin/farci casting`) est affichée
 
 ---
@@ -172,6 +178,7 @@ Les causes « de dépôt », plus rares :
 
 ## Voir aussi
 
+- `docs/PILOTAGE.md` — la feuille imprimable de la séance
 - `docs/WORKSHOP_FLOW.md` — le déroulé des étapes et les objectifs par équipe
 - `docs/AIRGAP.md` — le préchargement en détail
 - `docs/CHAOS.md` — les scénarios et leur résultat attendu

@@ -7,6 +7,29 @@
 3. **PR** : créer une Pull Request vers `main`
 4. **Revue** : au moins 1 review avant merge
 
+## Deux forges, une seule source de vérité
+
+| Forge | Rôle | Qui écrit sur `main` |
+|---|---|---|
+| **GitHub** (`origin`) | **source de vérité** du dépôt | une PR relue et fusionnée par un humain |
+| **Gitea** (salle, équipe 0) | copie de travail pendant la séance | **personne** à la main : `./bin/farci forge-sync` seulement |
+
+- Gitea `main` ne reçoit que GitHub `main`, **en avance rapide** :
+
+  ```bash
+  ./bin/farci forge-sync status               # identiques, en retard, divergents ?
+  ./bin/farci forge-sync push                 # Gitea main ← GitHub main
+  ./bin/farci forge-sync bundle farci.bundle  # salle sans Internet : sur clé USB
+  ./bin/farci forge-sync from-bundle farci.bundle
+  ```
+
+- Pendant la séance, les PR des équipes sur Gitea visent une **branche de
+  séance** (`seance`), pas `main`.
+- Si Gitea `main` a divergé, la synchronisation est **refusée** (jamais de
+  force). Ce qui mérite d'être gardé remonte par une PR GitHub :
+  `./bin/farci forge-sync rapatrier <branche>`, puis `git push origin
+  depuis-gitea/<branche>` et une PR. Au `push` suivant, Gitea rattrape GitHub.
+
 ## Règle obligatoire : branche + PR humaine
 
 **Toute modification de code du projet doit passer par une nouvelle branche.**

@@ -12,7 +12,7 @@ WHAT="${1:-}"
 case "${WHAT}" in
   -h|--help)
     cat <<'USAGE'
-  usage : ./bin/farci <docs|contracts|flow|airgap|chaos|checklist|list>
+  usage : ./bin/farci <docs|checklist> [contracts|flow|airgap|chaos|pilotage|list]
 USAGE
     exit 0 ;;
 esac
@@ -39,10 +39,11 @@ case "$WHAT" in
   flow|workshop-flow)  show_doc WORKSHOP_FLOW.md ;;
   airgap)              show_doc AIRGAP.md ;;
   chaos)               show_doc CHAOS.md ;;
+  pilotage)            show_doc PILOTAGE.md ;;
   checklist|formateur|instructor) show_doc INSTRUCTOR_GUIDE.md ;;
   -h|--help)
     cat <<'USAGE'
-  usage : ./bin/farci <docs|contracts|flow|airgap|chaos|checklist|list>
+  usage : ./bin/farci <docs|checklist> [contracts|flow|airgap|chaos|pilotage|list]
 USAGE
     exit 0 ;;
   list)

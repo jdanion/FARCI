@@ -1,102 +1,58 @@
-# Équipe 3 — LLM Gateway (LiteLLM, Bifrost)
+# Équipe 3 — Passerelle LLM
 
-## Attendus pédagogiques
+> Fiche débutant. La référence technique complète est
+> `03-llm-gateway/TUTORIAL.md` (`./bin/farci read 3`).
 
-- Comprendre le rôle d'une gateway LLM (masquage, rate limiting, fallback)
-- Comprendre la notion d'alias de modèle logique
-- Comprendre pourquoi le gateway est le "mur anti-raisonnement"
-- Comprendre la différence entre LiteLLM et Bifrost
-- Savoir tester le contrat gateway
+## Votre objectif
 
-## Solution simple (scripts)
+Monter **la passerelle** (LiteLLM) : le seul point par lequel les
+applications parlent aux modèles. La ligne `LLM Gateway` passe de `🛟 REF`
+à `✅ UP`.
 
-```bash
-# 1. Démarrer LiteLLM (sans clé : les clés virtuelles sont un bonus qui exige PostgreSQL)
-./bin/farci up 03-llm-gateway/litellm
+Une application ne doit jamais connaître le modèle qui lui répond : comme
+un standard téléphonique, la passerelle oriente l'appel, réessaie, et
+bascule sur un autre poste si le premier ne décroche pas.
 
-# 2. Vérifier : ligne LLM Gateway verte, test gateway-contract PASS
-./bin/farci status
-./bin/farci test
+## Les étapes
 
-# 3. Démonstration du repli
-03-llm-gateway/failover/demo-failover.sh
-```
+1. **Vérifier la machine** — `./bin/farci doctor` : notez « IP de cette
+   machine ».
+2. **Lire la configuration** — `03-llm-gateway/litellm/config.yaml` : un nom
+   logique, `med-extraction`, et son repli `med-extraction-lite`. Aucune
+   adresse : le runtime est joint par l'accueil de la salle.
+3. **Démarrer** — `./bin/farci up 03-llm-gateway/litellm`.
+4. **Suivre le démarrage** — `./bin/farci logs 03-llm-gateway/litellm` jusqu'à
+   `Uvicorn running` (Ctrl+C pour quitter).
+5. **Tester votre passerelle** — `curl -s http://127.0.0.1:4000/v1/models` :
+   la liste contient `med-extraction`.
+6. **Vous déclarer** — donnez votre IP au formateur
+   (`./bin/farci room set 3 <votre-ip>` sur le Pi).
+7. **Tester par l'accueil** — `./bin/farci test` : `gateway-contract PASS`.
+   L'écran affiche `LLM Gateway ✅ UP`.
 
-## Solution from scratch
-
-> Toutes les commandes se lancent depuis la racine du dépôt. Les adresses
-> viennent de `config/network.env` : les charger d'abord avec
-> `source scripts/dev-env.sh && farci_load_env` (ce qui définit
-> `$CADDY_URL`, `$INFERENCE_A_URL`, `$DOCLING_URL`…).
-
-### 1. Démarrer LiteLLM
-
-```bash
-docker run -d \
-  --name farci-litellm \
-  -p 4000:4000 \
-  -v $(pwd)/config.yaml:/app/config.yaml:ro \
-  -v litellm-data:/data \
-  ghcr.io/berriai/litellm:1.102.1 \
-  --config /app/config.yaml --port 4000
-```
-
-### 2. Créer une clé API (bonus : LiteLLM avec base PostgreSQL)
+## La sonde : comment savoir que c'est fini
 
 ```bash
-curl -X POST $GATEWAY_A_URL/key/generate \
-  -H "Authorization: Bearer sk-priority-placeholder" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "key_alias": "standard",
-    "rpm_limit": 10
-  }'
+./bin/farci test        # gateway-contract   PASS   med-extraction
 ```
 
-### 3. Tester l'authentification (bonus)
+Et sur l'écran de la salle : `LLM Gateway ✅ UP`.
 
-```bash
-# Sans clé → 401
-curl -X POST $GATEWAY_A_URL/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'
+## Bloqué depuis 10 minutes ?
 
-# Avec clé → 200
-curl -X POST $GATEWAY_A_URL/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer sk-standard-xxx" \
-  -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'
-```
+Levez la main. Les applications de la salle passent par la passerelle de
+la référence (🛟) en attendant.
 
-### 4. Tester le rate limiting (bonus)
+| Ce que vous voyez | À essayer |
+|---|---|
+| la passerelle ne démarre pas | `./bin/farci logs 03-llm-gateway/litellm` : souvent une erreur d'indentation dans `config.yaml` |
+| `FARCI_RUNTIME_URL manquante` | `config/network.env` : `REFERENCE_IP` doit être l'adresse du Pi |
+| 500 « connection refused » | aucun runtime ne répond : `./bin/farci status`, prévenir le formateur |
+| `curl` fonctionne, l'écran reste `🛟` | votre IP n'est pas déclarée : `./bin/farci room` sur le Pi |
 
-```bash
-# 12 requêtes rapides → certaines en 429
-for i in $(seq 1 12); do
-  curl -s -o /dev/null -w '%{http_code}\n' \
-    -X POST $GATEWAY_A_URL/v1/chat/completions \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer sk-standard-xxx" \
-    -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}],"max_tokens":1}'
-done
-```
+## Bonus
 
-### 5. Tester le fallback
-
-```bash
-# Coupure du primaire
-docker stop farci-ollama
-
-# Le gateway doit répondre 200 avec x-fallback-applied: true
-curl -X POST $GATEWAY_A_URL/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer sk-standard-xxx" \
-  -d '{"model":"med-extraction","messages":[{"role":"user","content":"test"}]}'
-```
-
-## Vérifications
-
-- [ ] LiteLLM répond sur :4000
-- [ ] (bonus) Authentification requise (401 sans clé)
-- [ ] (bonus) Rate limiting actif (429 après 10 RPM)
-- [ ] Fallback fonctionnel (200 + x-fallback-applied)
+- Démonstration du repli : `03-llm-gateway/failover/demo-failover.sh`.
+- Bifrost, seconde passerelle : `./bin/farci up 03-llm-gateway/bifrost`.
+- Clés virtuelles et quotas (scénario 03) : demandent une base PostgreSQL,
+  voir le TUTORIAL.

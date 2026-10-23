@@ -34,6 +34,7 @@ case "${FARCI_TARGET:-env}" in
 esac
 
 case "${1:-}" in
+  "")      ;;
   --print) ACTION="--print" ;;
   --check) ACTION="--check" ;;
   *)       die "option inconnue : $1 (voir --help)" ;;

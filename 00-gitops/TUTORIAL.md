@@ -52,9 +52,14 @@ Le runner déclare le label `farci` : c'est le `runs-on:` des workflows de
 ```bash
 ./bin/farci up 00-gitops
 00-gitops/gitea/bootstrap.sh          # organisation, administrateur, dépôt
+./bin/farci forge-sync push           # main de GitHub → Gitea (ou from-bundle sans Internet)
 00-gitops/runner/register-runner.sh   # vérifie l'enregistrement du runner
 00-gitops/post-provision.sh           # protège la branche main
 ```
+
+GitHub reste la source de vérité : Gitea `main` n'avance que par
+`./bin/farci forge-sync` (avance rapide). Les PR de la séance visent la
+branche `seance` ; voir `CONTRIBUTING.md`, « Deux forges ».
 
 ## Test local
 

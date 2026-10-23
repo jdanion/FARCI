@@ -55,6 +55,9 @@ python3 -c "import sys; sys.exit(0 if sys.version_info>=(3,11) else 1)" 2>/dev/n
 
 section "Outils pratiques (absents = warnings)"
 have make && line "make" "présent" || line "make" "${C_YELLOW}absent — ./bin/farci fait le même travail${C_RESET}"
+python3 -c "import pydantic" 2>/dev/null \
+  && line "dépendances Python" "${C_GREEN}ok (pydantic)${C_RESET}" \
+  || line "dépendances Python" "${C_YELLOW}absentes — ./bin/farci bootstrap (installe .venv/ hors ligne)${C_RESET}"
 have jq && line "jq" "présent" || line "jq" "${C_DIM}absent — inutile, les tests utilisent python3${C_RESET}"
 have shellcheck && line "shellcheck" "présent" \
   || line "shellcheck" "${C_DIM}absent — le lint le signalera en SKIP${C_RESET}"

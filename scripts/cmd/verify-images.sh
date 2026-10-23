@@ -27,9 +27,13 @@ source "$FARCI_ROOT/scripts/lib/images.sh"
 
 section "FARCI — vérification des images Docker"
 
-# Par défaut la chaîne cœur ; --all pour inclure les briques bonus.
+# Par défaut la chaîne cœur ; --all pour inclure les briques bonus ;
+# --reference pour la pile de référence de base (sur le Pi).
 scope=core
-[[ "${1:-}" == "--all" ]] && scope=all
+case "${1:-}" in
+  --all)       scope=all ;;
+  --reference) scope=reference ;;
+esac
 mapfile -t IMAGES < <(farci_images "$scope")
 
 missing=0
@@ -49,7 +53,11 @@ printf '\n'
 printf '%d présente(s), %d manquante(s)\n' "$present" "$missing"
 
 if (( missing > 0 )); then
-  printf 'Exécutez ./preload.sh --core pour télécharger les images manquantes.\n'
+  if [[ "$scope" == reference ]]; then
+    printf 'Exécutez ./preload.sh --reference (sur cette machine, avec Internet).\n'
+  else
+    printf 'Exécutez ./preload.sh --core pour télécharger les images manquantes.\n'
+  fi
   exit 1
 fi
 

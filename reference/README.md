@@ -51,15 +51,19 @@ git clone <dépôt> farci && cd farci
 cp .env.example .env
 cp config/network.env.example config/network.env   # REFERENCE_IP=192.168.50.1
 
-# 3. Les images POUR LE PI : à lancer sur le Pi lui-même.
+# 3. Les images et les paquets Python POUR LE PI : à lancer sur le Pi lui-même.
 #    `docker pull` tire l'architecture de la machine (arm64) ; les .tar des
 #    portables (x86) ne fonctionneraient pas ici, et inversement.
 ./preload.sh --reference
+./bin/farci bootstrap       # .venv/ installé hors ligne (le chaos et le plan C en ont besoin)
 
 # 4. Premier démarrage, pour vérifier
 ./bin/farci up reference
 ./bin/farci status          # tout en 🛟 REF, « Service rendu READY »
 ./bin/farci test            # gateway-contract PASS (par l'accueil)
+
+# 5. La répétition générale, à refaire la veille (voir docs/PILOTAGE.md)
+./bin/farci rehearse
 ```
 
 Alimentation officielle 27 W et refroidissement actif : sous charge, un

@@ -6,7 +6,7 @@ Préparer les documents avant qu'un modèle ne les lise : **pseudonymiser**
 (aucun identifiant direct ne part vers le modèle) et, pour les PDF, **convertir**
 en texte structuré avec Docling.
 
-- **Objectif minimal** : Docling répond (ligne `Docling` verte) et les tests de
+- **Objectif minimal** : Docling répond (ligne `Documents` verte) et les tests de
   pseudonymisation passent.
 - **Bonus** : convertir les PDF du dataset et comparer la sortie Docling au
   texte d'origine.
@@ -81,7 +81,7 @@ Ligne `docling` : `PASS` si un PDF existe, sinon `SKIP` (générer les PDF avec
 
 ## Vérification sur le tableau de bord
 
-Ligne `Docling` verte.
+Ligne `Documents` verte (`🛟 REF` tant que la référence vous remplace).
 
 ## Commit
 
