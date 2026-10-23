@@ -18,6 +18,11 @@ IPP, NIR, date de naissance) sont ignorées : un dossier pseudonymisé est donc
 reconnu comme l'original. Prompt v2 détecté par son titre dans le message
 système ; v1 sinon. Modèle `med-chaos` : réponse hors schéma (scénario 04).
 
+Annotation XML (EDS-NLP, eds.llm_markup_extractor) : si le message système
+demande une « annotation XML », le dernier message utilisateur est renvoyé
+tel quel, balisé par un lexique fixe (diagnostic, intervention,
+complication, stade). Ce n'est pas un modèle : c'est la doublure rejouée.
+
 Stdlib uniquement. Usage :
     python3 reference/replay/server.py                # port REPLAY_PORT ou 8090
     python3 reference/replay/server.py --port 18090 --delay 0
@@ -99,6 +104,28 @@ class Library:
         return table.get(prompt, table["v1"]).get(key, NOT_A_DOSSIER)
 
 
+# Lexique de la doublure rejouée pour l'annotation XML : le vocabulaire du jeu
+# de données synthétique (datasets/tools/cases.py), rien de plus.
+MARKUP_LEXICON = (
+    ("diagnostic", r"adénocarcinome canalaire(?: du pancréas)?|TNE grade \d(?: du pancréas)?"
+                   r"|IPMN (?:transformé|bordeline)|[Tt]umeur du pancréas"),
+    ("intervention", r"Duodénopancréatectomie|Whipple modifié|\bDPC\b"),
+    ("complication", r"[Ff]istule pancréatique|\bDGE\b|[Hh]émorragie"),
+    ("stade", r"\bp[TN]\d[a-c]?\b"),
+)
+MARKUP_RE = re.compile("|".join(f"(?P<{label}>{pattern})" for label, pattern in MARKUP_LEXICON))
+
+
+def is_markup_request(messages: list) -> bool:
+    system = " ".join(str(m.get("content", "")) for m in messages if m.get("role") == "system")
+    return "annotation XML" in system
+
+
+def markup(text: str) -> str:
+    """Le texte recopié mot pour mot, entités balisées : <label>…</label>."""
+    return MARKUP_RE.sub(lambda m: f"<{m.lastgroup}>{m.group(0)}</{m.lastgroup}>", text)
+
+
 def prompt_version(messages: list) -> str:
     system = " ".join(str(m.get("content", "")) for m in messages if m.get("role") == "system")
     return "v2" if re.search(r"prompt d'extraction v2", system) else "v1"
@@ -110,6 +137,9 @@ def completion(library: Library, body: dict) -> tuple[str, str, str]:
     if model not in MODELS:
         model = "med-extraction"
     messages = body.get("messages") or []
+    if is_markup_request(messages):
+        users = [str(m.get("content", "")) for m in messages if m.get("role") == "user"]
+        return model, markup(users[-1] if users else ""), "Mode rejoué : annotation par lexique fixe."
     user_text = "\n".join(str(m.get("content", "")) for m in messages if m.get("role") == "user")
     key = library.identify(user_text)
     prompt = prompt_version(messages)

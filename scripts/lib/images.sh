@@ -26,6 +26,8 @@ declare -gA FARCI_IMAGE=(
   [docling]="ghcr.io/docling-project/docling-serve-cpu:v${DOCLING_SERVE_VERSION:-}"
   [phoenix]="arizephoenix/phoenix:${PHOENIX_VERSION:-}"
   [open-webui]="ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION:-}"
+  # construite au préchargement (group_build_eds_nlp), jamais téléchargée
+  [eds-nlp]="farci/eds-nlp:${EDSNLP_VERSION:-}"
   # --- bonus -----------------------------------------------------------------
   [gitea]="gitea/gitea:${GITEA_VERSION:-}"
   [act-runner]="gitea/act_runner:${GITEA_ACT_RUNNER_VERSION:-}"
@@ -39,9 +41,9 @@ declare -gA FARCI_IMAGE=(
   [mlflow]="ghcr.io/mlflow/mlflow:v${MLFLOW_VERSION:-}"
   [flowise]="flowiseai/flowise:${FLOWISE_VERSION:-}"
 )
-FARCI_IMAGES_CORE=(caddy python ollama litellm docling phoenix open-webui)
+FARCI_IMAGES_CORE=(caddy python ollama litellm docling eds-nlp phoenix open-webui)
 # Pile de référence de base ; Ollama et Docling y sont des options.
-FARCI_IMAGES_REFERENCE=(caddy python litellm phoenix open-webui)
+FARCI_IMAGES_REFERENCE=(caddy python litellm phoenix open-webui eds-nlp)
 FARCI_IMAGES_BONUS=(gitea act-runner ci-runner postgres redis uptime-kuma bifrost langfuse otel-collector mlflow flowise)
 
 farci_image() { printf '%s\n' "${FARCI_IMAGE[$1]:?image inconnue : $1}"; }

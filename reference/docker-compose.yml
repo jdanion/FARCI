@@ -3,7 +3,7 @@
 # étudiants.
 #
 #   ./bin/farci up reference                 accueil + agrégateur + runtime rejoué
-#                                            + LiteLLM + Phoenix + Open WebUI
+#                                            + LiteLLM + Phoenix + Open WebUI + EDS-NLP
 #   ./bin/farci up reference ollama          + vrai modèle de secours (2B, lent)
 #   ./bin/farci up reference docling         + Docling (lourd : à tester sur le Pi)
 #
@@ -30,6 +30,7 @@ services:
       UP_INFERENCE: ${UP_INFERENCE:?UP_INFERENCE manquant, démarrer avec ./bin/farci up reference}
       UP_DOCUMENTS: ${UP_DOCUMENTS:?UP_DOCUMENTS manquant, démarrer avec ./bin/farci up reference}
       UP_OBSERVABILITE: ${UP_OBSERVABILITE:?UP_OBSERVABILITE manquant, démarrer avec ./bin/farci up reference}
+      UP_EDS: ${UP_EDS:?UP_EDS manquant, démarrer avec ./bin/farci up reference}
     ports:
       - "${ENTRY_PORT:?ENTRY_PORT manquant (config/network.env)}:80"
     volumes:
@@ -129,6 +130,19 @@ services:
     volumes:
       - ref-open-webui-data:/app/backend/data
     mem_limit: 1536m
+
+  # Doublure du service EDS-NLP de l'équipe 4 (image construite au
+  # préchargement sur le Pi : ./preload.sh --reference).
+  eds-nlp:
+    image: farci/eds-nlp:${EDSNLP_VERSION}
+    container_name: farci-ref-eds-nlp
+    restart: unless-stopped
+    environment:
+      FARCI_GATEWAY_URL: http://caddy:80/v1
+      EDS_LLM_MODEL: ${EDS_LLM_MODEL:-med-extraction}
+    ports:
+      - "${EDS_NLP_PORT:?EDS_NLP_PORT manquant (config/network.env)}:8000"
+    mem_limit: 768m
 
   # --- options ---------------------------------------------------------------
   # Vrai modèle de secours (Qwen3.5-2B) : lent sur un Pi, pour démontrer

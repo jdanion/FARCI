@@ -6,6 +6,27 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### EDS-NLP (AP-HP) — pseudonymiser et extraire des entités
+
+- Service `04-clinical-documents/eds-nlp/` (équipe 4) : `POST /v1/pseudonymiser`
+  (EDS-Pseudo, règles + contexte patient, sans PyTorch) et `POST /v1/entites`
+  (pseudonymise, puis `eds.llm_markup_extractor` d'EDS-NLP 0.23.0 balise
+  diagnostic, intervention, complication, stade via la passerelle de la
+  salle). Contrat 4 dans `docs/CONTRACTS.md`.
+- Brique **cœur, hors READY** : ligne `EDS-NLP` au tableau, route `/eds` à
+  l'accueil (`FARCI_EDS_URL`), doublure sur le Pi, `rescue eds`
+  (`rescue 4` bascule Docling et EDS-NLP).
+- Image `farci/eds-nlp` construite au préchargement
+  (`./preload.sh --only build_eds_nlp`, incluse dans `--core` et
+  `--reference`) : compilateur seulement sans paquet précompilé (ARM).
+  EDS-Pseudo cloné au commit figé (`EDS_PSEUDO_COMMIT`), pas de PyPI.
+- `./bin/farci eds pseudo | entites | compare` : client en Python standard ;
+  le contexte patient vient du registre du jeu de données. Étape 2,
+  parcours D (10 min) : entités contre JSON, négations manquées.
+- Runtime rejoué : mode « annotation XML » (lexique fixe) pour le plan C.
+- `rehearse` : étape `eds-nlp` (avertissement). Tests :
+  `tests/test_eds_nlp.py`, `tests/test_eds_nlp.sh`.
+
 ### Lot 4 — répéter et piloter
 
 - **`./bin/farci rehearse`** : répétition générale de J-1, moins de 15 min,

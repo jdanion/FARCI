@@ -1,0 +1,4 @@
+Patient opéré d'une <intervention>duodénopancréatectomie céphalique</intervention> pour <diagnostic>adénocarcinome du pancréas</diagnostic>.
+Les suites ont été marquées par une <complication>fistule pancréatique</complication> de grade B.
+Pièce classée <stade>pT2</stade> <stade>pN0</stade>, marges saines.
+Pas de complication hémorragique. Sortie au huitième jour.

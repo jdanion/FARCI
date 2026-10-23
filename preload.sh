@@ -113,7 +113,7 @@ select_groups() {
       SELECTED_GROUPS=("models_ci")
       ;;
     reference)
-      SELECTED_GROUPS=("reference" "models_ci" "wheels")
+      SELECTED_GROUPS=("reference" "build_eds_nlp" "models_ci" "wheels")
       ;;
     *)
       err "mode inconnu : $PRELOAD_MODE"

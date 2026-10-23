@@ -42,7 +42,7 @@ Total selon le périmètre :
 | `--core` | gitops + dashboard + inference + gateway + observabilité + documents + évaluation + clients + wheels + modèle 9B + modèle de secours 2B | ~28 Go |
 | `--only models_qwen38` | le modèle 27B | +17,5 Go |
 | `--models-ci` | le modèle de secours seul (Qwen3.5-2B) | ~1,2 Go |
-| `--reference` | pile de référence (accueil, runtime rejoué, LiteLLM, Phoenix, Open WebUI, Ollama, Docling) + modèle de secours — **à lancer sur le Pi** | ~8 Go |
+| `--reference` | pile de référence (accueil, runtime rejoué, LiteLLM, Phoenix, Open WebUI, EDS-NLP construit sur place, Ollama, Docling) + modèle de secours + wheels — **à lancer sur le Pi** | ~9 Go |
 | `--all` | tout | ~57 Go |
 
 Chaque image est téléchargée **puis** sauvegardée en `.tar` dans
@@ -110,6 +110,7 @@ Request, et de `verify-airgap.sh` avant la coupure.
 |---|---|---|
 | L'image llama.cpp officielle n'a pas de tag semver | les images sont publiées par numéro de build ; certains builds n'ont jamais eu d'image | le dépôt **compile** l'image en multi-architecture pendant le préchargement, depuis les sources vérifiées |
 | L'image llama.cpp officielle n'existe pas en `linux/arm64` | la documentation le mentionne, l'image n'existe pas | idem : notre image est construite pour `linux/amd64` **et** `linux/arm64` |
+| EDS-NLP n'a pas de paquet précompilé pour ARM (Pi, Mac Apple Silicon) | `pip install edsnlp` compile, il faut un compilateur | l'image `farci/eds-nlp` est construite au préchargement, avec le compilateur seulement si nécessaire ; celle du Pi sert aux Mac |
 | `make` absent sur certains postes | la machine de référence est minimale | la `Makefile` ne fait qu'appeler `bin/farci` ; les deux marchent |
 | `jq` absent | idem | les tests utilisent un parseur JSON maison sur la stdlib Python |
 | Un modèle « léger » demande 8 Go de RAM | le cahier des charges visait 1–4 Go, indisponibles dans les familles retenues | un modèle de 2 Go est prévu pour la CI et le développement, **exclu du score** |

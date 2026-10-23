@@ -106,7 +106,7 @@ briques encore `🛟` y restent : la suite ne dépend pas d'elles.
 | 1 Réseau | ligne Network | `./bin/farci up 01-network-dashboard` |
 | 2 Inférence | ligne Inference | `./bin/farci up 02-inference/ollama` puis `02-inference/ollama/create-model.sh` |
 | 3 Passerelle | ligne LLM Gateway | `./bin/farci up 03-llm-gateway/litellm` |
-| 4 Documents | ligne Documents + pseudonymisation testée | `./bin/farci up 04-clinical-documents/docling` |
+| 4 Documents | lignes Documents et EDS-NLP + pseudonymisation testée | `./bin/farci up 04-clinical-documents/docling` puis `./bin/farci up 04-clinical-documents/eds-nlp` |
 | 5 Observabilité | ligne Observability | `./bin/farci up 05-observability/phoenix` |
 | 7 Applications | ligne Open WebUI | `./bin/farci up 07-applications/open-webui` |
 

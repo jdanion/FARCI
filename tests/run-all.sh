@@ -27,6 +27,7 @@ tests=(
   test_inference_contract.sh
   test_gateway_contract.sh
   test_docling.sh
+  test_eds_nlp.sh
   test_observability.sh
   test_gitops.sh
   test_airgap.sh

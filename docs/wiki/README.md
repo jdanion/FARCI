@@ -33,7 +33,7 @@ a déclaré l'IP de votre machine (`./bin/farci doctor` vous la donne).
 | 1 | Réseau et tableau de bord | Network | [equipe-01](equipe-01.md) |
 | 2 | Inférence | Inference | [equipe-02](equipe-02.md) |
 | 3 | Passerelle LLM | LLM Gateway | [equipe-03](equipe-03.md) |
-| 4 | Documents cliniques | Documents | [equipe-04](equipe-04.md) |
+| 4 | Documents cliniques, EDS-NLP | Documents, EDS-NLP | [equipe-04](equipe-04.md) |
 | 5 | Observabilité | Observability | [equipe-05](equipe-05.md) |
 | 6 | Évaluation | (classement) | [equipe-06](equipe-06.md) |
 | 7 | Applications | Open WebUI | [equipe-07](equipe-07.md) |

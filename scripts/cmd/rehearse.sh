@@ -9,7 +9,8 @@
 # Trois parties, enchaînées selon la machine :
 #   POSTE    outillage, configuration, images, plan C (extraction rejouée + score)
 #   SALLE    si l'accueil (REFERENCE_IP) répond : service rendu, contrat de la
-#            passerelle, extraction réelle de 3 dossiers par l'accueil
+#            passerelle, EDS-NLP (avertissement), extraction réelle de 3
+#            dossiers par l'accueil
 #   SECOURS  sur la machine qui porte l'accueil (le Pi) : rescue, scénarios de
 #            chaos de la séance, reset-all
 #
@@ -182,6 +183,8 @@ else
   run_step service-rendu  BLOQUANT 60  "./bin/farci status : la liste « Il manque »" step_service_rendu sans-docling
   run_step documents      AVERTISSEMENT 60 "pas de Docling dans la salle : ./bin/farci up reference docling, sinon l'équipe 4 le livrera" step_service_rendu docling
   run_step contrat-passerelle BLOQUANT 150 "./bin/farci logs reference litellm ; ./bin/farci status" "$FARCI_ROOT/tests/test_gateway_contract.sh"
+  run_step eds-nlp AVERTISSEMENT 60 "EDS-NLP hors READY : ./bin/farci up reference eds-nlp, ou l'équipe 4 le livrera" \
+    env EDS_NLP_URL="${FARCI_EDS_URL:-}" "$FARCI_ROOT/tests/test_eds_nlp.sh"
   run_step extraction-salle BLOQUANT 300 "plus lent que 5 min : rescue inference le jour J ; erreurs : ./bin/farci logs reference" step_extraction_salle
 
   if ! carries_entry; then

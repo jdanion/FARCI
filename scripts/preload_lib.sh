@@ -54,6 +54,7 @@ declare -a PRELOAD_GROUPS=(
   observability_phoenix
   observability_langfuse
   documents
+  build_eds_nlp
   evaluation
   clients
   wheels
@@ -73,6 +74,7 @@ declare -a PRELOAD_CORE_GROUPS=(
   gateway_litellm
   observability_phoenix
   documents
+  build_eds_nlp
   evaluation
   clients
   wheels
@@ -142,6 +144,11 @@ preload_docker_pull() {
 preload_image() {
   local image file
   image="$(farci_image "$1")" || return 1
+  # Les images farci/* ne se téléchargent pas : un groupe build_* les construit.
+  if [[ "$image" == farci/* ]]; then
+    debug "construite localement, pas de téléchargement : $image"
+    return 0
+  fi
   file="$(printf '%s' "$image" | tr '/:' '__').tar"
   preload_docker_pull "$image" || return 1
   if [[ "${PRELOAD_SKIP_EXISTING:-0}" == "1" && -f "$FARCI_IMAGES_DIR/$file" ]]; then
@@ -250,6 +257,35 @@ group_build_llamacpp() {
     warn "Dockerfile llama.cpp absent : $src_dir/Dockerfile"
     warn "  → créer 02-inference/llamacpp/Dockerfile (phase 4)"
   fi
+}
+
+# Image du service EDS-NLP (équipe 4, doublure du Pi). Construite pour
+# l'architecture de CETTE machine : sur le Pi, elle sert aussi aux Mac
+# Apple Silicon (linux/arm64). FARCI_DOCKER_BUILD_ARGS : arguments
+# supplémentaires de docker build (proxy d'établissement, par exemple).
+group_build_eds_nlp() {
+  local dir="$FARCI_ROOT/04-clinical-documents/eds-nlp" image src
+  image="$(farci_image eds-nlp)" || return 1
+  src="$dir/vendor/eds-pseudo"
+  info "groupe : build_eds_nlp ($image, architecture $(uname -m))"
+  if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
+    printf '  [dry-run] git clone aphp/eds-pseudo @ %s ; docker build -t %s\n' "$EDS_PSEUDO_COMMIT" "$image"
+    return 0
+  fi
+  if [[ ! -d "$src/.git" ]]; then
+    rm -rf "$src"
+    git clone -q https://github.com/aphp/eds-pseudo "$src" || { err "clonage d'eds-pseudo impossible"; return 1; }
+  fi
+  git -C "$src" fetch -q origin 2>/dev/null || true
+  git -C "$src" checkout -q --detach "$EDS_PSEUDO_COMMIT" \
+    || { err "commit eds-pseudo introuvable : $EDS_PSEUDO_COMMIT"; return 1; }
+  local -a extra=()
+  read -r -a extra <<< "${FARCI_DOCKER_BUILD_ARGS:-}"
+  docker build -t "$image" \
+    --build-arg "PYTHON_IMAGE_TAG=$PYTHON_IMAGE_TAG" \
+    --build-arg "EDSNLP_VERSION=$EDSNLP_VERSION" \
+    "${extra[@]}" "$dir" || { err "échec de la construction de $image"; return 1; }
+  preload_docker_save "$image" "$(printf '%s' "$image" | tr '/:' '__').tar"
 }
 
 group_models_ornith() {

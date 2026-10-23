@@ -5,8 +5,9 @@
 #   ./bin/farci rescue <brique>           la référence sert seule cette brique
 #   ./bin/farci rescue --off <brique>     rend la main à l'équipe
 #
-# Briques : inference (équipe 2), passerelle (3), documents (4),
-# observabilite (5). On accepte aussi equipe-2 … equipe-5.
+# Briques : inference (équipe 2), passerelle (3), documents (Docling, 4),
+# eds (EDS-NLP, 4), observabilite (5). On accepte aussi equipe-2 … equipe-5
+# (equipe-4 bascule Docling ET EDS-NLP).
 #
 # Sans rescue, l'accueil bascule DÉJÀ tout seul quand la brique de l'équipe
 # ne répond pas. rescue sert quand elle répond MAL (modèle trop lent,
@@ -31,7 +32,9 @@ route_of() {
   case "$1" in
     inference|runtime|equipe-2|2)          echo inference ;;
     passerelle|gateway|equipe-3|3)         echo passerelle ;;
-    documents|docling|equipe-4|4)          echo documents ;;
+    documents|docling)                     echo documents ;;
+    eds|eds-nlp)                           echo eds ;;
+    equipe-4|4)                            echo documents; echo eds ;;
     observabilite|phoenix|equipe-5|5)      echo observabilite ;;
     reseau|accueil|caddy|equipe-1|1)
       info "l'accueil de la salle est déjà celui du Pi : rien à basculer pour l'équipe 1"
@@ -39,7 +42,7 @@ route_of() {
     webui|open-webui|equipe-7|7)
       info "faire ouvrir l'Open WebUI de la référence : ${REFERENCE_WEBUI_URL:-http://<REFERENCE_IP>:<OPEN_WEBUI_PORT>}"
       exit 0 ;;
-    *) die "brique inconnue : $1 (inference | passerelle | documents | observabilite)" ;;
+    *) die "brique inconnue : $1 (inference | passerelle | documents | eds | observabilite)" ;;
   esac
 }
 
@@ -57,16 +60,18 @@ case "${1:-}" in
     exit 0 ;;
   --off)
     [[ -n "${2:-}" ]] || die "usage : ./bin/farci rescue --off <brique>"
-    route="$(route_of "$2")"
-    write_state "$(current | tr ',' '\n' | grep -vx "$route" | paste -sd, -)"
-    ok "$route : rendue à l'équipe (si sa brique répond)"
+    routes="$(route_of "$2")"
+    write_state "$(current | tr ',' '\n' | grep -vxF "$routes" | paste -sd, -)"
+    ok "$(paste -sd, - <<< "$routes") : rendue(s) à l'équipe (si sa brique répond)"
     ;;
   *)
-    route="$(route_of "$1")"
+    routes="$(route_of "$1")"
     list="$(current)"
-    grep -qx "$route" <<< "${list//,/$'\n'}" || list="${list:+$list,}$route"
+    while IFS= read -r route; do
+      grep -qx "$route" <<< "${list//,/$'\n'}" || list="${list:+$list,}$route"
+    done <<< "$routes"
     write_state "$list"
-    ok "$route : servie par la référence 🛟"
+    ok "$(paste -sd, - <<< "$routes") : servie(s) par la référence 🛟"
     ;;
 esac
 

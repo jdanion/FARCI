@@ -189,6 +189,23 @@ services:
     critical: true
     phase: 6
 
+  # EDS-NLP (AP-HP) : pseudonymisation EDS-Pseudo + entités par LLM. Cœur
+  # pour l'équipe 4, doublé par le Pi, mais HORS de READY : sa panne ne doit
+  # jamais arrêter l'extraction principale.
+  - id: eds-nlp
+    label: EDS-NLP
+    team: "4"
+    compose: 04-clinical-documents/eds-nlp
+    group: DOCUMENT_PIPELINE
+    ip_var: EDS_NLP_IP
+    port_var: EDS_NLP_PORT
+    reference_port_var: EDS_NLP_PORT
+    health_paths:
+      - /health
+    tier: core
+    critical: false
+    phase: 6
+
   - id: phoenix
     label: Observability A (Phoenix)
     team: "5"
@@ -295,6 +312,10 @@ routes:
     var: UP_OBSERVABILITE
     services: [phoenix]
     reference: phoenix
+  - name: eds
+    var: UP_EDS
+    services: [eds-nlp]
+    reference: eds-nlp
 
 # Lignes du tableau de progression projeté dans l'amphithéâtre (FARCI §49).
 # Les lignes `core` sont toujours affichées ; les lignes `bonus` sont résumées
@@ -313,6 +334,9 @@ status_rows:
   - label: Documents
     tier: core
     check: [docling]
+  - label: EDS-NLP
+    tier: core
+    check: [eds-nlp]
   - label: Observability
     tier: core
     check: [phoenix]

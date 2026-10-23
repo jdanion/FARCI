@@ -13,7 +13,7 @@ on utilise, on casse. Ce document dit **quoi** se passe et **pourquoi** ;
 | 0:00 – 0:20 | 20 min | **Accueil** : les 3 étapes, le vocabulaire, le tableau tout en 🛟 | chaque étudiant sait dans quelle équipe il est et a lancé `./bin/farci doctor` |
 | 0:20 – 1:50 | 90 min | **Étape 1 — Construire** : équipes cœur seulement | `CLINICAL PIPELINE READY` sur le tableau |
 | 1:50 – 2:00 | 10 min | **Pause** | — |
-| 2:00 – 2:50 | 50 min | **Étape 2 — Utiliser** : parcours Python (principal) et Open WebUI ; Flowise en démo | chaque équipe a une run dans `datasets/extracted/` |
+| 2:00 – 2:50 | 50 min | **Étape 2 — Utiliser** : parcours Python (principal) et Open WebUI ; EDS-NLP (10 min) ; Flowise en démo | chaque équipe a une run dans `datasets/extracted/` |
 | 2:50 – 3:10 | 20 min | **Évaluation** et lecture d'une trace | le classement des runs est projeté, une trace est lue ensemble |
 | 3:10 – 3:45 | 35 min | **Étape 3 — Casser** : 4 scénarios pilotés par le formateur | chaque panne a été prédite, observée, réparée |
 | 3:45 – 4:00 | 15 min | **Clôture** : chacun explique une notion avec ses mots | — |
@@ -57,7 +57,7 @@ arrêt ne doit pas arrêter l'extraction (scénario 07).
 | 1 | `01-network-dashboard/` | Caddy + health-aggregator | Uptime Kuma |
 | 2 | `02-inference/` | Ollama | llama.cpp (même fichier de poids), oMLX |
 | 3 | `03-llm-gateway/` | LiteLLM | clés et quotas, Bifrost |
-| 4 | `04-clinical-documents/` | Docling + pseudonymisation | PDF convertis par Docling |
+| 4 | `04-clinical-documents/` | Docling + pseudonymisation + EDS-NLP (hors READY) | PDF convertis par Docling |
 | 5 | `05-observability/` | Phoenix | Langfuse, collecteur OTel |
 | 7 | `07-applications/` | Open WebUI prêt pour l'étape 2 | Flowise (démo) |
 | 0 | `00-gitops/` | — | Gitea + runner + CI (démo) |
@@ -84,7 +84,7 @@ vite.
 | 1 Réseau | `./bin/farci up 01-network-dashboard` | Network | sondes Uptime Kuma (`scripts/uptime-kuma-seed.sh`) |
 | 2 Inférence | Ollama démarré, modèle importé (`02-inference/ollama/create-model.sh`) | Inference | llama.cpp sur le même GGUF, benchmark (`02-inference/bench/bench.sh`) |
 | 3 Passerelle | LiteLLM répond à `med-extraction` via l'accueil | LLM Gateway | démo de repli ; clés virtuelles et quota (PostgreSQL requis, `03-llm-gateway/litellm/bootstrap-keys.sh`) |
-| 4 Documents | Docling démarré + `./bin/farci test-unit -k deidentification` vert | Documents | conversion des PDF (`./bin/farci generate-dataset --pdf`) |
+| 4 Documents | Docling et EDS-NLP démarrés + `./bin/farci test-unit -k deidentification` vert | Documents, EDS-NLP | conversion des PDF (`./bin/farci generate-dataset --pdf`), pseudonymiseurs comparés |
 | 5 Observabilité | Phoenix démarré | Observability | Langfuse sur le même flux OTLP |
 | 7 Applications | Open WebUI démarré, branché sur `/v1` | Open WebUI | premier dossier extrait par le parcours Python |
 
@@ -143,9 +143,16 @@ modèle logique `med-extraction`, le gold standard.
 | A — Python (**principal**) | tout le monde : c'est là qu'on voit la validation | `./bin/farci extract --subset quick --run <équipe>` |
 | B — Open WebUI | les étudiants sans machine utilisable, et ceux qui veulent jouer avec le prompt | navigateur, puis `07-applications/open-webui/export-submissions.sh` |
 | C — Flowise | démonstration du formateur (10 min) | — |
+| D — EDS-NLP (AP-HP) | toute la salle, 10 min, sur le service de l'équipe 4 | `./bin/farci eds entites <fichier>`, puis `./bin/farci eds compare --limit 2` |
 
-Tous les parcours produisent `datasets/extracted/<run>/patient_<IPP>.json` avec
+Les parcours A à C produisent `datasets/extracted/<run>/patient_<IPP>.json` avec
 **exactement** le même schéma. C'est ce qui rend la comparaison possible.
+
+Le parcours D répond à une autre question : au lieu d'une **variable déduite**
+(JSON), le modèle balise des **entités**, des morceaux du texte à leur place,
+après la pseudonymisation EDS-Pseudo. On compare au gold ce qui est retrouvé,
+et ce qui est balisé en trop (une complication « Non » balisée : une négation
+manquée). Deux outils de la recherche clinique réelle, la même passerelle.
 
 ---
 

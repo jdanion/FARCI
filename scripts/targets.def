@@ -46,6 +46,7 @@ generate-dataset	dataset	Générer le dataset synthétique (.txt, --pdf pour Doc
 build-gold	dataset	Générer le gold standard depuis le registre	build-gold.sh
 make-quick-set	dataset	Afficher le sous-ensemble quick (10 cas)	make-quick-set.sh
 extract	dataset	Étape 2, parcours Python : extraire tous les dossiers	extract.sh
+eds	dataset	Étape 2, EDS-NLP (AP-HP) : pseudo | entites | compare	eds.sh
 evaluate	dataset	Comparer les extractions au gold, classer les runs	evaluate.sh
 
 chaos	chaos	Étape 3 : list | scenario-NN | status | reset	chaos.sh

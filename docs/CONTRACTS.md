@@ -135,6 +135,36 @@ Une trace minimale doit contenir :
 
 ---
 
+## Contrat 4 — EDS-NLP (pseudonymiser, extraire des entités)
+
+Servi par l'équipe 4 (`04-clinical-documents/eds-nlp/`) ou la doublure du Pi,
+joint par l'accueil de la salle : `FARCI_EDS_URL` (`…/eds`). Hors de
+`CLINICAL PIPELINE READY`.
+
+| Point d'entrée | Corps | Réponse |
+|---|---|---|
+| `GET /health` | — | `{"status": "ok", "llm": "<url>", "modele": "med-extraction"}` |
+| `POST /v1/pseudonymiser` | `{"texte": "...", "contexte": {"NOM": ["..."], "IPP": ["..."]}}` | `{"texte": "<pseudonymisé>", "entites": [{"label", "debut", "fin", "texte"}]}` |
+| `POST /v1/entites` | `{"texte": "...", "contexte": {...}, "pseudonymiser": true}` | `{"texte_envoye": "...", "entites": [...], "modele": "..."}` |
+
+- E1 : `/v1/entites` pseudonymise **avant** l'appel au modèle, sauf
+  `"pseudonymiser": false` explicite ; `texte_envoye` montre exactement ce
+  que le modèle a reçu.
+- E2 : les identifiants deviennent `[LABEL]` (`[NOM]`, `[IPP]`, `[SECU]`…) ;
+  clés de contexte acceptées : `NOM`, `PRENOM`, `IPP`, `NDA`, `SECU`,
+  `DATE_NAISSANCE`, `ADRESSE`, `VILLE`, `ZIP`, `TEL`, `MAIL`, `HOPITAL`.
+- E3 : entités `diagnostic`, `intervention`, `complication`, `stade`, avec
+  leurs positions dans `texte_envoye`.
+- E4 : le modèle est appelé par la **passerelle** (contrat 2), jamais
+  directement ; LLM injoignable → HTTP 502 avec un message, et
+  `/v1/pseudonymiser` continue de répondre.
+- E5 : corps invalide ou texte de plus de 20 000 caractères → HTTP 400.
+
+Tests : `tests/test_eds_nlp.py` (contrat, doublure rejouée, vrais composants
+quand EDS-NLP est installé) et `tests/test_eds_nlp.sh` (service déployé).
+
+---
+
 ## Comment ajouter une implémentation en quatre étapes
 
 C'est l'exercice qui valide que le contrat est bon.

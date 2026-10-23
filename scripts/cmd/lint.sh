@@ -395,7 +395,7 @@ fi
 # 8. taille — le dépôt reste léger (contrainte du plan §0.1)
 # ---------------------------------------------------------------------------
 if wanted size; then
-  big="$(find "$FARCI_ROOT" -type f -not -path '*/.git/*' -size +1M \
+  big="$(find "$FARCI_ROOT" -type f -not -path '*/.git/*' -not -path '*/.venv/*' -not -path '*/eds-nlp/vendor/*' -size +1M \
          -printf '%s %p\n' 2>/dev/null | sort -rn | head -5 || true)"
   if [[ -n "$big" ]]; then
     record WARN size "fichiers volumineux dans l'arbre de travail :"

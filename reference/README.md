@@ -25,6 +25,7 @@ la salle. Aucun autre matériel n'est requis sur place.
 | LiteLLM | `farci-ref-litellm` | `GATEWAY_A_PORT` | 1 Go |
 | Phoenix | `farci-ref-phoenix` | `PHOENIX_PORT` | 1 Go |
 | Open WebUI | `farci-ref-open-webui` | `OPEN_WEBUI_PORT` | 1,5 Go |
+| EDS-NLP (doublure de l'équipe 4) | `farci-ref-eds-nlp` | `EDS_NLP_PORT` | 768 Mo |
 | *option* Ollama + modèle 2B | `farci-ref-ollama` | — | 4 Go |
 | *option* Docling | `farci-ref-docling` | `DOCLING_PORT` | 3 Go |
 
@@ -34,7 +35,7 @@ ne sert pas un modèle à dix machines ; il sert en revanche des réponses
 rejouées instantanément, ce qui suffit pour que l'étape 2 et le chaos
 fonctionnent même si aucune équipe n'a de modèle.
 
-**Budget mémoire** : la pile de base tient dans ~4 Go. Ollama **ou** Docling
+**Budget mémoire** : la pile de base tient dans ~5 Go. Ollama **ou** Docling
 en plus, jamais les deux sur un Pi de 8 Go.
 
 ---
@@ -54,7 +55,7 @@ cp config/network.env.example config/network.env   # REFERENCE_IP=192.168.50.1
 # 3. Les images et les paquets Python POUR LE PI : à lancer sur le Pi lui-même.
 #    `docker pull` tire l'architecture de la machine (arm64) ; les .tar des
 #    portables (x86) ne fonctionneraient pas ici, et inversement.
-./preload.sh --reference
+./preload.sh --reference    # dont l'image EDS-NLP, COMPILÉE ici pour arm64 (~10 min)
 ./bin/farci bootstrap       # .venv/ installé hors ligne (le chaos et le plan C en ont besoin)
 
 # 4. Premier démarrage, pour vérifier
@@ -131,6 +132,7 @@ ils ne connaissent que `REFERENCE_IP`.
 | tout est confus, fin d'un chaos | `./bin/farci reset-all` | pannes réparées, bascules levées, tableau affiché |
 | un vrai modèle sur la référence | `./bin/farci up reference ollama` puis `OLLAMA_CONTAINER=farci-ref-ollama 02-inference/ollama/create-model.sh secours` et `REFERENCE_RUNTIME_HOST=ollama:11434 ./bin/farci up reference litellm` | modèle 2B, lent mais réel |
 | Docling sur la référence | `./bin/farci up reference docling` | à tester sur le Pi avant le jour J |
+| EDS-NLP de l'équipe 4 répond mal | `./bin/farci rescue eds` | la doublure du Pi sert `/eds` |
 
 Une brique d'équipe qui **tombe** n'a besoin d'aucune commande : l'accueil
 passe à la référence tout seul (et l'écarte 20 secondes avant de
@@ -183,3 +185,5 @@ Ce dépôt a été testé sur x86 avec Docker, sans Pi ni Wi-Fi :
 - [ ] la pile de base démarre en moins de 2 min sur le Pi et reste sous 5 Go
 - [ ] dix portables sur le point d'accès : stabilité et débit suffisants
 - [ ] Docling (profil `documents`) sur le Pi : temps de conversion d'un PDF
+- [ ] l'image EDS-NLP se compile sur le Pi (`./preload.sh --reference`) ; elle
+      sert aussi aux Mac Apple Silicon (même architecture)

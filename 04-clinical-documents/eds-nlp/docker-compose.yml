@@ -1,0 +1,19 @@
+# FARCI — service EDS-NLP de l'équipe 4 (pseudonymiser, extraire des entités)
+#
+#   ./bin/farci up 04-clinical-documents/eds-nlp
+#
+# L'image farci/eds-nlp est construite au préchargement (./preload.sh), jamais
+# ici : le jour J, rien ne se télécharge. Le LLM est celui de la salle, par
+# l'accueil (FARCI_GATEWAY_URL) : la passerelle de l'équipe 3 ou la référence.
+
+services:
+  eds-nlp:
+    image: farci/eds-nlp:${EDSNLP_VERSION}
+    container_name: farci-eds-nlp
+    restart: unless-stopped
+    environment:
+      FARCI_GATEWAY_URL: ${FARCI_GATEWAY_URL:?FARCI_GATEWAY_URL manquante (REFERENCE_IP, config/network.env)}
+      EDS_LLM_MODEL: ${EDS_LLM_MODEL:-med-extraction}
+    ports:
+      - "${EDS_NLP_PORT:?EDS_NLP_PORT manquant (config/network.env)}:8000"
+    mem_limit: 768m

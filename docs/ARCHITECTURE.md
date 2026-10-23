@@ -103,13 +103,14 @@ formateur, qui crée aussi le Wi-Fi.
 http://<REFERENCE_IP>/v1              → la passerelle LLM
 http://<REFERENCE_IP>/runtime/v1      → les runtimes (pour la passerelle, jamais les applications)
 http://<REFERENCE_IP>/docling         → la chaîne documentaire
+http://<REFERENCE_IP>/eds             → EDS-NLP : pseudonymiser, extraire des entités
 http://<REFERENCE_IP>/observability   → les traces OTLP
 http://<REFERENCE_IP>/status          → l'état de la salle
 ```
 
 `REFERENCE_IP` et `ENTRY_PORT` viennent de `config/network.env` ;
 `scripts/dev-env.sh` en dérive `FARCI_GATEWAY_URL`, `FARCI_RUNTIME_URL`,
-`FARCI_DOCLING_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` et `FARCI_STATUS_URL`.
+`FARCI_DOCLING_URL`, `FARCI_EDS_URL`, `OTEL_EXPORTER_OTLP_ENDPOINT` et `FARCI_STATUS_URL`.
 Aucun autre fichier ne compose d'adresse.
 
 ### Une IP de machine + un port par service

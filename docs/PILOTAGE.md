@@ -34,7 +34,7 @@ donne la piste. Le rapport est dans `datasets/reports/rehearse-*.txt`.
 | 0:30 → 1:15 | Objectif minimal ; je déclare chaque machine : `./bin/farci room set <n> <ip>` | **1:00** : une équipe encore `🛟` continue sans bloquer personne |
 | ~1:30 | **CLINICAL PIPELINE READY** : on le montre à tous | **1:40** au plus tard : on passe à la suite, avec ce qui sert (`✅` ou `🛟`) |
 | 1:50 | **Pause** — jamais supprimée | je répare pendant la pause |
-| 2:00 | Étape 2 : `./bin/farci extract --subset quick --run <équipe>` | lent → `./bin/farci rescue inference` |
+| 2:00 | Étape 2 : `./bin/farci extract --subset quick --run <équipe>` ; EDS-NLP : `./bin/farci eds compare --limit 2` | lent → `./bin/farci rescue inference` |
 | 2:50 | Évaluation : `./bin/farci evaluate --subset quick`, une trace lue | une seule trace si retard |
 | 3:10 | Étape 3 : 01, 04, 06 (ou 05), 07 — pari avant chaque panne | retard → 01, 04, 07 seulement |
 | 3:45 | Clôture : chacun explique une notion | jamais coupée |
@@ -50,7 +50,7 @@ Pause, évaluation et clôture restent.
 |---|---|
 | voir qui sert quoi | `./bin/farci room` |
 | déclarer une équipe | `./bin/farci room set <n> <ip>` |
-| forcer la référence sur une brique qui répond mal | `./bin/farci rescue <inference\|passerelle\|documents\|observabilite>` |
+| forcer la référence sur une brique qui répond mal | `./bin/farci rescue <inference\|passerelle\|documents\|eds\|observabilite>` |
 | rendre la main à l'équipe | `./bin/farci rescue --off <brique>` |
 | jouer une panne | `./bin/farci chaos scenario-NN` |
 | tout remettre d'aplomb | `./bin/farci reset-all` |

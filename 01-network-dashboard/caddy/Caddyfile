@@ -62,6 +62,13 @@
         }
     }
 
+    # EDS-NLP (équipe 4) : pseudonymiser, extraire des entités
+    handle_path /eds/* {
+        reverse_proxy {$UP_EDS} {
+            import repli
+        }
+    }
+
     # Traces OTLP vers Phoenix : si l'observabilité tombe, la référence
     # reçoit, et l'extraction ne s'en aperçoit pas (scénario 07).
     handle_path /observability/* {
