@@ -31,6 +31,7 @@ case "${1:-}" in
     printf '  puis toucher « Plein écran · écran allumé ».\n'
     ;;
   reset)
+    need_docker
     name="$(aggregator)"
     [[ -n "$name" ]] || die "aucun agrégateur ne tourne ici : ./bin/farci up reference"
     docker exec "$name" rm -f /data/tableau.json

@@ -48,6 +48,29 @@ need() {
   have "$1" || die "commande manquante : $1  ${2:+($2)}"
 }
 
+# Pourquoi Docker ne répond pas, et quoi faire : un démon arrêté et un
+# utilisateur hors du groupe docker donnent la même erreur à `docker info`.
+#   docker_diagnose  → vide si Docker répond, sinon une phrase d'action
+docker_diagnose() {
+  local out
+  have docker || { printf 'Docker n'"'"'est pas installé sur cette machine'; return; }
+  out="$(docker info 2>&1 >/dev/null)" && return 0
+  case "$out" in
+    *"permission denied"*)
+      printf 'l'"'"'utilisateur %s n'"'"'a pas accès à Docker : sudo usermod -aG docker %s, puis se déconnecter et se reconnecter (ou : newgrp docker)' "${USER:-$(id -un)}" "${USER:-$(id -un)}" ;;
+    *"Cannot connect"*|*"Is the docker daemon running"*|*"No such file"*)
+      printf 'le service Docker est arrêté : sudo systemctl enable --now docker (Mac : lancer Docker Desktop)' ;;
+    *)
+      printf 'Docker ne répond pas : %s' "$(printf '%s' "$out" | head -1)" ;;
+  esac
+}
+
+need_docker() {
+  local why
+  why="$(docker_diagnose)"
+  [[ -z "$why" ]] || die "$why"
+}
+
 need_python() {
   have python3 || die "python3 est requis (>= ${FARCI_MIN_PYTHON:-3.11})"
   python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, ${FARCI_MIN_PYTHON:-11}) else 1)" \

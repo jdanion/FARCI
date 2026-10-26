@@ -272,6 +272,8 @@ les images ont une variante `linux/arm64`.
 
 | Symptôme | Commande |
 |---|---|
+| « n'a pas accès à Docker » (ou « Docker ne répond pas ») | `sudo usermod -aG docker "$USER"`, se déconnecter et se reconnecter (ou `newgrp docker`) ; vérifier avec `docker ps` sans `sudo` |
+| « le service Docker est arrêté » | `sudo systemctl enable --now docker` |
 | `preload` : échec du clonage d'eds-pseudo ou de la compilation EDS-NLP | relancer `./preload.sh --only build_eds_nlp` ; joindre la sortie |
 | `preload` : un modèle en erreur 404 | l'URL de `models/models.env` a changé sur Hugging Face : la corriger (même nom de fichier) |
 | `make core-up` : « image absente » | `./bin/farci verify-images --reference`, puis `./preload.sh --pi --skip-existing` |

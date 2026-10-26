@@ -35,8 +35,7 @@ for candidate in docker-compose.yml docker-compose.yaml compose.yaml; do
 done
 [[ -n "$compose_file" ]] || die "aucun docker-compose.yml dans $dir"
 
-need docker "Docker est requis pour démarrer une brique"
-docker info >/dev/null 2>&1 || die "Docker ne répond pas : est-il démarré ? (./bin/farci doctor)"
+need_docker
 
 # Amonts de l'accueil (UP_*) : « brique de l'équipe, puis référence »,
 # calculés depuis config/network.env et config/rescue.env. Seules les

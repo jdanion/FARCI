@@ -48,8 +48,8 @@ for tool in docker python3 curl tar sha256sum git; do
     REQUIRED_OK=0
   fi
 done
-if have docker && ! docker info >/dev/null 2>&1; then
-  err "le démon Docker ne répond pas — le started service docker est-il lancé ?"
+if have docker && [[ -n "$(docker_diagnose)" ]]; then
+  err "$(docker_diagnose)"
   REQUIRED_OK=0
 fi
 if (( CHECK_ONLY )); then

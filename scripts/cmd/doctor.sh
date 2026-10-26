@@ -35,10 +35,11 @@ done
 # bloquant, c'est un changement de rôle (binôme pour l'étape 1).
 DOCKER_OK=0
 section "Docker (pour héberger une brique)"
+DOCKER_WHY="$(docker_diagnose)"
 if ! have docker; then
   line "docker" "${C_YELLOW}absent${C_RESET}"
-elif ! docker info >/dev/null 2>&1; then
-  line "démarrage docker" "${C_YELLOW}injoignable (Docker Desktop est-il lancé ?)${C_RESET}"
+elif [[ -n "$DOCKER_WHY" ]]; then
+  line "docker" "${C_YELLOW}${DOCKER_WHY}${C_RESET}"
 elif ! docker compose version >/dev/null 2>&1; then
   line "docker compose" "${C_YELLOW}plugin absent${C_RESET}"
 else
