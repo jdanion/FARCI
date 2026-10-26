@@ -6,6 +6,23 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Le tableau de la salle (écran projeté, iPad)
+
+- `http://<accueil>/` → `/tableau` : page web servie par l'agrégateur de
+  santé, sans ressource externe. Tuiles par brique (✅ équipe, 🛟 référence,
+  ⛔ panne), jauge du pipeline, classement des équipes, fil de la séance,
+  chrono et phase du déroulé, bandeaux de panne et de bascule, confettis et
+  annonce plein écran de CLINICAL PIPELINE READY. Plein écran et écran
+  allumé sur iPad.
+- Points automatiques (`01-network-dashboard/health-aggregator/tableau.py`) :
+  une brique compte quand l'accueil la sert ; barème positif seulement.
+  Sauvegarde dans un volume ; `./bin/farci tableau reset` pour une nouvelle
+  séance.
+- L'agrégateur monte le dépôt en lecture seule : bascules (`rescue`) et
+  pannes de chaos sont visibles du tableau et de `/status`.
+- `pipeline_state` expose aussi la liste nommée des exigences.
+- Tests : `tests/test_tableau.py`.
+
 ### Déploiement sur un Raspberry Pi 5 seul
 
 - `DEPLOY-PI.md` : séquence complète et vérifiée pour un Pi 5 (8 Go, Debian

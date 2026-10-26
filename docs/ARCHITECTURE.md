@@ -106,6 +106,7 @@ http://<REFERENCE_IP>/docling         → la chaîne documentaire
 http://<REFERENCE_IP>/eds             → EDS-NLP : pseudonymiser, extraire des entités
 http://<REFERENCE_IP>/observability   → les traces OTLP
 http://<REFERENCE_IP>/status          → l'état de la salle
+http://<REFERENCE_IP>/                → le tableau de la salle (écran projeté)
 ```
 
 `REFERENCE_IP` et `ENTRY_PORT` viennent de `config/network.env` ;

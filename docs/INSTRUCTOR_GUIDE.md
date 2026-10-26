@@ -68,9 +68,12 @@ Reste à faire à la main :
 
 - [ ] Le Pi crée le Wi-Fi (`sudo nmcli con up farci-ap`) et porte la pile de
       référence (`./bin/farci up reference`)
-- [ ] L'écran de projection affiche `./bin/farci status --watch` lancé **sur le
-      Pi** : tout est `🛟 REF`, c'est **normal et voulu** — aucune équipe n'a
-      encore livré, la référence rend le service
+- [ ] L'écran de projection affiche le **tableau de la salle** :
+      `http://<REFERENCE_IP>/` (un iPad ou un navigateur suffit ; à défaut,
+      `./bin/farci status --watch` sur le Pi). Tout est `🛟`, c'est **normal et
+      voulu** — aucune équipe n'a encore livré, la référence rend le service
+- [ ] `./bin/farci tableau reset` sur le Pi : scores, badges, fil et chrono à
+      zéro (la répétition de la veille ne compte pas)
 - [ ] L'adresse d'Open WebUI de la référence (`REFERENCE_IP:OPEN_WEBUI_PORT`)
       est notée au tableau, pour qui n'a pas de machine utilisable
 - [ ] Les fiches d'équipe sont prêtes (`docs/wiki/equipe-XX.md`, `./bin/farci read <équipe>`)

@@ -47,20 +47,21 @@ services:
     image: python:${PYTHON_IMAGE_TAG}
     container_name: farci-ref-aggregator
     restart: unless-stopped
-    working_dir: /app
+    # Le dépôt en lecture seule : registre, bascules (config/rescue.env) et
+    # pannes de chaos (.chaos/) sont ainsi visibles du tableau de la salle.
+    working_dir: /farci/01-network-dashboard/health-aggregator
     command: ["python", "app.py"]
     env_file:
       - ../config/network.env
     environment:
-      FARCI_ROOT: /app
+      FARCI_ROOT: /farci
       AGGREGATOR_LISTEN_PORT: "8081"
+      TABLEAU_STATE: /data/tableau.json
     ports:
       - "${HEALTH_AGGREGATOR_PORT:?HEALTH_AGGREGATOR_PORT manquant (config/network.env)}:8081"
     volumes:
-      - ../01-network-dashboard/health-aggregator/app.py:/app/app.py:ro
-      - ../scripts/services.py:/app/scripts/services.py:ro
-      - ../scripts/lib/miniyaml.py:/app/scripts/lib/miniyaml.py:ro
-      - ../config/services.yaml:/app/config/services.yaml:ro
+      - ..:/farci:ro
+      - ref-tableau:/data
     mem_limit: 128m
 
   replay:
@@ -178,6 +179,7 @@ services:
     mem_limit: 3g
 
 volumes:
+  ref-tableau:
   ref-caddy-data:
   ref-phoenix-data:
   ref-open-webui-data:

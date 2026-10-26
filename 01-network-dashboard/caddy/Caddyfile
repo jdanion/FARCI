@@ -39,6 +39,14 @@
         reverse_proxy health-aggregator:8081
     }
 
+    # Le tableau de la salle (écran projeté, iPad) : http://<accueil>/
+    handle /tableau* {
+        reverse_proxy health-aggregator:8081
+    }
+    handle / {
+        redir * /tableau 302
+    }
+
     # Passerelle LLM (API OpenAI) : le seul point d'entrée des applications
     handle /v1/* {
         reverse_proxy {$UP_PASSERELLE} {

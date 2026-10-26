@@ -17,7 +17,7 @@ l'affiche.
 | J-1 | **sur le Pi** : `./bin/farci rehearse` → **PASS** (moins de 15 min) | ☐ |
 | J-1 | **sur un portable** branché au Wi-Fi du Pi : `./bin/farci rehearse` → **PASS** | ☐ |
 | J0 −30 min | `sudo nmcli con up farci-ap` puis `./bin/farci up reference` | ☐ |
-| J0 −20 min | écran projeté : `./bin/farci status --watch` (tout en `🛟 REF`) | ☐ |
+| J0 −20 min | écran projeté : l'iPad sur `http://<REFERENCE_IP>/` (tableau de la salle, tout en `🛟`), puis **`./bin/farci tableau reset`** sur le Pi : scores et chrono à zéro | ☐ |
 | J0 −10 min | au tableau : SSID, `REFERENCE_IP`, adresse Open WebUI `REFERENCE_IP:3080` | ☐ |
 
 Un **FAIL** de `rehearse` la veille se corrige la veille : la ligne en échec

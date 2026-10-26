@@ -159,6 +159,7 @@ Dans un navigateur du LAN :
 
 | Adresse | Attendu |
 |---|---|
+| `http://farci.local/` | **le tableau de la salle** (redirige vers `/tableau`) : tuiles, classement, fil |
 | `http://farci.local/status` | JSON : `service_rendu.state` = `READY` |
 | `http://farci.local:3080` | Open WebUI, sans compte ; modèle `med-extraction` |
 | `http://farci.local:6006` | Phoenix ; des traces après `./bin/farci extract` |
@@ -166,6 +167,22 @@ Dans un navigateur du LAN :
 Sans modèle, les réponses viennent du **runtime rejoué** (réponses
 enregistrées, instantanées). C'est voulu : un Pi ne sert pas un modèle à une
 salle. Pour un vrai modèle, voir § 7.
+
+### Le tableau de la salle sur l'iPad
+
+1. Safari → `http://farci.local/` (ou `http://192.168.0.222/`).
+2. Partager → « Sur l'écran d'accueil » : le tableau s'ouvre ensuite en plein
+   écran, sans barre d'adresse.
+3. Toucher « Plein écran · écran allumé » (en bas à droite) : l'iPad ne se
+   met plus en veille tant que la page est ouverte.
+4. Recopie vidéo (AirPlay ou adaptateur) vers l'écran de la salle.
+5. Avant l'arrivée des étudiants, sur le Pi : `./bin/farci tableau reset`
+   (scores, badges, fil et chrono à zéro).
+
+Une équipe marque des points quand l'accueil sert **sa** brique (✅) : 100
+par brique cœur, 50 par brique bonus, +50 « Premiers ! », +50 « Pipeline
+READY » à chaque équipe ayant livré, +50 « Increvable » après 30 minutes
+sans interruption. Une panne ne coûte rien.
 
 ## 7. Option : un vrai modèle sur le Pi (Qwen3.5-2B)
 

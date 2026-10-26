@@ -96,6 +96,10 @@ La ligne `network` doit être `PASS` (Caddy répond et relaie `/status`).
 ./bin/farci status --watch      # sur l'écran projeté
 ```
 
+Votre agrégateur sert aussi **le tableau de la salle** : ouvrez
+`http://<votre IP>:<CADDY_PORT>/` (votre Caddy redirige vers `/tableau`).
+C'est la même page que celle projetée depuis le Pi : vous l'hébergez.
+
 Bonus Uptime Kuma : `./bin/farci up 01-network-dashboard uptime-kuma`, puis
 créer les sondes depuis le registre avec `scripts/uptime-kuma-seed.sh`.
 

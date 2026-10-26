@@ -244,7 +244,8 @@ def pipeline_state(states: dict[str, bool]) -> dict:
     states : id de service -> True s'il répond. Renvoie
       {"state": "READY" | "DEGRADED" | "NOT READY",
        "missing": [ce qui manque, dans l'ordre de montage conseillé],
-       "met": n, "required": m}
+       "met": n, "required": m,
+       "exigences": [{"nom": libellé lisible, "ok": bool}, ...]}  (tableau de la salle)
     Un service `critical: true` est une exigence ; un `critical_group` est UNE
     exigence satisfaite dès qu'un de ses membres répond.
     """
@@ -254,13 +255,17 @@ def pipeline_state(states: dict[str, bool]) -> dict:
         if service.get("critical_group"):
             members_of.setdefault(str(service["critical_group"]), []).append(str(service["id"]))
     requirements: list[tuple[str, list[str]]] = []
+    names: dict[str, str] = {}
     for service in services():
         group = service.get("critical_group")
         if service.get("critical") is True:
             requirements.append((str(service["id"]), [str(service["id"])]))
+            names[str(service["id"])] = str(service.get("label") or service["id"])
         elif group and not any(label.startswith(f"1 {group} ") for label, _ in requirements):
             members = members_of[str(group)]
-            requirements.append((f"1 {group} ({' | '.join(members)})", members))
+            label = f"1 {group} ({' | '.join(members)})"
+            requirements.append((label, members))
+            names[label] = f"Un {group}"
 
     missing = [label for label, members in requirements
                if not any(states.get(m, False) for m in members)]
@@ -271,7 +276,8 @@ def pipeline_state(states: dict[str, bool]) -> dict:
         state = "DEGRADED"
     else:
         state = "NOT READY"
-    return {"state": state, "missing": missing, "met": met, "required": len(requirements)}
+    return {"state": state, "missing": missing, "met": met, "required": len(requirements),
+            "exigences": [{"nom": names[label], "ok": label not in missing} for label, _ in requirements]}
 
 
 def probe(url: str | None, paths: list, timeout: float) -> str:
