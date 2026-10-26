@@ -44,6 +44,21 @@ while IFS= read -r line; do
   [[ "$line" == UP_*=* ]] && export "${line?}"
 done < <(python3 "$FARCI_ROOT/scripts/services.py" upstreams)
 
+# Un échec de `compose up` a plusieurs causes fréquentes : dire laquelle.
+explain_failure() {
+  local log="$1" names
+  local missing=0
+  names="$(grep -oE 'container name "/[^"]+" is already in use' "$log" | sed -E 's|.*"/([^"]+)".*|\1|' | sort -u | tr '\n' ' ')"
+  grep -qiE 'no such image|pull access denied|image .* not found|not found: manifest' "$log" && missing=1
+  rm -f "$log"
+  if [[ -n "$names" ]]; then
+    die "un ancien conteneur porte déjà ce nom (lancé autrement, par exemple avec sudo ou un autre nom de projet) : docker rm -f ${names% } — puis relancer"
+  elif (( missing )); then
+    die "image absente : ./bin/farci verify-images, puis ./preload.sh (avec Internet) ou docker load"
+  fi
+  die "démarrage impossible : voir le message de Docker ci-dessus"
+}
+
 case "${FARCI_TARGET:-up}" in
   up)
     # Air-gap : une image absente est une erreur franche, jamais un
@@ -51,8 +66,11 @@ case "${FARCI_TARGET:-up}" in
     # FARCI_ALLOW_PULL=1 ./bin/farci up <dossier>
     pull=never
     [[ "${FARCI_ALLOW_PULL:-0}" == "1" ]] && pull=missing
-    docker compose -f "$compose_file" up -d --pull "$pull" "$@" \
-      || die "démarrage impossible — image absente ? ./bin/farci verify-images"
+    log="$(mktemp)"
+    if ! docker compose -f "$compose_file" up -d --pull "$pull" "$@" 2>&1 | tee "$log"; then
+      explain_failure "$log"
+    fi
+    rm -f "$log"
     ok "brique démarrée : ${dir#"$FARCI_ROOT"/} — suivre : ./bin/farci status"
     ;;
   down)

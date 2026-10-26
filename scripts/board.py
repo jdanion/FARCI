@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 import unicodedata
@@ -34,10 +35,13 @@ GREEN, YELLOW, RED, DIM, BOLD, RESET = (
 )
 
 
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
 def width(text: str) -> int:
-    """Largeur à l'écran : un emoji occupe deux colonnes."""
+    """Largeur à l'écran : un emoji occupe deux colonnes, une couleur aucune."""
     total = 0
-    for char in text:
+    for char in ANSI.sub("", text):
         if unicodedata.combining(char) or char == "️":
             continue
         total += 2 if unicodedata.east_asian_width(char) in ("W", "F") else 1
