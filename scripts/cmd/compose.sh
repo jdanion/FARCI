@@ -76,6 +76,13 @@ case "${FARCI_TARGET:-up}" in
     # Air-gap : une image absente est une erreur franche, jamais un
     # téléchargement silencieux (docs/AIRGAP.md). Préparation avec Internet :
     # FARCI_ALLOW_PULL=1 ./bin/farci up <dossier>
+    # llama.cpp sert le 9B s'il est là, sinon le 2B : un poste léger n'a
+    # préchargé que le 2B (./preload.sh --equipe 2). LLAMACPP_GGUF impose.
+    if [[ "${dir#"$FARCI_ROOT"/}" == 02-inference/llamacpp && -z "${LLAMACPP_GGUF:-}" ]] \
+       && [[ ! -f "${FARCI_MODELS_DIR:-}/Ornith-1.5-9B-Q5_K_M.gguf" ]]; then
+      export LLAMACPP_GGUF=Qwen3.5-2B-Q4_K_M.gguf
+      info "modèle 9B absent : llama.cpp sert Qwen3.5-2B (LLAMACPP_GGUF pour en imposer un autre)"
+    fi
     pull=never
     [[ "${FARCI_ALLOW_PULL:-0}" == "1" ]] && pull=missing
     log="$(mktemp)"
@@ -83,7 +90,7 @@ case "${FARCI_TARGET:-up}" in
       explain_failure "$log"
     fi
     rm -f "$log"
-    ok "brique démarrée : ${dir#"$FARCI_ROOT"/} — suivre : ./bin/farci status"
+    ok "brique démarrée : ${dir#"$FARCI_ROOT"/}"
     ;;
   down)
     docker compose -f "$compose_file" down "$@"

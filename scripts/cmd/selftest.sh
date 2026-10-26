@@ -105,6 +105,14 @@ else
   FAILED=1
 fi
 
+section "« Ensuite : » après chaque commande (scripts/suite.def)"
+# Chaque cible propose la suite ; chaque commande proposée existe.
+if python3 "$FARCI_ROOT/scripts/check_suite.py"; then
+  :
+else
+  FAILED=1
+fi
+
 section "réponse à --help de toutes les cibles"
 # Un script dont le parsing d'arguments boucle ne rendra JAMAIS la main : on
 # vérifie donc que chaque cible répond à --help rapidement. C'est le filet de

@@ -115,7 +115,17 @@ main() {
 
   # Un script partagé par plusieurs cibles sait laquelle l'a invoqué.
   export FARCI_TARGET="$name"
-  exec "$script" "$@"
+  # Appel imbriqué (une cible qui en lance une autre) : seul le lanceur du
+  # haut affiche « Ensuite : ».
+  if [[ -n "${FARCI_SUITE_PARENT:-}" ]]; then
+    exec "$script" "$@"
+  fi
+  export FARCI_SUITE_PARENT=1
+  local code=0
+  "$script" "$@" || code=$?
+  # La ou les commandes à lancer ensuite (scripts/suite.def).
+  farci_suite "$name" "$code" "$@"
+  exit "$code"
 }
 
 main "$@"

@@ -1,0 +1,260 @@
+# FARCI — et ensuite ? (source de vérité unique)
+# =============================================================================
+# À la fin de chaque commande, bin/farci affiche la ou les commandes à lancer
+# ensuite (scripts/lib/suite.sh) : plus besoin de rouvrir le tutoriel.
+#
+# Colonnes séparées par des TAB : clé, quand, commande, pourquoi.
+#   clé       la cible (« up »), éventuellement suivie de son premier argument
+#             (« up 02-inference/ollama », « partage maj ») ; la clé la plus
+#             précise gagne (up 02-inference/ollama > up 02-inference > up)
+#   quand     ok (code 0) | echec (code non nul) | tout
+#   commande  {1} et {2} : arguments de la commande ; {equipe} : FARCI_EQUIPE
+#             (ou --equipe N) ; {salle} : REFERENCE_IP
+#   pourquoi  une ligne, en clair
+#
+# Contrôlé par ./bin/farci selftest : chaque cible a au moins une ligne « ok »,
+# et chaque « ./bin/farci X » cité existe dans scripts/targets.def.
+# =============================================================================
+# --- atelier : premiers pas --------------------------------------------------
+help	ok	./bin/farci doctor	vérifier la machine (Docker, RAM, adresse de la salle)
+help	ok	./bin/farci read {equipe}	la fiche de votre équipe
+doctor	ok	./bin/farci bootstrap	préparer le poste (.env, .venv) — hors ligne
+doctor	ok	./bin/farci read {equipe}	la marche à suivre de votre équipe
+doctor	echec	./bin/farci doctor	relancer après avoir corrigé les lignes en rouge ci-dessus
+doctor	echec	./bin/farci read {equipe}	en attendant : lire la fiche de votre équipe
+bootstrap	ok	./preload.sh --equipe {equipe}	AVEC Internet, avant l'atelier : votre brique, selon la machine
+bootstrap	ok	./bin/farci doctor	tout doit être vert, dont « accueil de la salle »
+bootstrap	ok	./bin/farci read {equipe}	la fiche de votre équipe
+bootstrap	ok	./preload.sh --pi	sur le Pi seulement (formateur : ./preload.sh --core)
+bootstrap	echec	./bin/farci doctor	ce qui manque à la machine
+read	ok	./bin/farci doctor	l'IP de votre poste, à donner au formateur
+read	ok	./bin/farci status	qui rend chaque brique : ✅ une équipe, 🛟 le Pi
+read	echec	./bin/farci read	la liste des équipes (0 à 8)
+docs	ok	./bin/farci read {equipe}	la fiche de votre équipe
+checklist	ok	./bin/farci rehearse	J-1 : la répétition générale, PASS ou FAIL
+casting	ok	./bin/farci read <équipe>	chaque étudiant lit la fiche de son équipe
+casting	ok	./preload.sh --equipe <équipe>	sur chaque poste, avec Internet : sa brique seulement
+version	ok	./bin/farci verify-images	les images figées sont-elles là ?
+env	ok	./bin/farci env-check	valider la configuration
+env-check	ok	./bin/farci doctor	la machine et l'accueil de la salle
+env-check	echec	./bin/farci env	la configuration effective, valeur par valeur
+env-check	echec	./bin/farci room set reference <IP du Pi>	si l'adresse de la salle manque ou a changé
+services	ok	./bin/farci room	qui héberge quoi dans la salle
+network-check	ok	./bin/farci status	le tableau de la salle
+network-check	echec	./bin/farci room	adresses déclarées, brique par brique
+
+# --- atelier : la salle ------------------------------------------------------
+status	ok	./bin/farci room	qui héberge quoi (IP déclarées)
+status	ok	./bin/farci status --watch	en continu, pour l'écran de la salle
+status	ok	./bin/farci test	le contrat de votre brique est-il tenu ?
+status	echec	./bin/farci room	une brique non déclarée ? (sur le Pi : room set)
+status	echec	./bin/farci rescue	sur le Pi : faire servir une brique par la référence
+room	ok	./bin/farci room set <équipe> <ip>	sur le Pi : déclarer le poste d'une équipe
+room	ok	./bin/farci status	le tableau de la salle
+room set	ok	./bin/farci status	la brique passe au ✅ dès qu'elle répond
+room set	ok	./bin/farci tableau	l'adresse du tableau projeté
+room set	echec	./bin/farci room	cibles et adresses acceptées
+room unset	ok	./bin/farci status	la référence reprend la brique (🛟)
+tableau	ok	./bin/farci tableau reset	sur le Pi, avant l'arrivée des étudiants
+tableau	ok	./bin/farci partage maj	publier le dépôt pour qui arrive sans git clone
+tableau reset	ok	./bin/farci partage maj	publier la version du jour (http://{salle}/rejoindre)
+tableau reset	ok	./bin/farci status --watch	suivre la salle dans le terminal
+tableau reset	echec	./bin/farci dashboard-up	l'agrégateur doit tourner sur cette machine
+partage	ok	./bin/farci partage maj	publier (ou republier) ce dépôt
+partage maj	ok	http://{salle}/rejoindre	à afficher pour les étudiants arrivés sans rien
+partage maj	ok	./bin/farci partage wheels	une fois, AVEC Internet : dépendances Python des étudiants
+partage maj	ok	./bin/farci core-up	si l'accueil ne sert pas encore /farci.git
+partage wheels	ok	./bin/farci partage	état de ce qui est publié
+partage wheels	echec	./bin/farci partage wheels	relancer avec Internet ; versions dans versions.env
+partage offline-x86	ok	./bin/farci partage	état de ce qui est publié
+partage	echec	./bin/farci partage --help	sous-commandes : maj, wheels, offline-x86
+core-up	ok	./bin/farci dashboard-up	l'accueil et le tableau, avec les adresses utiles
+core-up	ok	./bin/farci health	attendu : « service rendu : READY »
+core-up	echec	./bin/farci logs reference	ce que disent les conteneurs
+core-up	echec	./bin/farci verify-images --reference	une image manque-t-elle ?
+dashboard-up	ok	./bin/farci health	le service rendu à la salle
+dashboard-up	ok	./bin/farci tableau	l'adresse à ouvrir sur l'iPad
+dashboard-up	echec	./bin/farci logs reference caddy	l'accueil de la salle
+health	ok	./bin/farci tableau	l'adresse à ouvrir sur l'iPad
+health	ok	./bin/farci rehearse	J-1 : la répétition générale
+health	echec	./bin/farci logs reference	une brique démarre encore ? (Docling, Open WebUI : 1–2 min)
+health	echec	./bin/farci core-up	redémarrer la pile de référence
+
+# --- atelier : démarrer une brique -------------------------------------------
+up	ok	./bin/farci logs {1|dossier}	suivre le démarrage (Ctrl+C pour quitter)
+up	ok	./bin/farci status	votre brique doit passer au ✅
+up	ok	./bin/farci doctor	votre IP, à donner au formateur (room set)
+up	echec	./bin/farci logs {1}	ce que dit le conteneur
+up	echec	./bin/farci verify-images	une image manque ? (./preload.sh --equipe {equipe} avec Internet)
+up	echec	./bin/farci doctor	Docker répond-il ?
+up 00-gitops	ok	00-gitops/gitea/bootstrap.sh	créer l'organisation et le dépôt
+up 00-gitops	ok	./bin/farci logs 00-gitops	suivre le démarrage de Gitea
+up 01-network-dashboard	ok	./bin/farci logs 01-network-dashboard	suivre le démarrage (Ctrl+C pour quitter)
+up 01-network-dashboard	ok	./bin/farci status --watch	le tableau, sur l'écran de la salle
+up 01-network-dashboard	ok	./bin/farci test	le contrat de l'accueil
+up 02-inference/ollama	ok	02-inference/ollama/create-model.sh	charger le modèle sous le nom med-extraction
+up 02-inference/ollama	ok	./bin/farci logs 02-inference/ollama	suivre le démarrage (Ctrl+C pour quitter)
+up 02-inference/llamacpp	ok	./bin/farci logs 02-inference/llamacpp	attendre « server is listening » (Ctrl+C)
+up 02-inference/llamacpp	ok	./bin/farci test	inference-contract doit être PASS
+up 02-inference/llamacpp	ok	./bin/farci doctor	votre IP, à donner au formateur (room set)
+up 03-llm-gateway	ok	./bin/farci logs {1}	suivre le démarrage (Ctrl+C pour quitter)
+up 03-llm-gateway	ok	./bin/farci test	gateway-contract doit être PASS
+up 03-llm-gateway	ok	./bin/farci doctor	votre IP, à donner au formateur (room set)
+up 04-clinical-documents/docling	ok	./bin/farci logs 04-clinical-documents/docling	1–2 min : « Application startup complete »
+up 04-clinical-documents/docling	ok	./bin/farci up 04-clinical-documents/eds-nlp	la seconde brique de l'équipe 4
+up 04-clinical-documents/docling	ok	./bin/farci test	le contrat de Docling
+up 04-clinical-documents/eds-nlp	ok	./bin/farci eds pseudo datasets/raw/patient_1234567890123_cro.txt	pseudonymiser un dossier
+up 04-clinical-documents/eds-nlp	ok	./bin/farci test	le contrat d'EDS-NLP
+up 05-observability	ok	./bin/farci logs {1}	suivre le démarrage (Ctrl+C pour quitter)
+up 05-observability	ok	./bin/farci extract --subset quick --limit 3	produire des traces à regarder
+up 05-observability	ok	./bin/farci test	observability doit être PASS
+up 06-evaluation	ok	./bin/farci evaluate	scorer les extractions contre le gold
+up 06-evaluation	ok	./bin/farci logs {1}	suivre le démarrage (Ctrl+C pour quitter)
+up 07-applications/open-webui	ok	./bin/farci logs 07-applications/open-webui	1–2 min de migrations au premier démarrage
+up 07-applications/open-webui	ok	./bin/farci status	Open WebUI doit passer au ✅
+up 07-applications/flowise	ok	./bin/farci logs 07-applications/flowise	démonstration du formateur
+up 08-arcane-agents	ok	./bin/farci logs 08-arcane-agents	ce que les agents observent
+up reference	ok	./bin/farci health	le service rendu à la salle
+up reference	ok	./bin/farci tableau	l'adresse à ouvrir sur l'iPad
+up reference	echec	./bin/farci logs reference	ce que disent les conteneurs
+up reference	echec	./bin/farci verify-images --reference	une image manque-t-elle ?
+down	ok	./bin/farci status	la référence reprend la brique (🛟)
+down	ok	./bin/farci up {1}	pour la relancer
+logs	tout	./bin/farci status	le tableau de la salle
+logs	tout	./bin/farci up {1}	relancer la brique après une correction
+
+# --- air-gap : préparer avec Internet ----------------------------------------
+preload --core	ok	./verify-airgap.sh	tout est-il là pour travailler hors ligne ?
+preload --core	ok	./bin/farci verify-manifest	les empreintes de offline/
+preload --core	echec	./preload.sh --core --skip-existing	relancer sans retélécharger ce qui est déjà là
+preload --all	ok	./verify-airgap.sh	tout est-il là pour travailler hors ligne ?
+preload --all	ok	./bin/farci verify-manifest	les empreintes de offline/
+preload --all	echec	./preload.sh --all --skip-existing	relancer sans retélécharger ce qui est déjà là
+preload --pi	ok	./bin/farci bootstrap	installer .venv/ hors ligne
+preload --pi	ok	./bin/farci verify-images --reference	attendu : 0 manquante(s)
+preload --pi	ok	./bin/farci core-up	démarrer la pile de référence
+preload --pi	echec	./preload.sh --pi --skip-existing	relancer sans retélécharger ce qui est déjà là
+preload --reference	ok	./bin/farci bootstrap	installer .venv/ hors ligne
+preload --reference	ok	./bin/farci verify-images --reference	attendu : 0 manquante(s)
+preload --reference	ok	./bin/farci core-up	démarrer la pile de référence
+preload --reference	echec	./preload.sh --reference --skip-existing	relancer sans retélécharger ce qui est déjà là
+preload	ok	./verify-airgap.sh --equipe {equipe}	tout est-il là pour travailler hors ligne ?
+preload	ok	./bin/farci bootstrap	installer .venv/ depuis les wheels téléchargées
+preload	ok	./bin/farci read {equipe}	la fiche de votre équipe
+preload	echec	./preload.sh --equipe {equipe} --skip-existing	relancer sans retélécharger ce qui est déjà là
+preload	echec	./bin/farci doctor	Docker, disque, réseau
+verify-airgap	ok	./bin/farci doctor	la machine est prête
+verify-airgap	ok	./bin/farci read {equipe}	la fiche de votre équipe
+verify-airgap	echec	./preload.sh --equipe {equipe} --skip-existing	AVEC Internet : compléter ce qui manque
+verify-airgap	echec	./bin/farci verify-images	quelles images manquent
+gen-manifest	ok	./bin/farci verify-manifest	contrôler les empreintes
+verify-manifest	ok	./verify-airgap.sh	la vérification complète
+verify-manifest	echec	./bin/farci gen-manifest	réécrire le manifeste si les fichiers sont les bons
+verify-images	ok	./bin/farci up <dossier>	démarrer votre brique
+verify-images	echec	./preload.sh --equipe {equipe} --skip-existing	AVEC Internet : télécharger ce qui manque
+verify-models	ok	./bin/farci up 02-inference/llamacpp	ou 02-inference/ollama sur une grosse configuration
+verify-models	echec	./preload.sh --equipe 2 --skip-existing	AVEC Internet : télécharger le modèle de votre machine
+verify-wheels	ok	./bin/farci bootstrap	installer .venv/ hors ligne
+verify-wheels	echec	./preload.sh --only wheels	AVEC Internet, sur CETTE machine
+forge-sync	ok	./bin/farci forge-sync push	Gitea main ← GitHub main (avance rapide)
+forge-sync status	ok	./bin/farci forge-sync push	si Gitea est en retard
+forge-sync push	ok	00-gitops/runner/register-runner.sh	brancher la CI (une fois)
+forge-sync push	ok	./bin/farci status	GitOps sur le tableau
+forge-sync bundle	ok	./bin/farci forge-sync from-bundle {2}	sur la forge de la salle, sans Internet
+forge-sync from-bundle	ok	00-gitops/runner/register-runner.sh	brancher la CI (une fois)
+forge-sync rapatrier	ok	git push origin depuis-gitea/{2}	puis ouvrir une Pull Request sur GitHub
+forge-sync	echec	./bin/farci forge-sync status	GitHub et Gitea : identiques, en retard, divergents ?
+
+# --- étape 2 : le jeu de données ---------------------------------------------
+generate-dataset	ok	./bin/farci build-gold	le gold standard qui va avec
+build-gold	ok	./bin/farci make-quick-set	les 10 cas du jeu rapide
+make-quick-set	ok	./bin/farci extract --subset quick	extraire le jeu rapide
+extract	ok	./bin/farci evaluate --subset quick	scorer votre run contre le gold
+extract	ok	./bin/farci eds compare --subset quick	comparer aux entités d'EDS-NLP
+extract	echec	./bin/farci status	la passerelle répond-elle ? (ligne LLM Gateway)
+extract	echec	./bin/farci extract --replay --subset quick	plan C : réponses rejouées, sans réseau
+eds	ok	./bin/farci eds pseudo datasets/raw/patient_1234567890123_cro.txt	pseudonymiser un dossier
+eds pseudo	ok	./bin/farci eds entites {2}	les entités du même dossier, par le LLM
+eds entites	ok	./bin/farci eds compare --subset quick	toutes les entités contre le gold
+eds compare	ok	./bin/farci evaluate --subset quick	le score de l'extraction structurée
+eds	echec	./bin/farci status	la ligne EDS-NLP : servie par l'équipe 4 ou le Pi ?
+eds	echec	./bin/farci eds --help	sous-commandes : pseudo, entites, compare
+evaluate	ok	./bin/farci extract --subset quick --run v2 --prompt v2	comparer un second prompt
+evaluate	ok	./bin/farci up 06-evaluation/mlflow	bonus : suivre les runs dans MLflow
+evaluate	echec	./bin/farci extract --subset quick	il faut d'abord des extractions
+
+# --- étape 3 : chaos ---------------------------------------------------------
+chaos	ok	./bin/farci chaos list	les scénarios disponibles
+chaos list	ok	./bin/farci chaos scenario-01	déclencher une panne (réversible)
+chaos scenario-01	ok	./bin/farci status --watch	regarder la salle réagir (Ctrl+C pour quitter)
+chaos scenario-01	ok	./bin/farci chaos reset	tout réparer
+chaos scenario-02	ok	./bin/farci status --watch	regarder la salle réagir (Ctrl+C pour quitter)
+chaos scenario-02	ok	./bin/farci chaos reset	tout réparer
+chaos scenario-03	ok	./bin/farci status --watch	regarder la salle réagir (Ctrl+C pour quitter)
+chaos scenario-03	ok	./bin/farci chaos reset	tout réparer
+chaos scenario-04	ok	./bin/farci status --watch	regarder la salle réagir (Ctrl+C pour quitter)
+chaos scenario-04	ok	./bin/farci chaos reset	tout réparer
+chaos scenario-05	ok	./bin/farci status --watch	regarder la salle réagir (Ctrl+C pour quitter)
+chaos scenario-05	ok	./bin/farci chaos reset	tout réparer
+chaos scenario-06	ok	./bin/farci status --watch	regarder la salle réagir (Ctrl+C pour quitter)
+chaos scenario-06	ok	./bin/farci chaos reset	tout réparer
+chaos scenario-07	ok	./bin/farci status --watch	regarder la salle réagir (Ctrl+C pour quitter)
+chaos scenario-07	ok	./bin/farci chaos reset	tout réparer
+chaos status	ok	./bin/farci chaos reset	tout réparer
+chaos reset	ok	./bin/farci status	la salle revient à l'état normal
+chaos	echec	./bin/farci chaos status	les pannes actives
+chaos	echec	./bin/farci reset-all	sur le Pi : retour à un état propre connu
+
+# --- secours -----------------------------------------------------------------
+rescue	ok	./bin/farci status	la brique est servie par la référence (🛟)
+rescue	ok	./bin/farci rescue --off {1|brique}	rendre la main à l'équipe
+rescue --off	ok	./bin/farci status	la brique revient à l'équipe dès qu'elle répond
+rescue	echec	./bin/farci rescue	les briques acceptées et l'état des routes
+reset-all	ok	./bin/farci tableau reset	si c'est une nouvelle séance
+reset-all	tout	./bin/farci status	l'état de la salle
+rehearse	ok	./bin/farci tableau reset	avant l'arrivée des étudiants
+rehearse	ok	./bin/farci partage maj	publier la version du jour
+rehearse	echec	./bin/farci rehearse	relancer après la correction indiquée pour chaque FAIL
+replay	tout	./bin/farci extract --replay --subset quick	extraire sans réseau (plan C)
+
+# --- qualité -----------------------------------------------------------------
+ci	ok	git push	pousser votre branche : la CI distante rejoue la même chose
+ci	echec	./bin/farci selftest	isoler l'étape qui casse
+selftest	ok	./bin/farci lint	la batterie de contrôles
+selftest	echec	./bin/farci help	la cible signalée doit y figurer
+test-unit	ok	./bin/farci lint	la batterie de contrôles
+test-unit	echec	./bin/farci test-unit -k <nom>	isoler un fichier de tests
+test	ok	./bin/farci status	le tableau de la salle
+test	echec	./bin/farci logs <dossier>	ce que dit la brique en FAIL
+test	echec	./bin/farci status	qui sert la brique en ce moment ?
+lint	ok	./bin/farci test-unit	les tests unitaires
+lint	echec	./bin/farci lint	relancer après correction des lignes FAIL
+lint-versions	ok	./bin/farci test-unit	les tests unitaires
+lint-versions	echec	./bin/farci lint-versions	relancer après correction des lignes FAIL
+lint-ips	ok	./bin/farci test-unit	les tests unitaires
+lint-ips	echec	./bin/farci lint-ips	relancer après correction des lignes FAIL
+lint-docs	ok	./bin/farci test-unit	les tests unitaires
+lint-docs	echec	./bin/farci lint-docs	relancer après correction des lignes FAIL
+lint-offline	ok	./bin/farci test-unit	les tests unitaires
+lint-offline	echec	./bin/farci lint-offline	relancer après correction des lignes FAIL
+lint-todo	ok	./bin/farci test-unit	les tests unitaires
+lint-todo	echec	./bin/farci lint-todo	relancer après correction des lignes FAIL
+lint-shell	ok	./bin/farci test-unit	les tests unitaires
+lint-shell	echec	./bin/farci lint-shell	relancer après correction des lignes FAIL
+lint-python	ok	./bin/farci test-unit	les tests unitaires
+lint-python	echec	./bin/farci lint-python	relancer après correction des lignes FAIL
+lint-commands	ok	./bin/farci test-unit	les tests unitaires
+lint-commands	echec	./bin/farci lint-commands	relancer après correction des lignes FAIL
+clean	ok	./bin/farci clean --yes	effacer vraiment ce qui est listé
+clean --yes	ok	./bin/farci status	rien d'important n'a été touché
+
+# --- scripts lancés directement ----------------------------------------------
+00-gitops/gitea/bootstrap.sh	ok	./bin/farci forge-sync push	main de GitHub → Gitea (from-bundle sans Internet)
+00-gitops/gitea/bootstrap.sh	ok	00-gitops/runner/register-runner.sh	brancher la CI
+00-gitops/runner/register-runner.sh	ok	00-gitops/post-provision.sh	protéger main (PR obligatoire)
+00-gitops/post-provision.sh	ok	./bin/farci room set gitea <votre IP>	au formateur, sur le Pi : la forge rejoint la salle
+00-gitops/post-provision.sh	ok	./bin/farci test	gitops doit être PASS
+02-inference/ollama/create-model.sh	ok	./bin/farci test	inference-contract doit être PASS
+02-inference/ollama/create-model.sh	ok	./bin/farci doctor	votre IP, à donner au formateur (room set 2 <ip>)
+02-inference/ollama/create-model.sh	echec	./bin/farci verify-models	le fichier du modèle est-il là ?
+03-llm-gateway/litellm/bootstrap-keys.sh	ok	./bin/farci test	gateway-contract doit être PASS

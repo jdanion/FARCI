@@ -6,6 +6,21 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### « Ensuite : » à la fin de chaque commande
+
+- Chaque `./bin/farci <cible>` se termine par la ou les commandes à lancer
+  ensuite, différentes en cas d'échec (« Pour comprendre et réparer : »).
+  Elles tiennent compte de la brique (`up 02-inference/ollama` propose
+  `create-model.sh`), de l'équipe (`FARCI_EQUIPE`, `--equipe N`) et de
+  l'adresse de la salle. Aussi après `./preload.sh`, `./verify-airgap.sh` et
+  les scripts lancés directement (Gitea, runner, `create-model.sh`…).
+- Un seul registre : `scripts/suite.def` (clé, quand, commande, pourquoi),
+  vérifié par `./bin/farci selftest` : chaque cible a sa suite, chaque
+  commande citée existe.
+- Sur la sortie d'erreur, seulement dans un terminal : les sorties JSON et les
+  tubes restent propres. `FARCI_SUITE=0` les coupe, `FARCI_SUITE=1` les force.
+- llama.cpp sert Qwen3.5-2B quand le 9B n'est pas préchargé (poste léger).
+
 ### Deux stacks par brique, préchargement adapté au poste
 
 - `./preload.sh` (sans option) précharge **ce poste** : la brique de son équipe
