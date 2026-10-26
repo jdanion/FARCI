@@ -1,35 +1,39 @@
-# FARCI — llama.cpp server (construit localement, phase 1)
+# FARCI — llama.cpp server, compilé pour la machine qui le servira
 #
-# Compilée depuis les sources pour la machine qui la construit
-# (./preload.sh : groupe build_llamacpp).
-# Aucune dépendance GHCR : air-gap parfait.
+# Construit par ./preload.sh (groupe build_llamacpp), AVEC Internet :
+#   1. le préchargement clone llama.cpp à la version LLAMACPP_BUILD
+#      (versions.env) dans 02-inference/llamacpp/vendor/llama.cpp (hors Git) ;
+#   2. docker build compile llama-server ici, sans réseau vers GitHub.
+# GGML_NATIVE : les instructions du processeur de CETTE machine (CPU seul).
+# Base : l'image python déjà préchargée (versions.env), rien d'autre à tirer.
 
-FROM --platform=$BUILDPLATFORM gcc:13 AS builder
-
-ARG LLAMACPP_BUILD=b10600
+ARG PYTHON_IMAGE_TAG
+FROM python:${PYTHON_IMAGE_TAG} AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     cmake \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /src
-RUN git clone --depth 1 --branch ${LLAMACPP_BUILD} https://github.com/ggml-org/llama.cpp.git
-
+COPY vendor/llama.cpp /src/llama.cpp
 WORKDIR /src/llama.cpp
-RUN cmake -B build -DGGML_NATIVE=ON -DLLAMA_CURL=OFF \
-    && cmake --build build --config Release -j$(nproc)
+# Binaire autonome (bibliothèques statiques), sans HTTPS ni téléchargement de
+# modèle (air-gap : les poids sont montés en lecture seule).
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=ON -DBUILD_SHARED_LIBS=OFF \
+      -DLLAMA_OPENSSL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF \
+    && cmake --build build --config Release -j"$(nproc)" --target llama-server
 
-FROM debian:13-slim
+ARG PYTHON_IMAGE_TAG
+FROM python:${PYTHON_IMAGE_TAG}
 
+# libgomp1 : OpenMP (threads de calcul) ; curl : sonde de santé de la compose.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libstdc++6 \
+    libgomp1 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /src/llama.cpp/build/bin/llama-server /usr/local/bin/
-COPY --from=builder /src/llama.cpp/build/bin/llama-cli /usr/local/bin/
 
-EXPOSE 8081
+EXPOSE 8080
 
 ENTRYPOINT ["llama-server"]

@@ -217,18 +217,29 @@ group_dashboard() {
 }
 
 # llama.cpp, compilé pour CETTE machine (GGML_NATIVE : les instructions de
-# son processeur). Le Dockerfile clone lui-même la version LLAMACPP_BUILD.
+# son processeur). Les sources sont clonées ici, à la version LLAMACPP_BUILD,
+# dans 02-inference/llamacpp/vendor/llama.cpp (hors Git) : le docker build
+# n'a pas besoin de GitHub. FARCI_DOCKER_BUILD_ARGS : arguments
+# supplémentaires de docker build (proxy d'établissement, par exemple).
 group_build_llamacpp() {
-  local image="farci/llamacpp:server-${LLAMACPP_BUILD}" dir="$FARCI_ROOT/02-inference/llamacpp"
+  local dir="$FARCI_ROOT/02-inference/llamacpp" image src
+  image="$(farci_image llamacpp)" || return 1
+  src="$dir/vendor/llama.cpp"
   info "groupe : build_llamacpp ($image, architecture $(uname -m))"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
-    printf '  [dry-run] docker build -t %s %s\n' "$image" "$dir"
+    printf '  [dry-run] git clone ggml-org/llama.cpp @ %s ; docker build -t %s\n' "$LLAMACPP_BUILD" "$image"
     return 0
+  fi
+  if [[ "$(git -C "$src" describe --tags --exact-match 2>/dev/null)" != "$LLAMACPP_BUILD" ]]; then
+    rm -rf "$src"
+    git clone -q --depth 1 --branch "$LLAMACPP_BUILD" https://github.com/ggml-org/llama.cpp "$src" \
+      || { err "llama.cpp $LLAMACPP_BUILD introuvable (versions.env : LLAMACPP_BUILD)"; return 1; }
   fi
   local -a extra=()
   read -r -a extra <<< "${FARCI_DOCKER_BUILD_ARGS:-}"
-  docker build -t "$image" --build-arg "LLAMACPP_BUILD=$LLAMACPP_BUILD" \
-    "${extra[@]}" -f "$dir/Dockerfile" "$dir" || { err "échec de la compilation llama.cpp"; return 1; }
+  info "compilation de llama-server (5 à 20 min selon la machine)…"
+  docker build -t "$image" --build-arg "PYTHON_IMAGE_TAG=$PYTHON_IMAGE_TAG" \
+    "${extra[@]}" "$dir" || { err "échec de la compilation llama.cpp"; return 1; }
   preload_docker_save "$image" "llamacpp-server-${LLAMACPP_BUILD}.tar"
 }
 

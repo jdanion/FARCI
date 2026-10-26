@@ -1,0 +1,2 @@
+# Le dépôt git cloné est inutile à la compilation : on ne copie que les sources.
+vendor/llama.cpp/.git

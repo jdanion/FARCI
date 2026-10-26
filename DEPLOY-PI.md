@@ -360,7 +360,7 @@ les images ont une variante `linux/arm64`.
 | `ollama/ollama:0.34.4` | oui | option § 7 |
 | `farci/eds-nlp:0.23.0` | construite sur le Pi | oui |
 | `gitea/gitea:1.27.3`, `gitea/act_runner:0.6.1`, `node:20.19.5-bookworm`, `postgres:18.6-alpine`, `redis:8.8.3-alpine`, `louislam/uptime-kuma:2.5.5`, `maximhq/bifrost:v1.6.0`, `langfuse/langfuse:4.46.0`, `otel/opentelemetry-collector-contrib:0.120.0`, `ghcr.io/mlflow/mlflow:v3.16.1`, `flowiseai/flowise:3.1.4` | oui | non (briques bonus) |
-| `farci/llamacpp:server-b10600` | construite localement | non (bonus, groupe `build_llamacpp`, absent du profil « pi ») |
+| `farci/llamacpp:server-b11500` | construite localement | non (bonus, groupe `build_llamacpp`, absent du profil « pi ») |
 
 ## 11. Dépannage
 

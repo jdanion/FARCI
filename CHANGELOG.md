@@ -6,6 +6,18 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### llama.cpp : la compilation fonctionne
+
+- `LLAMACPP_BUILD=b10600` n'existait pas (la numérotation des tags llama.cpp
+  a des trous) : `b11500` (2026-10-08), tag vérifié.
+- Le préchargement clone les sources sur l'hôte
+  (`02-inference/llamacpp/vendor/llama.cpp`, hors Git) ; le `docker build`
+  ne contacte plus GitHub. Base : l'image `python` déjà préchargée (plus de
+  `gcc:13` ni de `debian` non figés).
+- Binaire autonome (`BUILD_SHARED_LIBS=OFF`, `libgomp1` dans l'image) : la
+  version précédente aurait démarré sans ses bibliothèques partagées.
+  `LLAMA_CURL` n'existe plus en amont : `LLAMA_OPENSSL=OFF`.
+
 ### Nouvelle séance en une commande
 
 - `./bin/farci seance nouvelle [--garder-equipes] [--tout]` : sauvegarde la
