@@ -11,12 +11,12 @@ Code) sans rien deviner.
 | Disque | 108 Go libres ; il en faut **~30 Go** (voir § 8) |
 | Réseau | LAN domestique, adresse fixe **192.168.0.222**, nom **farci.local** |
 | Rôle | machine seule : la **pile de référence** (`reference/`) sert toutes les briques (🛟) |
-| Source | dépôt public `jdanion/FARCI`, branche `claude/youthful-curie-5ofyyy`, tag `pi-deploy-20261026` |
+| Source | dépôt public `jdanion/FARCI`, branche `claude/youthful-curie-5ofyyy` (le SHA attendu est donné avec ce guide) |
 
 > ⚠️ **Ne pas utiliser `main`** sur GitHub pour l'instant : le 23 octobre,
 > `main` a été ramené à un état du 27 septembre (une synchronisation depuis
-> Gitea l'a écrasé). La branche et le tag ci-dessus contiennent tout le
-> travail à jour (lots 1 à 4, EDS-NLP, ce guide).
+> Gitea l'a écrasé). La branche ci-dessus contient tout le travail à jour
+> (lots 1 à 4, EDS-NLP, ce guide).
 
 ---
 
@@ -45,8 +45,8 @@ Le dépôt est **public** : aucune clé ni jeton n'est nécessaire.
 cd ~
 git clone --branch claude/youthful-curie-5ofyyy https://github.com/jdanion/FARCI.git farci
 cd farci
-git checkout pi-deploy-20261026            # fige exactement la version testée
-git log -1 --oneline
+git log -1 --format='%H %s'                # comparer au SHA donné avec ce guide
+# pour figer exactement cette version : git checkout <SHA>
 ```
 
 ## 3. Créer la configuration
