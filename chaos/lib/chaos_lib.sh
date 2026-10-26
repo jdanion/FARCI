@@ -234,8 +234,11 @@ chaos_chat_code() {
 chaos_extract() {
   local n="$1" model="${2:-med-extraction}" tmp out
   tmp="$(mktemp -d)"
+  # On lit LA LIGNE DU BILAN, pas la dernière ligne : quand l'observabilité
+  # est coupée (scénario 07), OpenTelemetry écrit son échec d'export APRÈS
+  # le bilan, à la sortie du programme.
   out="$(python3 "$FARCI_ROOT/07-applications/python/run_pipeline.py" --limit "$n" \
-           --model "$model" --output "$tmp" 2>&1 | tail -1)"
+           --model "$model" --output "$tmp" 2>&1 | grep -E 'dossier\(s\) écrit\(s\)' | tail -1 || true)"
   rm -rf "$tmp"
   python3 -c 'import re,sys; m=[int(x) for x in re.findall(r"(\d+)", sys.argv[1])[:3]]; print(*(m+[0,0,0])[:3])' "$out"
 }
