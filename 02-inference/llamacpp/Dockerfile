@@ -26,9 +26,11 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=ON -DBUILD_SHARED_LI
 ARG PYTHON_IMAGE_TAG
 FROM python:${PYTHON_IMAGE_TAG}
 
-# libgomp1 : OpenMP (threads de calcul) ; curl : sonde de santé de la compose.
+# Ce dont llama-server a besoin à l'exécution (ldd) : libgomp1 (OpenMP,
+# threads de calcul) et libstdc++6 ; curl : sonde de santé de la compose.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
+    libstdc++6 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
