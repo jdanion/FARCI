@@ -1,10 +1,18 @@
 """FARCI — définition des rôles et de leurs exigences.
 
+Règle : une option n'est listée que si le dépôt la FOURNIT (compose, config,
+TUTORIAL). Pas d'alternative « sur le papier » : un étudiant à qui l'on
+propose Nginx ou PyMuPDF doit trouver de quoi le faire tourner hors ligne.
+
 Chaque rôle a :
 - un nom
 - une liste d'options (la première = choix n°1, indispensable)
 - des exigences matérielles (RAM, GPU, Mac, etc.)
 - un nombre d'étudiants requis
+
+Deux options au plus par brique : chacune se télécharge et se prépare hors
+ligne, au-delà la préparation déborde (./preload.sh ne prend que celles que
+le poste peut servir).
 """
 
 from __future__ import annotations
@@ -12,14 +20,19 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
+# Seuil d'une « grosse configuration » sans GPU (même valeur que
+# FARCI_GROSSE_RAM_GO, scripts/lib/machine.sh).
+GROSSE_RAM_GO = 32
+
 
 @dataclass
 class Option:
-    """Une option pour un rôle (ex: Ollama, llama.cpp, oMLX)."""
+    """Une option pour un rôle (ex: Ollama, llama.cpp)."""
     name: str
     label: str
     requires_mac: bool = False
     requires_gpu: bool = False
+    grosse_config: bool = False  # GPU, ou au moins GROSSE_RAM_GO de RAM
     min_ram_gb: int = 0
     min_vram_gb: int = 0
     description: str = ""
@@ -33,7 +46,7 @@ class Role:
     options: list[Option]
     min_students: int = 1
     max_students: int = 1
-    critical: bool = True  # True = rôle indispensable (choix n°1)
+    critical: bool = True  # True = brique cœur (config/services.yaml, tier: core)
     description: str = ""
 
     @property
@@ -53,11 +66,10 @@ ROLES: list[Role] = [
         label="GitOps",
         options=[
             Option("gitea", "Gitea", min_ram_gb=2, description="Forge Git"),
-            Option("gitlab", "GitLab", min_ram_gb=4, description="Alternative à Gitea"),
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=False,  # bonus : démonstration du formateur si personne
         description="Forge Git + CI/CD",
     ),
 
@@ -67,12 +79,10 @@ ROLES: list[Role] = [
         label="Réseau & Dashboard",
         options=[
             Option("caddy", "Caddy", min_ram_gb=1, description="Reverse proxy"),
-            Option("nginx", "Nginx", min_ram_gb=1, description="Alternative à Caddy"),
-            Option("traefik", "Traefik", min_ram_gb=2, description="Alternative cloud-native"),
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Réverse proxy + dashboard",
     ),
 
@@ -81,13 +91,13 @@ ROLES: list[Role] = [
         name="inference",
         label="Inférence",
         options=[
-            Option("ollama", "Ollama", min_ram_gb=8, description="Runtime principal"),
-            Option("llamacpp", "llama.cpp", min_ram_gb=4, description="Runtime alternatif"),
-            Option("omlx", "oMLX", requires_mac=True, min_ram_gb=16, description="Mac uniquement"),
+            Option("ollama", "Ollama", grosse_config=True, min_ram_gb=8,
+                   description="Modèle 9B : GPU ou 32 Go de RAM"),
+            Option("llamacpp", "llama.cpp", min_ram_gb=4, description="Modèle 2B, tout poste"),
         ],
         min_students=2,
         max_students=4,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Runtime d'inférence LLM",
     ),
 
@@ -101,7 +111,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Gateway LLM + rate limiting",
     ),
 
@@ -111,11 +121,10 @@ ROLES: list[Role] = [
         label="Documents cliniques",
         options=[
             Option("docling", "Docling", min_ram_gb=4, description="Conversion PDF"),
-            Option("pymupdf", "PyMuPDF", min_ram_gb=2, description="Alternative légère"),
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Conversion + pseudonymisation",
     ),
 
@@ -129,7 +138,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Traces + métriques LLM",
     ),
 
@@ -139,11 +148,10 @@ ROLES: list[Role] = [
         label="Évaluation",
         options=[
             Option("mlflow", "MLflow", min_ram_gb=4, description="Suivi des runs"),
-            Option("wandb", "W&B", min_ram_gb=2, description="Alternative cloud"),
         ],
         min_students=1,
         max_students=2,
-        critical=True,
+        critical=False,  # bonus (MLflow) : l'évaluation se fait en CLI pour tous
         description="Métriques + comparaison",
     ),
 
@@ -154,11 +162,10 @@ ROLES: list[Role] = [
         options=[
             Option("python", "Python", min_ram_gb=2, description="Parcours A"),
             Option("open-webui", "Open WebUI", min_ram_gb=4, description="Parcours B"),
-            Option("flowise", "Flowise", min_ram_gb=4, description="Parcours C"),
         ],
         min_students=2,
         max_students=4,
-        critical=True,
+        critical=True,  # cœur : vert sur le tableau en moins de 45 min
         description="Applications clientes",
     ),
 
@@ -168,15 +175,14 @@ ROLES: list[Role] = [
         label="Agents Arcane",
         options=[
             Option("arcane", "Agents Arcane", min_ram_gb=2, description="Supervision"),
-            Option("portainer", "Portainer", min_ram_gb=2, description="Gestion Docker"),
         ],
         min_students=1,
         max_students=2,
-        critical=False,  # Optionnel
+        critical=False,  # bonus
         description="Supervision + GitOps",
     ),
 
-    # --- Équipe 11 : Chaos engineering ---
+    # --- Étape 3 : chaos engineering (pilotée par le formateur) ---
     Role(
         name="chaos",
         label="Chaos engineering",
@@ -185,7 +191,7 @@ ROLES: list[Role] = [
         ],
         min_students=1,
         max_students=2,
-        critical=False,  # Optionnel
+        critical=False,  # étape 3, pilotée par le formateur
         description="Tests de résilience",
     ),
 ]

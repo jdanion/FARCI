@@ -1,43 +1,25 @@
 #!/usr/bin/env bash
-# FARCI — scénario 04 : JSON invalide
+# FARCI — scénario 04 : sortie JSON invalide
 #
-# Attendu : Pydantic ValidationError, aucun fichier écrit
-# Mécanisme réel : modèle de test med-chaos volontairement non conforme
+# Action    : extraire avec `med-chaos`, un modèle de test déclaré à la
+#             passerelle, qui renvoie une sortie hors schéma (vrai mécanisme,
+#             pas une fausse URL).
+# Attendu   : chaque dossier est REJETÉ par la validation ; aucun fichier écrit.
+# Leçon     : une sortie de LLM ne devient une donnée qu'une fois validée.
+
+SCENARIO_TITLE="Sortie JSON invalide (modèle med-chaos)"
+SCENARIO_ATTENDU="dossiers rejetés, aucun fichier écrit"
 
 chaos_scenario_apply() {
-  local duration="${1:-}"
-  info "test de JSON invalide (modèle med-chaos)..."
+  info "extraction de 3 dossiers avec le modèle med-chaos…"
+  read -r CHAOS_ECRITS CHAOS_REJETES CHAOS_ERREURS <<< "$(chaos_extract 3 med-chaos)"
+  info "écrits : $CHAOS_ECRITS, rejetés : $CHAOS_REJETES, erreurs d'appel : $CHAOS_ERREURS"
+}
 
-  # Appeler le modèle med-chaos qui renvoie un JSON hors schéma
-  response=$(curl -sf -X POST "http://192.168.50.15/v1/chat/completions" \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer sk-standard-placeholder" \
-    -d '{
-      "model": "med-chaos",
-      "messages": [{"role": "user", "content": "test"}],
-      "max_tokens": 256
-    }' 2>/dev/null || echo "")
-
-  if [[ -z "$response" ]]; then
-    warn "pas de réponse (modèle med-chaos peut ne pas exister)"
-  else
-    # Vérifier que le JSON est invalide
-    if echo "$response" | python3 -c "import json,sys; json.load(sys.stdin)" 2>/dev/null; then
-      warn "le JSON est valide (attendu : invalide)"
-    else
-      ok "JSON invalide détecté (comportement attendu)"
-    fi
-  fi
-
-  echo '{"scenario":"04","action":"invalid_json"}' > "$CHAOS_STATE_FILE"
-
-  if [[ -n "$duration" ]]; then
-    sleep "$duration"
-    chaos_scenario_revert
-  fi
+chaos_scenario_check() {
+  chaos_expect "aucun dossier écrit, 3 rejetés" test "${CHAOS_ECRITS:-1}" = 0 -a "${CHAOS_REJETES:-0}" = 3
 }
 
 chaos_scenario_revert() {
-  echo '{}' > "$CHAOS_STATE_FILE"
-  ok "scenario 04 terminé"
+  ok "rien à réparer : rien n'a été écrit"
 }

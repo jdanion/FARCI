@@ -5,11 +5,11 @@
 
 services:
   docling:
-    image: ds4sd/docling-serve:${DOCLING_SERVE_VERSION}
+    image: ghcr.io/docling-project/docling-serve-cpu:v${DOCLING_SERVE_VERSION}
     container_name: farci-docling
     restart: unless-stopped
     ports:
-      - "5001:5001"
+      - "${DOCLING_PORT:?DOCLING_PORT manquant (config/network.env)}:5001"
     environment:
       DOCLING_DO_OCR: "false"
       DOCLING_DO_TABLE_STRUCTURE: "true"
@@ -17,9 +17,6 @@ services:
       DOCLING_USE_V2: "true"
     volumes:
       - docling-cache:/root/.cache
-    networks:
-      farci:
-        ipv4_address: ${DOCLING_IP}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
       interval: 10s
@@ -28,7 +25,3 @@ services:
 
 volumes:
   docling-cache:
-
-networks:
-  farci:
-    external: true

@@ -21,7 +21,7 @@ import urllib.error
 from datetime import datetime, timezone
 
 TARGET_SERVICE = os.environ.get("TARGET_SERVICE", "unknown")
-TARGET_URL = os.environ.get("TARGET_URL", "http://localhost:8080/healthz")
+TARGET_URL = os.environ["TARGET_URL"]  # fourni par docker-compose.yml, aucune valeur par défaut
 CHECK_INTERVAL = int(os.environ.get("CHECK_INTERVAL", "30"))
 ALERT_WEBHOOK = os.environ.get("ALERT_WEBHOOK", "")
 

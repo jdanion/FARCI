@@ -1,57 +1,106 @@
-# FARCI — Caddy reverse proxy (FARCI §12)
+# FARCI — l'accueil (reverse proxy Caddy, FARCI §12)
 #
-# Routage des services internes. HTTP only (air-gap prime sur TLS, §61.1).
-# handle_errors renvoie un JSON explicite pour débogage.
+# Ce même fichier sert DEUX accueils identiques :
+#   - celui de la salle, sur le Pi du formateur (reference/docker-compose.yml) ;
+#   - celui que monte l'équipe 1 (01-network-dashboard/docker-compose.yml).
+#
+# Aucune adresse ici. Caddy lit ses variables d'environnement avec {$NOM},
+# AVANT de lire le fichier : une variable peut donc contenir plusieurs amonts.
+# Les variables UP_* sont construites par `scripts/services.py upstreams` à
+# partir de config/network.env (et de config/rescue.env) : « brique de
+# l'équipe, puis brique de la référence ». Caddy essaie la première ; si
+# elle ne répond pas, il passe à la suivante et l'écarte 20 secondes.
+#
+# HTTP seulement : l'air-gap prime sur TLS (§61.1).
+
+(repli) {
+    lb_policy first
+    lb_try_duration 4s
+    lb_try_interval 250ms
+    fail_duration 20s
+    max_fails 1
+    unhealthy_status 5xx
+    transport http {
+        dial_timeout 2s
+    }
+}
 
 :80 {
-    # Health check rapide
+    # Vivacité de Caddy LUI-MÊME : ne dépend d'aucun autre service.
+    handle /livez {
+        respond "ok" 200
+    }
+
+    # État du pipeline (agrégateur de santé, dans la même compose)
     handle /healthz {
-        reverse_proxy ${HEALTH_AGGREGATOR_IP}:8081
+        reverse_proxy health-aggregator:8081
     }
-
-    # Health aggregator (status détaillé)
     handle /status {
-        reverse_proxy ${HEALTH_AGGREGATOR_IP}:8081
+        reverse_proxy health-aggregator:8081
     }
 
-    # LLM Gateway (OpenAI-compatible)
+    # Le tableau de la salle (écran projeté, iPad) : http://<accueil>/
+    handle /tableau* {
+        reverse_proxy health-aggregator:8081
+    }
+    handle / {
+        redir * /tableau 302
+    }
+
+    # Rejoindre la salle sans rien (sur le Pi : ./bin/farci partage maj) :
+    #   git clone http://<accueil>/farci.git farci
+    handle /rejoindre* {
+        reverse_proxy health-aggregator:8081
+    }
+    handle_path /farci.git/* {
+        root * /srv/partage/farci.git
+        file_server
+    }
+    handle_path /partage/offline-arm64/* {
+        root * /srv/offline-arm64
+        file_server browse
+    }
+    handle_path /partage/* {
+        root * /srv/partage
+        file_server browse
+    }
+
+    # Passerelle LLM (API OpenAI) : le seul point d'entrée des applications
     handle /v1/* {
-        reverse_proxy ${GATEWAY_A_IP}:4000
+        reverse_proxy {$UP_PASSERELLE} {
+            import repli
+        }
     }
 
-    # Docling (documents)
-    handle /docling/* {
-        reverse_proxy ${DOCLING_IP}:5001
+    # Runtimes : utilisé par LiteLLM, jamais par les applications
+    handle_path /runtime/* {
+        reverse_proxy {$UP_INFERENCE} {
+            import repli
+            health_uri /v1/models
+            health_interval 10s
+        }
     }
 
-    # Observabilité (Phoenix / Langfuse)
-    handle /observability/* {
-        reverse_proxy ${PHOENIX_IP}:6006
+    # Documents (Docling)
+    handle_path /docling/* {
+        reverse_proxy {$UP_DOCUMENTS} {
+            import repli
+        }
     }
 
-    # MLflow (évaluation)
-    handle /mlflow/* {
-        reverse_proxy ${MLFLOW_IP}:5000
+    # EDS-NLP (équipe 4) : pseudonymiser, extraire des entités
+    handle_path /eds/* {
+        reverse_proxy {$UP_EDS} {
+            import repli
+        }
     }
 
-    # Uptime Kuma (dashboard)
-    handle /kuma/* {
-        reverse_proxy ${UPTIME_KUMA_IP}:3001
-    }
-
-    # Flowise
-    handle /flowise/* {
-        reverse_proxy ${FLOWISE_IP}:3000
-    }
-
-    # Open WebUI
-    handle /webui/* {
-        reverse_proxy ${OPEN_WEBUI_IP}:8080
-    }
-
-    # Gitea
-    handle /gitea/* {
-        reverse_proxy ${GITEA_IP}:3000
+    # Traces OTLP vers Phoenix : si l'observabilité tombe, la référence
+    # reçoit, et l'extraction ne s'en aperçoit pas (scénario 07).
+    handle_path /observability/* {
+        reverse_proxy {$UP_OBSERVABILITE} {
+            import repli
+        }
     }
 
     # Erreurs JSON explicites

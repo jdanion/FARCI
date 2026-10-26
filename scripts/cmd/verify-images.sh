@@ -6,6 +6,11 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  sed -n '2,/^$/p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'
+  exit 0
+fi
+
 FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export FARCI_ROOT
 
@@ -16,32 +21,20 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-# Charger versions.env (non inclus dans farci_env_files)
-if [[ -r "$FARCI_ROOT/versions.env" ]]; then
-  while IFS='=' read -r key value; do
-    [[ -z "$key" || "$key" == \#* ]] && continue
-    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
-    [[ -z "${!key+x}" ]] && export "$key=$value"
-  done < "$FARCI_ROOT/versions.env"
-fi
+farci_load_versions
+# shellcheck source=scripts/lib/images.sh
+source "$FARCI_ROOT/scripts/lib/images.sh"
 
 section "FARCI — vérification des images Docker"
 
-IMAGES=(
-  "gitea/gitea:${GITEA_VERSION}"
-  "gitea/act_runner:${GITEA_ACT_RUNNER_VERSION}"
-  "postgres:${POSTGRES_VERSION}"
-  "redis:${REDIS_VERSION}"
-  "caddy:${CADDY_VERSION}"
-  "louislam/uptime-kuma:${UPTIME_KUMA_VERSION}"
-  "ollama/ollama:${OLLAMA_VERSION}"
-  "ghcr.io/berriai/litellm:${LITELLM_VERSION}"
-  "ds4sd/docling-serve:${DOCLING_SERVE_VERSION}"
-  "arizephoenix/phoenix:${PHOENIX_VERSION}"
-  "mlflow/mlflow:${MLFLOW_VERSION}"
-  "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}"
-  "flowiseai/flowise:${FLOWISE_VERSION}"
-)
+# Par défaut la chaîne cœur ; --all pour inclure les briques bonus ;
+# --reference pour la pile de référence de base (sur le Pi).
+scope=core
+case "${1:-}" in
+  --all)       scope=all ;;
+  --reference) scope=reference ;;
+esac
+mapfile -t IMAGES < <(farci_images "$scope")
 
 missing=0
 present=0
@@ -60,7 +53,11 @@ printf '\n'
 printf '%d présente(s), %d manquante(s)\n' "$present" "$missing"
 
 if (( missing > 0 )); then
-  printf 'Exécutez ./preload.sh --core pour télécharger les images manquantes.\n'
+  if [[ "$scope" == reference ]]; then
+    printf 'Exécutez ./preload.sh --reference (sur cette machine, avec Internet).\n'
+  else
+    printf 'Exécutez ./preload.sh --core pour télécharger les images manquantes.\n'
+  fi
   exit 1
 fi
 

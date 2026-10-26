@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
-# FARCI — post-setup Open WebUI
+# FARCI — vérification d'Open WebUI après démarrage
 #
-# Crée la connexion OAI-compatible vers Caddy et une clé virtuelle.
+#   07-applications/open-webui/post-setup.sh
+#
+# Rien à configurer à la main : la connexion à la passerelle (l'accueil de la
+# salle, /v1) est donnée par docker-compose.yml, sans compte (WEBUI_AUTH=False).
+# Ce script attend l'interface, vérifie que la passerelle propose bien
+# med-extraction, et affiche l'adresse à ouvrir.
 
 set -euo pipefail
 
@@ -14,25 +19,21 @@ source "$FARCI_ROOT/scripts/lib/common.sh"
 source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
+export no_proxy='*' NO_PROXY='*'
 
-WEBUI_URL="${OPEN_WEBUI_URL:-http://192.168.50.60:8080}"
-GATEWAY_URL="${GATEWAY_URL:-http://192.168.50.15/v1}"
+# L'Open WebUI de CETTE machine, sauf si OPEN_WEBUI_IP est déclarée.
+WEBUI_URL="${OPEN_WEBUI_URL:-http://127.0.0.1:${OPEN_WEBUI_PORT:?OPEN_WEBUI_PORT manquant (config/network.env)}}"
+GATEWAY_URL="${FARCI_GATEWAY_URL:?REFERENCE_IP/ENTRY_PORT manquants : voir config/network.env}"
 
-section "FARCI — post-setup Open WebUI"
+section "FARCI — vérification d'Open WebUI"
 
-info "attente d'Open WebUI..."
-wait_http "$WEBUI_URL" 60 "Open WebUI"
+info "attente d'Open WebUI (le premier démarrage est long)..."
+wait_http "$WEBUI_URL/health" 120 "Open WebUI"
 
-# Créer la connexion OAI-compatible
-info "création de la connexion OAI-compatible..."
-curl -sf -X POST "$WEBUI_URL/api/v1/auths/signin" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@farci.local", "password": "admin"}' || warn "connexion peut-être déjà existante"
+if curl -sf --max-time 10 "$GATEWAY_URL/models" | grep -q '"med-extraction"'; then
+  ok "la passerelle propose med-extraction ($GATEWAY_URL)"
+else
+  warn "la passerelle ne répond pas ou ne propose pas med-extraction : ./bin/farci test"
+fi
 
-# Créer une clé virtuelle
-info "création d'une clé virtuelle..."
-curl -sf -X POST "$WEBUI_URL/api/v1/api_keys" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "farci-standard", "key": "sk-standard-placeholder"}' || warn "clé peut-être déjà existante"
-
-ok "post-setup terminé"
+ok "ouvrir $WEBUI_URL dans un navigateur (aucun compte à créer)"

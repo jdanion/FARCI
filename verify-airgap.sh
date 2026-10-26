@@ -8,6 +8,8 @@
 #   ./verify-airgap.sh              vérification standard
 #   ./verify-airgap.sh --strict     avec coupure réseau (unshare -rn)
 #   ./verify-airgap.sh --json       sortie JSON
+#   ./verify-airgap.sh --equipe 2   poste étudiant : seulement la brique de son
+#                                   équipe, selon la machine (comme ./preload.sh)
 
 set -euo pipefail
 
@@ -20,20 +22,18 @@ source "$FARCI_ROOT/scripts/lib/common.sh"
 source "$FARCI_ROOT/scripts/dev-env.sh"
 # shellcheck source=scripts/preload_lib.sh
 source "$FARCI_ROOT/scripts/preload_lib.sh"
+# shellcheck source=scripts/lib/machine.sh
+source "$FARCI_ROOT/scripts/lib/machine.sh"
 
 farci_load_env
+farci_load_versions
+# shellcheck source=scripts/lib/images.sh
+source "$FARCI_ROOT/scripts/lib/images.sh"
 
-# Charger versions.env (non inclus dans farci_env_files)
-if [[ -r "$FARCI_ROOT/versions.env" ]]; then
-  while IFS='=' read -r key value; do
-    [[ -z "$key" || "$key" == \#* ]] && continue
-    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
-    [[ -z "${!key+x}" ]] && export "$key=$value"
-  done < "$FARCI_ROOT/versions.env"
-fi
 
 VERIFY_STRICT=0
 VERIFY_JSON=0
+VERIFY_EQUIPE="${FARCI_EQUIPE:-}"
 
 usage() {
   cat <<'USAGE'
@@ -42,6 +42,8 @@ Usage : ./verify-airgap.sh [OPTIONS]
 Options :
   --strict    Vérifier avec coupure réseau (unshare -rn)
   --json      Sortie JSON
+  --equipe N  Poste étudiant : la brique de l'équipe N seulement, selon la
+              machine (défaut : FARCI_EQUIPE de config/workshop.env)
   -h, --help  Afficher cette aide
 USAGE
 }
@@ -51,6 +53,7 @@ parse_args() {
     case "$1" in
       --strict) VERIFY_STRICT=1 ;;
       --json)   VERIFY_JSON=1 ;;
+      --equipe) VERIFY_EQUIPE="${2:?--equipe requiert un numéro (0 à 8)}"; shift ;;
       -h|--help) usage; exit 0 ;;
       *)        err "option inconnue : $1"; usage; exit 64 ;;
     esac
@@ -79,21 +82,13 @@ record_check() {
 
 check_images() {
   local missing=()
-  local images=(
-    "gitea/gitea:${GITEA_VERSION}"
-    "gitea/act_runner:${GITEA_ACT_RUNNER_VERSION}"
-    "postgres:${POSTGRES_VERSION}"
-    "redis:${REDIS_VERSION}"
-    "caddy:${CADDY_VERSION}"
-    "louislam/uptime-kuma:${UPTIME_KUMA_VERSION}"
-    "ollama/ollama:${OLLAMA_VERSION}"
-    "ghcr.io/berriai/litellm:${LITELLM_VERSION}"
-    "ds4sd/docling-serve:${DOCLING_SERVE_VERSION}"
-    "arizephoenix/phoenix:${PHOENIX_VERSION}"
-    "mlflow/mlflow:${MLFLOW_VERSION}"
-    "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}"
-    "flowiseai/flowise:${FLOWISE_VERSION}"
-  )
+  local images=()
+  if [[ -n "$VERIFY_EQUIPE" ]]; then
+    mapfile -t images < <(farci_images poste "$VERIFY_EQUIPE" "$(farci_machine)")
+    (( ${#images[@]} )) || { record_check "images" "FAIL" "équipe inconnue : $VERIFY_EQUIPE"; return; }
+  else
+    mapfile -t images < <(farci_images core)
+  fi
 
   for img in "${images[@]}"; do
     if ! docker image inspect "$img" >/dev/null 2>&1; then
@@ -131,10 +126,13 @@ check_versions() {
 check_compose() {
   # Vérifier qu'aucun compose n'utilise build: distant ou pull_policy: always
   local violations=()
+  # Une construction LOCALE (contexte = dossier du dépôt, image de base
+  # préchargée) fonctionne hors ligne ; une construction DISTANTE (contexte
+  # git ou http) ou un pull_policy: always ne fonctionnent pas.
   while IFS= read -r line; do
-    [[ "$line" == *"build:"* ]] && violations+=("$line")
-    [[ "$line" == *"pull_policy: always"* ]] && violations+=("$line")
-  done < <(grep -rn "build:\|pull_policy:" "$FARCI_ROOT" --include="docker-compose.yml" --include="compose.yml" 2>/dev/null || true)
+    violations+=("$line")
+  done < <(grep -rnE "(build|context):[[:space:]]*['\"]?(https?://|git@|git://|github\.com)|pull_policy:[[:space:]]*always" \
+             "$FARCI_ROOT" --include="docker-compose.yml" --include="compose.yml" 2>/dev/null || true)
 
   if (( ${#violations[@]} == 0 )); then
     record_check "compose" "PASS" "aucun build distant ni pull_policy: always"
@@ -147,13 +145,15 @@ check_models() {
   local missing=()
   local models_dir="$FARCI_MODELS_DIR"
 
-  # Vérifier les fichiers GGUF attendus
-  local expected=(
-    "Ornith-1.5-9B-Q5_K_M.gguf"
-    "Ornith-1.5-9B-Q4_K_M.gguf"
-    "Qwen3.8-27B-Q4_K_M.gguf"
-    "Qwen3.5-2B-Q4_K_M.gguf"
-  )
+  # Fichiers GGUF attendus : le 9B (Ollama, grosse configuration) et le 2B
+  # (llama.cpp, secours, CI). Un poste étudiant n'attend que ceux de sa brique.
+  local expected=("Ornith-1.5-9B-Q5_K_M.gguf" "Qwen3.5-2B-Q4_K_M.gguf")
+  if [[ -n "$VERIFY_EQUIPE" && "$VERIFY_EQUIPE" != 2 ]]; then
+    record_check "models" "PASS" "aucun modèle pour la brique de l'équipe $VERIFY_EQUIPE"
+    return
+  elif [[ "$VERIFY_EQUIPE" == 2 && "$(farci_machine)" != grosse ]]; then
+    expected=("Qwen3.5-2B-Q4_K_M.gguf")
+  fi
 
   for f in "${expected[@]}"; do
     if [[ ! -f "$models_dir/$f" ]]; then
@@ -164,18 +164,18 @@ check_models() {
   if (( ${#missing[@]} == 0 )); then
     record_check "models" "PASS" "tous les poids sont présents"
   else
-    record_check "models" "WARN" "poids manquants (normal si --core seul) : ${missing[*]}"
+    record_check "models" "WARN" "poids manquants : ${missing[*]}"
   fi
 }
 
 check_manifest() {
   local manifest="$FARCI_MANIFEST"
   if [[ ! -f "$manifest" ]]; then
-    record_check "manifest" "WARN" "MANIFEST.sha256 absent — exécuter ./preload.sh --core"
+    record_check "manifest" "WARN" "MANIFEST.sha256 absent — exécuter ./preload.sh"
     return
   fi
 
-  if sha256sum -c "$manifest" --quiet 2>/dev/null; then
+  if (cd "$FARCI_OFFLINE_DIR" && sha256sum -c "$manifest" --quiet) 2>/dev/null; then
     record_check "manifest" "PASS" "tous les fichiers sont conformes"
   else
     record_check "manifest" "FAIL" "certains fichiers ne correspondent pas au manifeste"

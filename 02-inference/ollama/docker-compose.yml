@@ -9,27 +9,21 @@ services:
     container_name: farci-ollama
     restart: unless-stopped
     environment:
-      OLLAMA_HOST: 0.0.0.0:8080
+      OLLAMA_HOST: 0.0.0.0:11434
       OLLAMA_KEEP_ALIVE: "-1"
       OLLAMA_NO_CLOUD: "1"
-      OLLAMA_MODELS: /models
     volumes:
-      - ${FARCI_MODELS_DIR}:/models:ro
+      # Les GGUF préchargés, en lecture seule : 02-inference/ollama/create-model.sh
+      # les importe sous le nom logique med-extraction.
+      - ${FARCI_MODELS_DIR:?FARCI_MODELS_DIR manquant}:/gguf:ro
       - ollama-data:/root/.ollama
     ports:
-      - "8080:8080"
-    networks:
-      farci:
-        ipv4_address: ${INFERENCE_A_IP}
+      - "${INFERENCE_A_PORT:?INFERENCE_A_PORT manquant (config/network.env)}:11434"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/tags"]
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
   ollama-data:
-
-networks:
-  farci:
-    external: true

@@ -1,87 +1,111 @@
-# TUTORIAL — Équipe 0 : GitOps
+# TUTORIAL — Équipe 0 : GitOps (brique bonus)
 
-## Objectif
+## Mission
 
-Mettre en place la forge Git (Gitea) et l'intégration continue (act_runner)
-pour le workshop FARCI.
+Monter la forge de l'atelier (Gitea) et son intégration continue (act_runner),
+pour que chaque équipe livre sa brique par Pull Request.
 
-## Prérequis
+- **Objectif minimal** : Gitea répond, la ligne `GitOps` passe au vert.
+- **Bonus** : runner enregistré, `main` protégée, la CI (`./bin/farci ci`)
+  tourne sur chaque PR.
 
-- Docker et Docker Compose installés
-- Réseau `farci` créé (`docker network create farci`)
-- Variables d'environnement configurées dans `.env`
+Brique **bonus** : elle n'entre pas dans `CLINICAL PIPELINE READY`. Si elle
+manque, le formateur la remplace par une démonstration.
 
-## Étapes
+## Ce que votre service apporte
 
-### 1. Démarrer Gitea
+Une trace écrite de qui a changé quoi, et une vérification automatique avant
+intégration. C'est la « procédure » de l'hôpital : ce qui est versionné est ce
+qui est installé.
 
-```bash
-cd 00-gitops
-docker compose up -d
-```
+## Ce que vous devez comprendre
 
-### 2. Attendre que Gitea soit prêt
+- **GitOps = le dossier de procédures vivant** : l'infrastructure est décrite
+  dans un dépôt ; on la modifie par une demande relue, pas à la main.
+- **CI** : à chaque PR, une machine rejoue les contrôles (`./bin/farci ci`).
+  Un humain relit, la machine vérifie.
 
-```bash
-curl http://192.168.50.10:3000/api/v1/version
-```
+## Vos dépendances
 
-### 3. Bootstrap (création org, admin, dépôt)
+Aucune. Le runner a besoin de Docker sur la machine qui l'héberge.
 
-```bash
-export GITEA_ADMIN_PASSWORD="mot-de-passe-admin"
-export GITEA_DB_PASSWORD="mot-de-passe-db"
-export GITEA_SECRET_KEY="clef-secrete"
-export GITEA_INTERNAL_TOKEN="token-interne"
-export GITEA_RUNNER_TOKEN="token-runner"
-./gitea/bootstrap.sh
-```
+## Votre IP
 
-### 4. Enregistrer le runner
+`GITEA_IP`, port `GITEA_PORT` (`config/network.env`).
 
-```bash
-./runner/register-runner.sh
-```
+## Installation
 
-### 5. Protéger la branche main
+Images `gitea`, `act_runner`, `postgres` et `node` (image des jobs de CI)
+préchargées : `./bin/farci verify-images --all`.
 
-```bash
-./post-provision.sh
-```
+## Configuration
 
-### 6. Créer une Pull Request
+Dans `.env` (jamais commité) : `GITEA_ADMIN_PASSWORD`, `GITEA_DB_PASSWORD`,
+`GITEA_SECRET_KEY`, `GITEA_INTERNAL_TOKEN`, `GITEA_RUNNER_TOKEN`. Les valeurs
+d'exemple sont dans `.env.example` : les remplacer.
+
+Le runner déclare le label `farci` : c'est le `runs-on:` des workflows de
+`.gitea/workflows/`.
+
+## Démarrage
 
 ```bash
-git checkout -b feat/test-pr
-# ... modifications ...
-git add .
-git commit -m "test: PR de démonstration"
-git push origin feat/test-pr
-# Créer l'UI ou via l'API
+./bin/farci up 00-gitops
+00-gitops/gitea/bootstrap.sh          # organisation, administrateur, dépôt
+./bin/farci forge-sync push           # main de GitHub → Gitea (ou from-bundle sans Internet)
+00-gitops/runner/register-runner.sh   # vérifie l'enregistrement du runner
+00-gitops/post-provision.sh           # protège la branche main
 ```
 
-## Vérifications
+GitHub reste la source de vérité : Gitea `main` n'avance que par
+`./bin/farci forge-sync` (avance rapide). Les PR de la séance visent la
+branche `seance` ; voir `CONTRIBUTING.md`, « Deux forges ».
 
-- [ ] Gitea accessible sur http://192.168.50.10:3000
-- [ ] Runner enregistré et actif
-- [ ] Push direct sur `main` rejeté
-- [ ] PR créée et workflow déclenché
+## Test local
+
+```bash
+./bin/farci status
+```
+
+La ligne `GitOps` doit être verte.
+
+## Test contractuel
+
+```bash
+./bin/farci test
+```
+
+La ligne `gitops` doit être `PASS`.
+
+## Vérification sur le tableau de bord
+
+`./bin/farci status` : ligne `GitOps` verte. Dans Gitea, l'onglet *Actions*
+du dépôt montre le workflow `tests` vert sur une PR de test.
+
+## Commit
+
+Les fichiers de `00-gitops/` et `.gitea/`. Aucun mot de passe : ils restent
+dans `.env`.
+
+## Pull Request
+
+Ouvrir une PR de démonstration (`feat/equipe-0/demo`) et montrer à la salle :
+la CI qui tourne, la relecture, le refus d'un push direct sur `main`.
+
+## Définition de DONE
+
+```text
+[ ] Gitea démarré
+[ ] ligne GitOps verte sur ./bin/farci status
+[ ] ./bin/farci test : gitops PASS
+[ ] runner enregistré, workflow tests vert sur une PR
+[ ] Pull Request ouverte et relue
+```
 
 ## Dépannage
 
-### Gitea ne démarre pas
-
-```bash
-docker logs farci-gitea
-docker logs farci-postgres
-```
-
-### Runner non enregistré
-
-```bash
-docker logs farci-act-runner
-```
-
-### Token invalide
-
-Régénérer le token dans `.env` et redémarrer les conteneurs.
+| Symptôme | Cause probable | Commande |
+|---|---|---|
+| `GITEA_DB_PASSWORD requis` | secrets absents | compléter `.env` (voir `.env.example`) |
+| Gitea redémarre en boucle | base PostgreSQL pas prête | `./bin/farci logs 00-gitops` |
+| le job CI reste « en attente » | runner absent ou label différent de `farci` | `00-gitops/runner/register-runner.sh` |

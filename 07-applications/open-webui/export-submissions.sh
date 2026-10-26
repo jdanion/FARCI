@@ -15,7 +15,8 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-WEBUI_URL="${OPEN_WEBUI_URL:-http://192.168.50.60:8080}"
+# L'Open WebUI de CETTE machine, sauf si OPEN_WEBUI_IP est déclarée.
+WEBUI_URL="${OPEN_WEBUI_URL:-http://127.0.0.1:${OPEN_WEBUI_PORT:?OPEN_WEBUI_PORT manquant (config/network.env)}}"
 OUTPUT_DIR="${1:-$FARCI_ROOT/datasets/extracted/webui}"
 
 section "FARCI — export Open WebUI"

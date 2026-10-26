@@ -1,17 +1,25 @@
-"""FARCI — métriques d'extraction.
+"""FARCI — métriques d'extraction, champ par champ.
 
-Exactitude champ par champ, micro P/R/F1.
-Les champs `null` attendus comptent comme corrects si prédits `null`.
+Pour chaque champ noté, en comparant la valeur normalisée du gold (g) et de
+la prédiction (p) :
+
+    g null, p null            -> VN  (juste : « non précisé » bien reconnu)
+    g null, p renseigné       -> FP  (valeur inventée)
+    g renseigné, p null       -> FN  (valeur manquée)
+    g et p renseignés, égaux  -> VP
+    g et p renseignés, ≠      -> FP + FN (mauvaise valeur)
+
+précision = VP / (VP + FP), rappel = VP / (VP + FN), F1 = moyenne harmonique,
+exactitude = (VP + VN) / nombre de champs.
+
+`patient_id` n'est pas noté : c'est la clé du dossier (le nom du fichier),
+et il est pseudonymisé avant d'atteindre le modèle.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from normalize import normalize_value
 
-from .normalize import normalize_value
-
-
-# Champs extraits (schéma ClinicalExtraction)
 EXTRACTION_FIELDS = [
     "patient_id", "age", "sex", "diagnosis",
     "procedure_type", "approach", "venous_resection",
@@ -20,77 +28,62 @@ EXTRACTION_FIELDS = [
     "pancreatic_fistula", "delayed_gastrojejunostomy", "hemorrhage",
     "length_of_stay", "readmission",
 ]
+SCORED_FIELDS = [f for f in EXTRACTION_FIELDS if f != "patient_id"]
 
 
-def compare_field(gold_value: Any, predicted_value: Any) -> dict:
-    """Compare un champ entre gold et prédiction."""
-    field_type = "unknown"
-    for f in EXTRACTION_FIELDS:
-        if f == "patient_id":
-            field_type = "id"
-        elif f in ("age", "tumor_size_mm", "nodes_examined", "nodes_positive", "length_of_stay"):
-            field_type = "number"
-        elif f in ("venous_resection", "pancreatic_fistula", "delayed_gastrojejunostomy",
-                   "hemorrhage", "readmission"):
-            field_type = "boolean"
-        else:
-            field_type = "text"
-        break
-
-    # Normaliser les deux valeurs
-    gold_norm = normalize_value(field_type, gold_value) if gold_value is not None else None
-    pred_norm = normalize_value(field_type, predicted_value) if predicted_value is not None else None
-
-    correct = gold_norm == pred_norm
-
+def compare_field(field: str, gold_value, predicted_value) -> dict:
+    gold_norm = normalize_value(field, gold_value)
+    pred_norm = normalize_value(field, predicted_value)
+    if gold_norm is None and pred_norm is None:
+        outcome = "vn"
+    elif gold_norm is None:
+        outcome = "fp"
+    elif pred_norm is None:
+        outcome = "fn"
+    elif gold_norm == pred_norm:
+        outcome = "vp"
+    else:
+        outcome = "faux"
     return {
         "gold": gold_value,
         "predicted": predicted_value,
-        "gold_normalized": gold_norm,
-        "pred_normalized": pred_norm,
-        "correct": correct,
+        "outcome": outcome,
+        "correct": outcome in ("vp", "vn"),
     }
 
 
-def compute_metrics(gold: dict, predicted: dict) -> dict:
-    """Calcule les métriques micro et macro pour un dossier."""
-    field_results = {}
-    tp = fp = fn = 0
+def empty_counts() -> dict:
+    return {"vp": 0, "vn": 0, "fp": 0, "fn": 0, "faux": 0}
 
-    for field in EXTRACTION_FIELDS:
-        result = compare_field(gold.get(field), predicted.get(field))
-        field_results[field] = result
 
-        if result["correct"]:
-            tp += 1
-        else:
-            # Faux négatif ou faux positif
-            if gold.get(field) is None and predicted.get(field) is None:
-                tp += 1  # Les deux None, correct
-            elif gold.get(field) is None:
-                fp += 1
-            elif predicted.get(field) is None:
-                fn += 1
-            else:
-                fp += 1
-                fn += 1
+def add_outcome(counts: dict, outcome: str) -> None:
+    counts[outcome] += 1
+    if outcome == "faux":
+        # Une mauvaise valeur est à la fois inventée (FP) et manquée (FN).
+        counts["fp"] += 1
+        counts["fn"] += 1
 
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
-    return {
-        "fields": field_results,
-        "micro": {
-            "precision": precision,
-            "recall": recall,
-            "f1": f1,
-            "tp": tp,
-            "fp": fp,
-            "fn": fn,
-        },
-        "macro": {
-            "correct": sum(1 for r in field_results.values() if r["correct"]),
-            "total": len(EXTRACTION_FIELDS),
-        },
-    }
+def scores(counts: dict) -> dict:
+    vp, vn, fp, fn = counts["vp"], counts["vn"], counts["fp"], counts["fn"]
+    # Rien à trouver et rien d'inventé : le dossier est parfait, pas nul.
+    perfect_empty = 1.0 if (fp == 0 and fn == 0) else 0.0
+    precision = vp / (vp + fp) if (vp + fp) else perfect_empty
+    recall = vp / (vp + fn) if (vp + fn) else perfect_empty
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+    total = vp + vn + fp + fn - counts["faux"]
+    accuracy = (vp + vn) / total if total else 0.0
+    return {"precision": precision, "recall": recall, "f1": f1, "exactitude": accuracy}
+
+
+def compute_metrics(gold: dict, predicted: dict | None) -> dict:
+    """Métriques d'un dossier. `predicted=None` : dossier non extrait ou invalide,
+    chaque valeur attendue compte alors comme manquée."""
+    predicted = predicted or {}
+    counts = empty_counts()
+    fields = {}
+    for field in SCORED_FIELDS:
+        result = compare_field(field, gold.get(field), predicted.get(field))
+        fields[field] = result
+        add_outcome(counts, result["outcome"])
+    return {"fields": fields, "counts": counts, **scores(counts)}

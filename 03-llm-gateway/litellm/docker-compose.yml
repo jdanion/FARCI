@@ -10,25 +10,18 @@ services:
     command: ["--config", "/app/config.yaml", "--port", "4000"]
     volumes:
       - ./config.yaml:/app/config.yaml:ro
-      - ./litellm_proxy_config.yaml:/app/litellm_proxy_config.yaml:ro
-      - litellm-data:/data
     ports:
-      - "4000:4000"
-    networks:
-      farci:
-        ipv4_address: ${GATEWAY_A_IP}
+      - "${GATEWAY_A_PORT:?GATEWAY_A_PORT manquant (config/network.env)}:4000"
     environment:
-      LITELLM_LOG: "DEBUG"
+      # Les runtimes, vus à travers l'accueil de la salle (config/network.env).
+      FARCI_RUNTIME_URL: ${FARCI_RUNTIME_URL:?FARCI_RUNTIME_URL manquante (REFERENCE_IP, config/network.env)}
+      # Scénario 04 : med-chaos n'existe que sur le runtime rejoué de la référence.
+      FARCI_CHAOS_RUNTIME_URL: ${REFERENCE_REPLAY_URL:?REFERENCE_REPLAY_URL manquante (REFERENCE_IP, config/network.env)}/v1
+      LITELLM_LOG: "INFO"
       LITELLM_LOCAL_MODEL_COST_MAP: "True"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=3)"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-volumes:
-  litellm-data:
-
-networks:
-  farci:
-    external: true

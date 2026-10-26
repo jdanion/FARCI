@@ -1,39 +1,35 @@
-# FARCI — Réseau, Caddy, dashboard, health-aggregator (FARCI §4, §12-§14)
+# FARCI — équipe 1 : l'accueil (Caddy) et l'agrégateur de santé (FARCI §12-§14)
+#
+# Le même Caddyfile et le même agrégateur tournent sur le Pi du formateur
+# (reference/docker-compose.yml) : c'est l'accueil de la salle. Celui de
+# l'équipe 1 est identique ; il est testé et projeté, mais la salle ne
+# dépend pas de lui.
+#
+#   ./bin/farci up 01-network-dashboard               Caddy + agrégateur
+#   ./bin/farci up 01-network-dashboard uptime-kuma   bonus : Uptime Kuma
+#
+# Les variables UP_* (amonts de chaque route) sont calculées par
+# `scripts/services.py upstreams` et exportées par ./bin/farci up.
 
 services:
   caddy:
     image: caddy:${CADDY_VERSION}
     container_name: farci-caddy
     restart: unless-stopped
+    environment:
+      UP_PASSERELLE: ${UP_PASSERELLE:?UP_PASSERELLE manquant, démarrer avec ./bin/farci up}
+      UP_INFERENCE: ${UP_INFERENCE:?UP_INFERENCE manquant, démarrer avec ./bin/farci up}
+      UP_DOCUMENTS: ${UP_DOCUMENTS:?UP_DOCUMENTS manquant, démarrer avec ./bin/farci up}
+      UP_OBSERVABILITE: ${UP_OBSERVABILITE:?UP_OBSERVABILITE manquant, démarrer avec ./bin/farci up}
+      UP_EDS: ${UP_EDS:?UP_EDS manquant, démarrer avec ./bin/farci up}
     ports:
-      - "80:80"
-      - "443:443"
+      - "${CADDY_PORT:?CADDY_PORT manquant (config/network.env)}:80"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
-    networks:
-      farci:
-        ipv4_address: ${CADDY_IP}
     healthcheck:
-      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  uptime-kuma:
-    image: louislam/uptime-kuma:${UPTIME_KUMA_VERSION}
-    container_name: farci-uptime-kuma
-    restart: unless-stopped
-    ports:
-      - "3001:3001"
-    volumes:
-      - uptime-kuma-data:/app/data
-    networks:
-      farci:
-        ipv4_address: ${UPTIME_KUMA_IP}
-    healthcheck:
-      test: ["CMD", "node", "extra/check-http.js", "http://localhost:3001"]
+      test: ["CMD", "wget", "-qO-", "http://localhost/livez"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -42,27 +38,42 @@ services:
     image: python:${PYTHON_IMAGE_TAG}
     container_name: farci-health-aggregator
     restart: unless-stopped
-    working_dir: /app
-    command: python app.py
-    volumes:
-      - ./health-aggregator:/app:ro
-      - ../../config/services.yaml:/app/config/services.yaml:ro
+    # Le dépôt en lecture seule : registre, bascules et pannes de chaos
+    # visibles du tableau de la salle (/tableau).
+    working_dir: /farci/01-network-dashboard/health-aggregator
+    command: ["python", "app.py"]
+    # Les adresses des services à sonder : config/network.env, rien d'autre.
+    env_file:
+      - ../config/network.env
+    environment:
+      FARCI_ROOT: /farci
+      AGGREGATOR_LISTEN_PORT: "8081"
+      TABLEAU_STATE: /data/tableau.json
     ports:
-      - "8081:8081"
-    networks:
-      farci:
-        ipv4_address: ${HEALTH_AGGREGATOR_IP}
+      - "${HEALTH_AGGREGATOR_PORT:?HEALTH_AGGREGATOR_PORT manquant (config/network.env)}:8081"
+    volumes:
+      - ..:/farci:ro
+      - tableau-data:/data
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/healthz', timeout=2)"]
-      interval: 5s
-      timeout: 3s
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/livez', timeout=2)"]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
+  # Brique bonus : ne démarre que si on la nomme
+  #   ./bin/farci up 01-network-dashboard uptime-kuma
+  uptime-kuma:
+    profiles: [bonus]
+    image: louislam/uptime-kuma:${UPTIME_KUMA_VERSION}
+    container_name: farci-uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "${UPTIME_KUMA_PORT:?UPTIME_KUMA_PORT manquant (config/network.env)}:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+
 volumes:
+  tableau-data:
   caddy-data:
   caddy-config:
   uptime-kuma-data:
-
-networks:
-  farci:
-    external: true

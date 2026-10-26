@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
-# FARCI — scénario 02 : arrêt du runtime secondaire
+# FARCI — scénario 02 : plus aucun runtime
 #
-# Attendu : Kuma CLINICAL AI PIPELINE 🔴, gateway 503 documenté
+# Action    : l'accueil ne sert plus AUCUN runtime (équipe ni référence).
+# Attendu   : la passerelle renvoie une erreur documentée, le pipeline compte
+#             des erreurs d'appel et n'écrit rien ; le tableau dit ce qui manque.
+# Leçon     : la résilience a une profondeur ; il faut savoir où elle s'arrête.
+
+SCENARIO_TITLE="Plus aucun runtime (principal et secours)"
+SCENARIO_ATTENDU="erreur explicite, aucun dossier écrit"
 
 chaos_scenario_apply() {
-  local duration="${1:-}"
-  info "arrêt du runtime secondaire (llama.cpp)..."
-  docker stop farci-llamacpp
-  echo '{"scenario":"02","action":"stop","target":"farci-llamacpp"}' > "$CHAOS_STATE_FILE"
+  chaos_route block inference
+}
 
-  if [[ -n "$duration" ]]; then
-    info "auto-revert dans ${duration}s..."
-    sleep "$duration"
-    chaos_scenario_revert
-  fi
+chaos_scenario_check() {
+  local code
+  code="$(chaos_chat_code)"
+  chaos_expect "la passerelle refuse proprement (HTTP $code, pas 200)" test "$code" != 200
 }
 
 chaos_scenario_revert() {
-  info "redémarrage du runtime secondaire..."
-  docker start farci-llamacpp
-  echo '{}' > "$CHAOS_STATE_FILE"
-  ok "runtime secondaire restauré"
+  chaos_route_clear inference
+  ok "runtimes rendus à l'accueil"
 }

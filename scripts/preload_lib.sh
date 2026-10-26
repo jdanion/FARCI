@@ -45,7 +45,6 @@ declare -a PRELOAD_GROUPS=(
   dashboard
   build_llamacpp
   models_ornith
-  models_qwen38
   models_ci
   inference_ollama
   inference_llamacpp
@@ -54,8 +53,10 @@ declare -a PRELOAD_GROUPS=(
   observability_phoenix
   observability_langfuse
   documents
+  build_eds_nlp
   evaluation
   clients
+  demo_flowise
   wheels
   manifest
   tools
@@ -73,6 +74,7 @@ declare -a PRELOAD_CORE_GROUPS=(
   gateway_litellm
   observability_phoenix
   documents
+  build_eds_nlp
   evaluation
   clients
   wheels
@@ -135,6 +137,47 @@ preload_docker_pull() {
   ok "image présente : $image"
 }
 
+# Télécharge une image de scripts/lib/images.sh PUIS la sauvegarde en .tar
+# dans offline/images/ : c'est ce .tar que l'on copie sur les postes sans
+# Internet (clé USB), où `docker load` la rend disponible.
+#   preload_image <clé>    (ex. preload_image docling)
+preload_image() {
+  local image file
+  image="$(farci_image "$1")" || return 1
+  # Les images farci/* ne se téléchargent pas : un groupe build_* les construit.
+  if [[ "$image" == farci/* ]]; then
+    debug "construite localement, pas de téléchargement : $image"
+    return 0
+  fi
+  file="$(printf '%s' "$image" | tr '/:' '__').tar"
+  preload_docker_pull "$image" || return 1
+  if [[ "${PRELOAD_SKIP_EXISTING:-0}" == "1" && -f "$FARCI_IMAGES_DIR/$file" ]]; then
+    debug "déjà sauvegardée : $file"
+    return 0
+  fi
+  preload_docker_save "$image" "$file"
+}
+
+# Télécharge les poids d'un modèle déclaré dans models/models.env.
+#   preload_model <PRÉFIXE>   (ex. ORNITH_1_5_9B_Q5KM -> _URL, _SHA256)
+# Le nom du fichier est celui de l'URL : c'est ce nom qu'attendent
+# llama.cpp, create-model.sh et verify-models.
+preload_model() {
+  local prefix="$1" url_var="${1}_URL" sha_var="${1}_SHA256" url sha dest
+  # shellcheck source=models/models.env
+  source "$FARCI_ROOT/models/models.env"
+  url="${!url_var:-}"
+  sha="${!sha_var:-}"
+  [[ -n "$url" ]] || { err "models/models.env : $url_var absent"; return 1; }
+  dest="$FARCI_MODELS_DIR/$(basename "$url")"
+  if [[ -f "$dest" && -z "$sha" && "${PRELOAD_SKIP_EXISTING:-0}" == "1" ]]; then
+    debug "déjà présent : $dest"
+    return 0
+  fi
+  [[ -n "$sha" ]] || warn "$sha_var vide : empreinte non vérifiée (elle sera inscrite au manifeste)"
+  preload_download "$url" "$dest" "$sha"
+}
+
 # Sauvegarde une image Docker dans le répertoire offline.
 #   preload_docker_save <image:tag> <nom_fichier>
 preload_docker_save() {
@@ -159,94 +202,85 @@ preload_docker_save() {
 
 group_gitops() {
   info "groupe : gitops"
-  preload_docker_pull "gitea/gitea:${GITEA_VERSION}"
-  preload_docker_pull "gitea/act_runner:${GITEA_ACT_RUNNER_VERSION}"
-  preload_docker_pull "postgres:${POSTGRES_VERSION}"
-  preload_docker_pull "redis:${REDIS_VERSION}"
+  preload_image gitea
+  preload_image act-runner
+  preload_image ci-runner
+  preload_image postgres
+  preload_image redis
 }
 
 group_dashboard() {
   info "groupe : dashboard"
-  preload_docker_pull "caddy:${CADDY_VERSION}"
-  preload_docker_pull "louislam/uptime-kuma:${UPTIME_KUMA_VERSION}"
+  preload_image caddy
+  preload_image python
+  preload_image uptime-kuma
 }
 
+# llama.cpp, compilé pour CETTE machine (GGML_NATIVE : les instructions de
+# son processeur). Le Dockerfile clone lui-même la version LLAMACPP_BUILD.
 group_build_llamacpp() {
-  info "groupe : build_llamacpp (compilation locale multi-arch)"
-  local src_dir="$FARCI_ROOT/02-inference/llamacpp"
-  local tarball="$FARCI_MODELS_DIR/llama.cpp-${LLAMACPP_BUILD}.tar.gz"
-  local tarball_sha="$FARCI_MODELS_DIR/llama.cpp-${LLAMACPP_BUILD}.tar.gz.sha256"
-
+  local image="farci/llamacpp:server-${LLAMACPP_BUILD}" dir="$FARCI_ROOT/02-inference/llamacpp"
+  info "groupe : build_llamacpp ($image, architecture $(uname -m))"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
-    printf '  [dry-run] buildx build --platform linux/amd64,linux/arm64 -t farci/llamacpp:server-%s\n' "$LLAMACPP_BUILD"
+    printf '  [dry-run] docker build -t %s %s\n' "$image" "$dir"
     return 0
   fi
+  local -a extra=()
+  read -r -a extra <<< "${FARCI_DOCKER_BUILD_ARGS:-}"
+  docker build -t "$image" --build-arg "LLAMACPP_BUILD=$LLAMACPP_BUILD" \
+    "${extra[@]}" -f "$dir/Dockerfile" "$dir" || { err "échec de la compilation llama.cpp"; return 1; }
+  preload_docker_save "$image" "llamacpp-server-${LLAMACPP_BUILD}.tar"
+}
 
-  # Télécharger les sources llama.cpp
-  local url="https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMACPP_BUILD}.tar.gz"
-  preload_download "$url" "$tarball"
-
-  # Vérifier le sha256 si le fichier .sha256 existe
-  if [[ -f "$tarball_sha" ]]; then
-    local expected_sha
-    expected_sha="$(cat "$tarball_sha")"
-    if ! echo "$expected_sha  $tarball" | sha256sum -c --quiet 2>/dev/null; then
-      err "sha256 mismatch pour llama.cpp source"
-      return 1
-    fi
+# Image du service EDS-NLP (équipe 4, doublure du Pi). Construite pour
+# l'architecture de CETTE machine : sur le Pi, elle sert aussi aux Mac
+# Apple Silicon (linux/arm64). FARCI_DOCKER_BUILD_ARGS : arguments
+# supplémentaires de docker build (proxy d'établissement, par exemple).
+group_build_eds_nlp() {
+  local dir="$FARCI_ROOT/04-clinical-documents/eds-nlp" image src
+  image="$(farci_image eds-nlp)" || return 1
+  src="$dir/vendor/eds-pseudo"
+  info "groupe : build_eds_nlp ($image, architecture $(uname -m))"
+  if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
+    printf '  [dry-run] git clone aphp/eds-pseudo @ %s ; docker build -t %s\n' "$EDS_PSEUDO_COMMIT" "$image"
+    return 0
   fi
-
-  # Compiler et sauvegarder l'image
-  if [[ -f "$src_dir/Dockerfile" ]]; then
-    docker buildx build \
-      --platform linux/amd64,linux/arm64 \
-      -t "farci/llamacpp:server-${LLAMACPP_BUILD}" \
-      -f "$src_dir/Dockerfile" \
-      --load \
-      "$FARCI_ROOT" || {
-      err "échec de la compilation llama.cpp"
-      return 1
-    }
-    preload_docker_save "farci/llamacpp:server-${LLAMACPP_BUILD}" "llamacpp-server-${LLAMACPP_BUILD}.tar"
-  else
-    warn "Dockerfile llama.cpp absent : $src_dir/Dockerfile"
-    warn "  → créer 02-inference/llamacpp/Dockerfile (phase 4)"
+  if [[ ! -d "$src/.git" ]]; then
+    rm -rf "$src"
+    git clone -q https://github.com/aphp/eds-pseudo "$src" || { err "clonage d'eds-pseudo impossible"; return 1; }
   fi
+  git -C "$src" fetch -q origin 2>/dev/null || true
+  git -C "$src" checkout -q --detach "$EDS_PSEUDO_COMMIT" \
+    || { err "commit eds-pseudo introuvable : $EDS_PSEUDO_COMMIT"; return 1; }
+  local -a extra=()
+  read -r -a extra <<< "${FARCI_DOCKER_BUILD_ARGS:-}"
+  docker build -t "$image" \
+    --build-arg "PYTHON_IMAGE_TAG=$PYTHON_IMAGE_TAG" \
+    --build-arg "EDSNLP_VERSION=$EDSNLP_VERSION" \
+    "${extra[@]}" "$dir" || { err "échec de la construction de $image"; return 1; }
+  preload_docker_save "$image" "$(printf '%s' "$image" | tr '/:' '__').tar"
 }
 
 group_models_ornith() {
-  info "groupe : models_ornith"
-  # Les URLs et sha256 sont dans models/models.env
-  # Pour l'instant, on vérifie juste que le fichier existe
-  if [[ ! -f "$FARCI_ROOT/models/models.env" ]]; then
-    warn "models/models.env absent — les URLs des poids ne sont pas encore définies"
-    return 0
-  fi
-  # Le téléchargement effectif sera fait par lock-models.sh en phase online
-  info "  → utiliser scripts/lock-models.sh pour télécharger les poids Ornith"
+  info "groupe : models_ornith (modèle principal, ~6,5 Go)"
+  preload_model ORNITH_1_5_9B_Q5KM
 }
 
+# Hors atelier (deux stacks par brique) : jamais dans un mode, seulement
+# ./preload.sh --only models_qwen38.
 group_models_qwen38() {
-  info "groupe : models_qwen38"
-  if [[ ! -f "$FARCI_ROOT/models/models.env" ]]; then
-    warn "models/models.env absent — les URLs des poids ne sont pas encore définies"
-    return 0
-  fi
-  info "  → utiliser scripts/lock-models.sh pour télécharger les poids Qwen3.8"
+  info "groupe : models_qwen38 (hors atelier, ~16,5 Go)"
+  preload_model QWEN3_8_27B_Q4KM
 }
 
 group_models_ci() {
-  info "groupe : models_ci"
-  if [[ ! -f "$FARCI_ROOT/models/models.env" ]]; then
-    warn "models/models.env absent — les URLs des poids ne sont pas encore définies"
-    return 0
-  fi
-  info "  → utiliser scripts/lock-models.sh pour télécharger les poids Qwen3.5-2B"
+  info "groupe : models_ci (modèle de secours et de CI, ~1,2 Go)"
+  preload_model QWEN3_5_2B_Q4KM
 }
 
 group_inference_ollama() {
   info "groupe : inference_ollama"
-  preload_docker_pull "ollama/ollama:${OLLAMA_VERSION}"
+  preload_image ollama
 }
 
 group_inference_llamacpp() {
@@ -257,38 +291,63 @@ group_inference_llamacpp() {
 
 group_gateway_litellm() {
   info "groupe : gateway_litellm"
-  preload_docker_pull "ghcr.io/berriai/litellm:${LITELLM_VERSION}"
+  preload_image litellm
 }
 
 group_gateway_bifrost() {
   info "groupe : gateway_bifrost"
-  preload_docker_pull "ghcr.com/MaximFaq/bifrost:${BIFROST_VERSION}"
+  preload_image bifrost
 }
 
 group_observability_phoenix() {
   info "groupe : observability_phoenix"
-  preload_docker_pull "arizephoenix/phoenix:${PHOENIX_VERSION}"
+  preload_image phoenix
 }
 
 group_observability_langfuse() {
   info "groupe : observability_langfuse"
-  preload_docker_pull "langfuse/langfuse:${LANGFUSE_VERSION}"
+  preload_image langfuse
+  preload_image postgres
+  preload_image otel-collector
 }
 
 group_documents() {
   info "groupe : documents"
-  preload_docker_pull "ds4sd/docling-serve:${DOCLING_SERVE_VERSION}"
+  preload_image docling
 }
 
 group_evaluation() {
   info "groupe : evaluation"
-  preload_docker_pull "mlflow/mlflow:${MLFLOW_VERSION}"
+  preload_image mlflow
 }
 
 group_clients() {
   info "groupe : clients"
-  preload_docker_pull "ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}"
-  preload_docker_pull "flowiseai/flowise:${FLOWISE_VERSION}"
+  preload_image open-webui
+}
+
+# Démonstration Flowise du formateur (--all seulement).
+group_demo_flowise() {
+  info "groupe : demo_flowise"
+  preload_image flowise
+}
+
+group_arcane() {
+  info "groupe : arcane (images construites sur la base python)"
+  preload_image python
+}
+
+# Pile de référence (reference/docker-compose.yml) : à lancer sur le Pi
+# lui-même. `docker pull` tire l'architecture de la machine (arm64 sur un
+# Pi) : les .tar produits ici ne servent qu'au Pi, pas aux portables x86.
+group_reference() {
+  info "groupe : reference (machine du formateur, architecture $(uname -m))"
+  local key
+  for key in "${FARCI_IMAGES_REFERENCE[@]}" ollama; do
+    preload_image "$key" || return 1
+  done
+  # Docling (profil documents) : image lourde, arm64 à vérifier sur le Pi.
+  preload_image docling || warn "Docling indisponible pour $(uname -m) : la route documents restera aux équipes"
 }
 
 group_wheels() {
@@ -305,13 +364,46 @@ group_wheels() {
     2>/dev/null || warn "pip download a échoué — vérifier requirements.in"
 }
 
+# Ce qu'un poste étudiant précharge (./preload.sh, mode poste) : la brique
+# de SON équipe, limitée à ce que la machine pourra servir le jour J.
+# Deux stacks au plus par brique ; Ollama + modèle 9B et Langfuse sont
+# réservés aux grosses configurations (scripts/lib/machine.sh).
+poste_groups() {
+  local team="$1" profil="$2"
+  case "$team" in
+    0) printf '%s\n' gitops ;;
+    1) printf '%s\n' dashboard ;;
+    2) if [[ "$profil" == grosse ]]; then printf '%s\n' inference_ollama models_ornith models_ci
+       else printf '%s\n' build_llamacpp models_ci; fi ;;
+    3) printf '%s\n' gateway_litellm gateway_bifrost ;;
+    4) printf '%s\n' documents build_eds_nlp ;;
+    5) if [[ "$profil" == grosse ]]; then printf '%s\n' observability_phoenix observability_langfuse
+       else printf '%s\n' observability_phoenix; fi ;;
+    6) printf '%s\n' evaluation ;;
+    7) printf '%s\n' clients ;;
+    8) printf '%s\n' arcane ;;
+    *) return 1 ;;
+  esac
+}
+
+# Pour les étudiants arrivés sans rien : wheels Python de toutes les
+# plateformes, servies par l'accueil du Pi (./bin/farci partage).
+group_partage() {
+  info "groupe : partage"
+  if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
+    printf '  [dry-run] ./bin/farci partage wheels\n'
+    return 0
+  fi
+  "$FARCI_ROOT/bin/farci" partage wheels || warn "wheels du partage incomplètes : ./bin/farci partage wheels"
+}
+
 group_manifest() {
   info "groupe : manifest"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
     printf '  [dry-run] générer offline/MANIFEST.sha256\n'
     return 0
   fi
-  "$FARCI_ROOT/scripts/gen-manifest.sh"
+  "$FARCI_ROOT/scripts/cmd/gen-manifest.sh"
 }
 
 group_tools() {

@@ -16,14 +16,14 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-LITELLM_URL="${GATEWAY_A_IP:-192.168.50.30}:4000"
+LITELLM_URL="${GATEWAY_A_URL:?GATEWAY_A_IP/GATEWAY_A_PORT manquants : voir config/network.env}"
 
 section "FARCI — bootstrap clés LiteLLM"
 
 # Clé standard (10 RPM, étudiants)
 STANDARD_KEY="sk-standard-$(openssl rand -hex 12)"
 info "création de la clé standard..."
-curl -sf -X POST "http://$LITELLM_URL/key/generate" \
+curl -sf -X POST "$LITELLM_URL/key/generate" \
   -H "Authorization: Bearer sk-priority-placeholder" \
   -H "Content-Type: application/json" \
   -d "{
@@ -34,7 +34,7 @@ curl -sf -X POST "http://$LITELLM_URL/key/generate" \
 # Clé priority (120 RPM, formateur)
 PRIORITY_KEY="sk-priority-$(openssl rand -hex 12)"
 info "création de la clé priority..."
-curl -sf -X POST "http://$LITELLM_URL/key/generate" \
+curl -sf -X POST "$LITELLM_URL/key/generate" \
   -H "Authorization: Bearer sk-priority-placeholder" \
   -H "Content-Type: application/json" \
   -d "{

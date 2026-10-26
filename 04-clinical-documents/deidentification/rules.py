@@ -50,7 +50,10 @@ def pseudonymize_dates(text: str, mapping: MappingStore) -> str:
 # --------------------------------------------------------------------------
 
 IPP_PATTERN = r'\b\d{13}\b'
-NIR_PATTERN = r'\b\d{1,2}\s\d{2}\s\d{2}\s\d{3}\s\d{3}\s\d{3}\s\d{2}\b'
+# NIR : 1 chiffre de sexe puis des groupes séparés par des espaces, clé finale
+# sur 2 chiffres. Couvre le format réel (1 85 05 78 006 084 36) et celui du
+# dataset synthétique (1 23 45 6789 0123 456 78).
+NIR_PATTERN = r'\b[12](?:\s\d{2,4}){4,5}\s\d{2}\b'
 SSN_PATTERN = r'\b\d{3}\s\d{2}\s\d{2}\s\d{3}\s\d{3}\s\d{3}\b'
 
 
@@ -183,6 +186,24 @@ FRENCH_LAST_NAMES = {
 }
 
 
+# Un nom qui suit une étiquette explicite (« Patient : », « Nom : »...) est
+# remplacé en entier, qu'il figure ou non dans les dictionnaires ci-dessus :
+# un dictionnaire ne connaît jamais tous les noms (Lemoine, Garcia...).
+LABELED_NAME_PATTERN = (
+    r'^(?P<label>[ \t]*(?:Patient|Patiente|Nom|Prénom|Nom de naissance)[ \t]*:[ \t]*)'
+    r'(?P<value>[^\n\[]+?)[ \t]*$'
+)
+
+
+def pseudonymize_labeled_names(text: str, mapping: MappingStore) -> str:
+    """Remplace la valeur des lignes « Patient : Prénom Nom » par [NOM_XXX]."""
+    def replacer(m):
+        key = f"NOM_{mapping.get_counter('NOM')}"
+        mapping.add(key, m.group("value"))
+        return f"{m.group('label')}[{key}]"
+    return re.sub(LABELED_NAME_PATTERN, replacer, text, flags=re.MULTILINE)
+
+
 def pseudonymize_names(text: str, mapping: MappingStore) -> str:
     """Remplace les noms et prénoms par [PRENOM_XXX], [NOM_XXX]."""
     # Prénoms (mots en minuscules dans le dictionnaire)
@@ -216,5 +237,6 @@ def pseudonymize_text(text: str, mapping: MappingStore) -> str:
     text = pseudonymize_identifiers(text, mapping)
     text = pseudonymize_contacts(text, mapping)
     text = pseudonymize_addresses(text, mapping)
+    text = pseudonymize_labeled_names(text, mapping)
     text = pseudonymize_names(text, mapping)
     return text

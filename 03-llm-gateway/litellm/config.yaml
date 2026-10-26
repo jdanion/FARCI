@@ -1,45 +1,50 @@
-# FARCI — configuration LiteLLM proxy
+# FARCI — configuration LiteLLM (passerelle A, équipe 3)
 #
-# LiteLLM est la gateway LLM. Elle :
-# 1. Masque les vrais noms de modèles
-# 2. Gère le rate limiting
-# 3. Gère le fallback (primaire -> secondaire)
-# 4. Coupe reasoning_content
+# LiteLLM :
+#   1. expose UN nom logique, `med-extraction`, au format OpenAI ;
+#   2. masque le runtime : il appelle l'accueil de la salle (/runtime/v1),
+#      qui sert le runtime de l'équipe 2 s'il est sain, sinon celui de la
+#      référence (runtime rejoué ou modèle de secours) ;
+#   3. réessaie, et bascule sur `med-extraction-lite` si le principal échoue.
+#
+# Aucune adresse ici : FARCI_RUNTIME_URL est transmise par docker-compose.yml,
+# construite depuis config/network.env. Ollama, llama.cpp et le runtime
+# rejoué parlent tous l'API OpenAI et servent tous `med-extraction` : un seul
+# type de fournisseur (openai/) suffit, c'est l'intérêt d'un contrat commun.
+#
+# Bonus (clés virtuelles, quotas par clé, scénario 03) : LiteLLM exige une
+# base PostgreSQL ; voir 03-llm-gateway/TUTORIAL.md.
 
 model_list:
   - model_name: med-extraction
     litellm_params:
-      model: ollama/ornith-1.5-9b-q5km
-      api_base: http://192.168.50.20:8080
-      api_key: ollama
-      num_retries: 2
-      timeout: 60
+      model: openai/med-extraction
+      api_base: os.environ/FARCI_RUNTIME_URL
+      api_key: farci
+      timeout: 300
 
   - model_name: med-extraction-lite
     litellm_params:
-      model: ollama/qwen3.5-2b-q4km
-      api_base: http://192.168.50.20:8080
-      api_key: ollama
+      model: openai/med-extraction-lite
+      api_base: os.environ/FARCI_RUNTIME_URL
+      api_key: farci
+      timeout: 300
 
-  - model_name: med-extraction-max
+  # Scénario 04 : modèle de test volontairement non conforme. Seul le runtime
+  # rejoué de la référence le sert : on l'appelle donc directement, sans
+  # passer par l'accueil (qui pourrait choisir le runtime de l'équipe).
+  - model_name: med-chaos
     litellm_params:
-      model: ollama/qwen3.8-27b-q4km
-      api_base: http://192.168.50.20:8080
-      api_key: ollama
+      model: openai/med-chaos
+      api_base: os.environ/FARCI_CHAOS_RUNTIME_URL
+      api_key: farci
 
 litellm_settings:
   drop_params: true
-  set_verbose: true
-  success_callback: ["langfuse"]
-  failure_callback: ["langfuse"]
-
-general_settings:
-  master_key: sk-priority-placeholder
-  database_url: "sqlite:////data/litellm.db"
-  store_model_in_db: true
+  num_retries: 1
+  request_timeout: 300
 
 router_settings:
-  routing_strategy: "least-busy"
-  num_retries: 2
-  timeout: 60
-  retry_after: 5
+  routing_strategy: simple-shuffle
+  fallbacks:
+    - med-extraction: [med-extraction-lite]

@@ -6,6 +6,11 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  sed -n '2,/^$/p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'
+  exit 0
+fi
+
 FARCI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 export FARCI_ROOT
 
@@ -35,11 +40,10 @@ if [[ ! -d "$MODELS_DIR" ]]; then
   exit 1
 fi
 
-# Fichiers attendus (GGUF)
+# Fichiers attendus (GGUF) : le 9B (Ollama, grosse configuration) et le 2B
+# (llama.cpp, secours, CI). Le 27B est hors atelier.
 EXPECTED_GGUF=(
   "Ornith-1.5-9B-Q5_K_M.gguf"
-  "Ornith-1.5-9B-Q4_K_M.gguf"
-  "Qwen3.8-27B-Q4_K_M.gguf"
   "Qwen3.5-2B-Q4_K_M.gguf"
 )
 

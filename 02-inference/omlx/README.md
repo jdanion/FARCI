@@ -1,5 +1,9 @@
 # FARCI — oMLX (option C, Mac uniquement)
 
+> **Hors atelier.** Deux stacks par brique : Ollama (grosse configuration) et
+> llama.cpp (tout poste). oMLX n'est plus proposé au casting ni préchargé ; ce
+> dossier reste pour qui veut l'essayer sur un Mac, hors séance.
+
 ## Qu'est-ce que oMLX ?
 
 oMLX est un runtime d'inférence optimisé pour Apple Silicon (Metal).

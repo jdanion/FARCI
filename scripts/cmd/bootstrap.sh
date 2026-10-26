@@ -15,7 +15,12 @@
 #       charges restent donc valides, sans que le dépôt stocke des Go)
 #   4. crée .env et config/*.env à partir des exemples, sans écraser l'existant
 #   5. initialise git si nécessaire
-#   6. lance le lint
+#   6. corrige les permissions des scripts
+#   7. crée l'environnement Python .venv/ et l'installe HORS LIGNE depuis
+#      offline/wheels/ (pip refuse souvent d'installer dans le Python système)
+#      ou, pour un étudiant arrivé sans rien, depuis le Pi de la salle :
+#      FARCI_WHEELS_URL=http://<Pi>/partage/wheels/ ./bin/farci bootstrap
+#   8. lance le lint
 #
 # Idempotent : peut être relancé sans risque.
 
@@ -27,7 +32,7 @@ CHECK_ONLY=0
 for arg in "$@"; do
   case "$arg" in
     --check) CHECK_ONLY=1 ;;
-    -h|--help) sed -n '2,22p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,24p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'; exit 0 ;;
     *) die "option inconnue : $arg" ;;
   esac
 done
@@ -45,8 +50,8 @@ for tool in docker python3 curl tar sha256sum git; do
     REQUIRED_OK=0
   fi
 done
-if have docker && ! docker info >/dev/null 2>&1; then
-  err "le démon Docker ne répond pas — le started service docker est-il lancé ?"
+if have docker && [[ -n "$(docker_diagnose)" ]]; then
+  err "$(docker_diagnose)"
   REQUIRED_OK=0
 fi
 if (( CHECK_ONLY )); then
@@ -132,8 +137,12 @@ Il n'est JAMAIS versionné : un modèle pèse 6 à 18 Go.
 
 Une seule fois, avec Internet, AVANT le workshop :
 
-    ./preload.sh --core
-    ./verify-airgap.sh
+    ./preload.sh --equipe <N>      poste étudiant : la brique de SON équipe,
+                                   selon la machine (ou FARCI_EQUIPE dans
+                                   config/workshop.env)
+    ./verify-airgap.sh --equipe <N>
+
+Poste du formateur : ./preload.sh --core (toutes les briques cœur, ~26 Go).
 
 Le jour J, rien ne doit être téléchargé. Si quelque chose tente de sortir sur
 Internet, c'est un défaut : `./verify-airgap.sh` le signale.
@@ -182,7 +191,37 @@ else
   info "tous les scripts sont exécutables"
 fi
 
-section "7. lint"
+section "7. environnement Python (.venv)"
+# Hors ligne : uniquement depuis offline/wheels/ (préparé par preload.sh).
+REQ="$FARCI_ROOT/requirements.txt"
+[[ -r "$REQ" ]] || REQ="$FARCI_ROOT/requirements.in"
+WHEELS="$FARCI_ROOT/offline/wheels"
+PIP_SOURCE=(--find-links "$WHEELS")
+if ! compgen -G "$WHEELS/*.whl" >/dev/null && [[ -n "${FARCI_WHEELS_URL:-}" ]]; then
+  # Les wheels du Pi de la salle (./bin/farci partage wheels), en HTTP simple.
+  WHEELS="$FARCI_WHEELS_URL"
+  wheels_host="${FARCI_WHEELS_URL#*://}"; wheels_host="${wheels_host%%/*}"; wheels_host="${wheels_host%%:*}"
+  PIP_SOURCE=(--find-links "$WHEELS" --trusted-host "$wheels_host")
+fi
+# bin/farci n'utilise .venv/ qu'une fois le témoin .farci-ok posé : un .venv/
+# incomplet ne doit jamais masquer un Python système qui fonctionne.
+if [[ -f "$FARCI_ROOT/.venv/.farci-ok" ]]; then
+  info ".venv/ déjà équipé"
+elif python3 -c "import pydantic" 2>/dev/null && [[ ! -d "$FARCI_ROOT/.venv" ]]; then
+  info "le Python du système a déjà les dépendances : pas de .venv/ nécessaire"
+elif [[ -z "${FARCI_WHEELS_URL:-}" ]] && ! compgen -G "$WHEELS/*.whl" >/dev/null; then
+  warn "offline/wheels/ est vide : ./preload.sh --only wheels (avec Internet, sur CETTE machine)"
+  info "ou, dans la salle : FARCI_WHEELS_URL=http://<Pi>/partage/wheels/ ./bin/farci bootstrap"
+elif ! { [[ -x "$FARCI_ROOT/.venv/bin/python3" ]] || python3 -m venv "$FARCI_ROOT/.venv"; }; then
+  warn "python3 -m venv a échoué : installer python3-venv AVANT l'atelier (sudo apt install python3-venv)"
+elif "$FARCI_ROOT/.venv/bin/python3" -m pip install -q --no-index "${PIP_SOURCE[@]}" -r "$REQ"; then
+  touch "$FARCI_ROOT/.venv/.farci-ok"
+  ok "dépendances Python installées hors ligne dans .venv/ ($(basename "$REQ"))"; changed
+else
+  warn "installation hors ligne incomplète depuis $WHEELS : ./bin/farci verify-wheels"
+fi
+
+section "8. lint"
 if "$FARCI_ROOT/bin/farci" lint --quiet; then
   ok "dépôt conforme"
 else
@@ -199,8 +238,8 @@ cat <<'NEXT'
 
   Prochaines étapes selon votre rôle :
 
-    équipe 0 (GitOps)       cat 00-gitops/TUTORIAL.md      (arrive en phase 2)
-    préparation air-gap     ./preload.sh --core             (arrive en phase 1)
+    lire sa fiche d'équipe   ./bin/farci read <équipe>
+    préparation air-gap     ./preload.sh --equipe <équipe>   (formateur : --core)
     développement           ./bin/farci doctor
     suivre la construction  ./bin/farci status --watch
 

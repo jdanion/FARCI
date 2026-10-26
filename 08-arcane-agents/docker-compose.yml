@@ -9,85 +9,82 @@ services:
       context: ./arcane-agent
       dockerfile: Dockerfile
       args:
+        PYTHON_IMAGE_TAG: ${PYTHON_IMAGE_TAG:?PYTHON_IMAGE_TAG manquant (versions.env)}
         TARGET_SERVICE: ollama
     container_name: farci-agent-ollama
     restart: unless-stopped
     environment:
       TARGET_SERVICE: ollama
-      TARGET_URL: http://192.168.50.20:8080
+      TARGET_URL: http://${INFERENCE_A_IP:?INFERENCE_A_IP manquant (config/network.env)}:${INFERENCE_A_PORT:?INFERENCE_A_PORT manquant}/v1/models
       CHECK_INTERVAL: "30"
       ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
-    networks:
-      - farci
 
   agent-llamacpp:
     build:
       context: ./arcane-agent
       dockerfile: Dockerfile
       args:
+        PYTHON_IMAGE_TAG: ${PYTHON_IMAGE_TAG:?PYTHON_IMAGE_TAG manquant (versions.env)}
         TARGET_SERVICE: llamacpp
     container_name: farci-agent-llamacpp
     restart: unless-stopped
     environment:
       TARGET_SERVICE: llamacpp
-      TARGET_URL: http://192.168.50.21:8081
+      TARGET_URL: http://${INFERENCE_B_IP:?INFERENCE_B_IP manquant (config/network.env)}:${INFERENCE_B_PORT:?INFERENCE_B_PORT manquant}/health
       CHECK_INTERVAL: "30"
       ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
-    networks:
-      - farci
 
   agent-gateway:
     build:
       context: ./arcane-agent
       dockerfile: Dockerfile
       args:
+        PYTHON_IMAGE_TAG: ${PYTHON_IMAGE_TAG:?PYTHON_IMAGE_TAG manquant (versions.env)}
         TARGET_SERVICE: gateway
     container_name: farci-agent-gateway
     restart: unless-stopped
     environment:
       TARGET_SERVICE: gateway
-      TARGET_URL: http://192.168.50.15/v1
+      TARGET_URL: http://${REFERENCE_IP:?REFERENCE_IP manquant (config/network.env)}:${ENTRY_PORT:?ENTRY_PORT manquant}/healthz
       CHECK_INTERVAL: "30"
       ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
-    networks:
-      - farci
 
   agent-docling:
     build:
       context: ./arcane-agent
       dockerfile: Dockerfile
       args:
+        PYTHON_IMAGE_TAG: ${PYTHON_IMAGE_TAG:?PYTHON_IMAGE_TAG manquant (versions.env)}
         TARGET_SERVICE: docling
     container_name: farci-agent-docling
     restart: unless-stopped
     environment:
       TARGET_SERVICE: docling
-      TARGET_URL: http://192.168.50.40:5001
+      TARGET_URL: http://${DOCLING_IP:?DOCLING_IP manquant (config/network.env)}:${DOCLING_PORT:?DOCLING_PORT manquant}/health
       CHECK_INTERVAL: "30"
       ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
-    networks:
-      - farci
 
   agent-mlflow:
     build:
       context: ./arcane-agent
       dockerfile: Dockerfile
       args:
+        PYTHON_IMAGE_TAG: ${PYTHON_IMAGE_TAG:?PYTHON_IMAGE_TAG manquant (versions.env)}
         TARGET_SERVICE: mlflow
     container_name: farci-agent-mlflow
     restart: unless-stopped
     environment:
       TARGET_SERVICE: mlflow
-      TARGET_URL: http://192.168.50.50:5000
+      TARGET_URL: http://${MLFLOW_IP:?MLFLOW_IP manquant (config/network.env)}:${MLFLOW_PORT:?MLFLOW_PORT manquant}/health
       CHECK_INTERVAL: "30"
       ALERT_WEBHOOK: ${ALERT_WEBHOOK_URL:-}
-    networks:
-      - farci
 
   webhook-receiver:
     build:
       context: ./webhook
       dockerfile: Dockerfile
+      args:
+        PYTHON_IMAGE_TAG: ${PYTHON_IMAGE_TAG:?PYTHON_IMAGE_TAG manquant (versions.env)}
     container_name: farci-webhook-receiver
     restart: unless-stopped
     ports:
@@ -98,9 +95,3 @@ services:
     volumes:
       - ./gitops:/app/gitops:ro
       - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - farci
-
-networks:
-  farci:
-    external: true

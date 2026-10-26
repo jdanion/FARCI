@@ -17,6 +17,14 @@ FARCI_BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FARCI_ROOT="$(cd "$FARCI_BIN_DIR/.." && pwd)"
 export FARCI_ROOT
 
+# Environnement Python du dépôt (créé par ./bin/farci bootstrap) : prioritaire
+# une fois ses dépendances installées (témoin .venv/.farci-ok). Sur Raspberry
+# Pi OS ou avec le Python de Homebrew, `pip install` dans le Python du système
+# est refusé (« externally-managed-environment »).
+if [[ -f "$FARCI_ROOT/.venv/.farci-ok" && ":$PATH:" != *":$FARCI_ROOT/.venv/bin:"* ]]; then
+  export PATH="$FARCI_ROOT/.venv/bin:$PATH"
+fi
+
 # shellcheck source=scripts/lib/common.sh
 source "$FARCI_ROOT/scripts/lib/common.sh"
 # shellcheck source=scripts/dev-env.sh

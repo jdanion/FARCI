@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FARCI">
+<meta name="theme-color" content="#0b1020">
+<title>FARCI — tableau de la salle</title>
+<!--
+  FARCI — le tableau de la salle, pour l'écran projeté (iPad, navigateur).
+  Servi par l'agrégateur de santé : http://<Pi>/  (ou /tableau).
+  Données : /tableau/etat, toutes les 3 s. Aucune ressource externe (air-gap).
+-->
+<style>
+  :root {
+    --fond: #0b1020; --carte: #141b33; --carte-2: #1b2445; --trait: #2a355f;
+    --texte: #eef2ff; --doux: #9aa6cf; --equipe: #22c55e; --equipe-fond: #0f2f1f;
+    --ref: #f59e0b; --ref-fond: #33270c; --panne: #ef4444; --panne-fond: #3a1216;
+    --inconnu: #64748b; --accent: #818cf8; --or: #facc15;
+    --r: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--fond); color: var(--texte);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow: hidden; }
+  body { display: grid; grid-template-rows: auto auto 1fr; gap: 1.2vh; padding: 1.6vh 1.6vw;
+    padding-left: max(1.6vw, env(safe-area-inset-left)); padding-right: max(1.6vw, env(safe-area-inset-right)); }
+
+  /* --- en-tête ------------------------------------------------------------ */
+  header { display: grid; grid-template-columns: auto 1fr auto; gap: 2vw; align-items: center; }
+  .marque { display: flex; align-items: baseline; gap: .8vw; }
+  .marque b { font-size: clamp(28px, 3.6vw, 64px); letter-spacing: .06em; }
+  .marque span { color: var(--doux); font-size: clamp(12px, 1.1vw, 20px); }
+  .phase { min-width: 0; }
+  .phase .nom { font-size: clamp(16px, 1.7vw, 30px); font-weight: 700; }
+  .phase .nom small { color: var(--doux); font-weight: 500; margin-left: .6vw; }
+  .frise { position: relative; height: 12px; margin-top: .8vh; border-radius: 99px; background: var(--carte-2); overflow: hidden; }
+  .frise i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--fond); }
+  .frise .fait { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--accent), #a78bfa);
+    border-radius: 99px; transition: width 1s ease; }
+  .heure { text-align: right; }
+  .heure b { font-size: clamp(28px, 3.4vw, 60px); font-variant-numeric: tabular-nums; }
+  .heure div { color: var(--doux); font-size: clamp(12px, 1vw, 18px); font-variant-numeric: tabular-nums; }
+
+  /* --- bandeaux ----------------------------------------------------------- */
+  .bandeaux { display: grid; gap: .8vh; }
+  .bandeau { display: none; padding: 1vh 1.4vw; border-radius: 12px; font-weight: 700;
+    font-size: clamp(14px, 1.4vw, 26px); }
+  .bandeau.on { display: block; }
+  .bandeau.chaos { background: var(--panne-fond); border: 2px solid var(--panne); animation: pulse 1.4s infinite; }
+  .bandeau.rescue { background: var(--ref-fond); border: 2px solid var(--ref); }
+  .bandeau.hors { background: #1f2937; border: 2px dashed var(--inconnu); }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(239, 68, 68, .25); } }
+
+  /* --- corps --------------------------------------------------------------- */
+  main { display: grid; grid-template-columns: 1.85fr 1fr; gap: 1.4vw; min-height: 0; }
+  .colonne { display: grid; gap: 1.4vh; min-height: 0; }
+  .gauche { grid-template-rows: auto 1fr auto; }
+  .droite { grid-template-rows: auto 1fr; }
+  .carte { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--r); padding: 1.6vh 1.4vw; min-height: 0; }
+  h2 { margin: 0 0 1vh; font-size: clamp(13px, 1.1vw, 20px); text-transform: uppercase; letter-spacing: .12em; color: var(--doux); }
+
+  .pipeline { display: grid; grid-template-columns: auto 1fr; gap: 1.6vw; align-items: center; }
+  .verdict { font-size: clamp(26px, 3.4vw, 64px); font-weight: 800; letter-spacing: .02em; }
+  .verdict.READY { color: var(--equipe); text-shadow: 0 0 24px rgba(34, 197, 94, .45); }
+  .verdict.DEGRADED { color: var(--ref); }
+  .verdict.NOT { color: var(--panne); }
+  .exigences { display: flex; gap: .6vw; flex-wrap: wrap; }
+  .exigence { flex: 1 1 0; min-width: 70px; padding: .9vh .6vw; border-radius: 12px; text-align: center;
+    background: var(--carte-2); border: 2px solid var(--trait); font-size: clamp(11px, .95vw, 17px); color: var(--doux);
+    transition: all .6s ease; }
+  .exigence.ok { background: var(--equipe-fond); border-color: var(--equipe); color: var(--texte); }
+  .detail { grid-column: 1 / -1; color: var(--doux); font-size: clamp(12px, 1vw, 18px); }
+
+  .tuiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2vh 1vw; align-content: start; }
+  .tuile { position: relative; border-radius: var(--r); padding: 1.6vh 1.2vw; background: var(--carte-2);
+    border: 2px solid var(--trait); display: grid; grid-template-columns: auto 1fr; gap: .2vh .9vw; align-items: center;
+    transition: background .6s ease, border-color .6s ease, transform .3s ease; }
+  .tuile > * { min-width: 0; }
+  .tuile .icone { grid-row: span 3; font-size: clamp(28px, 2.8vw, 52px); }
+  .tuile .titre { font-size: clamp(15px, 1.45vw, 28px); font-weight: 800; line-height: 1.1; overflow-wrap: anywhere; }
+  .tuile .qui { color: var(--doux); font-size: clamp(11px, .95vw, 17px); }
+  .etat { justify-self: start; margin-top: .4vh; padding: .3vh .7vw; border-radius: 99px; font-weight: 700; white-space: nowrap;
+    font-size: clamp(12px, 1vw, 18px); }
+  .tuile.equipe { background: var(--equipe-fond); border-color: var(--equipe); }
+  .tuile.equipe .etat { background: var(--equipe); color: #052e16; }
+  .tuile.reference, .tuile.partiel { background: var(--ref-fond); border-color: var(--ref); }
+  .tuile.reference .etat, .tuile.partiel .etat { background: var(--ref); color: #3a2503; }
+  .tuile.panne { background: var(--panne-fond); border-color: var(--panne); }
+  .tuile.panne .etat { background: var(--panne); color: #fff; }
+  .tuile.inconnu .etat { background: var(--inconnu); color: #fff; }
+  .tuile.flash { animation: flash 1.6s ease; }
+  @keyframes flash { 0% { transform: scale(1); } 20% { transform: scale(1.06); box-shadow: 0 0 0 10px rgba(34, 197, 94, .35); }
+    100% { transform: scale(1); box-shadow: none; } }
+
+  .bonus { display: flex; flex-wrap: wrap; gap: .6vw; align-items: center; }
+  .bonus h2 { margin: 0 1vw 0 0; }
+  .puce { padding: .5vh .9vw; border-radius: 99px; border: 1px dashed var(--trait); color: var(--doux);
+    font-size: clamp(11px, .95vw, 17px); }
+  .puce.equipe { border: 1px solid var(--equipe); background: var(--equipe-fond); color: var(--texte); }
+
+  .classement { display: grid; gap: 1vh; }
+  .rang { display: grid; grid-template-columns: 2.2em 1fr auto; gap: .2vh .8vw; align-items: center; }
+  .rang .medaille { font-size: clamp(18px, 1.8vw, 34px); text-align: center; }
+  .rang .nom { font-weight: 700; font-size: clamp(14px, 1.25vw, 24px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rang .pts { font-weight: 800; font-size: clamp(16px, 1.5vw, 28px); font-variant-numeric: tabular-nums; color: var(--or); }
+  .rang .barre { grid-column: 2 / 4; height: 8px; background: var(--carte-2); border-radius: 99px; overflow: hidden; }
+  .rang .barre i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--or)); transition: width 1s ease; }
+  .rang .badges { grid-column: 2 / 4; color: var(--doux); font-size: clamp(11px, .9vw, 16px); }
+  .vide { color: var(--doux); font-style: italic; font-size: clamp(12px, 1vw, 18px); }
+
+  .fil { list-style: none; margin: 0; padding: 0; display: grid; gap: .8vh; overflow: hidden; }
+  .fil li { display: grid; grid-template-columns: 3.2em 1.6em 1fr auto; gap: .5vw; align-items: baseline;
+    font-size: clamp(13px, 1.1vw, 20px); animation: entre .6s ease; }
+  .fil time { color: var(--doux); font-variant-numeric: tabular-nums; }
+  .fil .plus { color: var(--or); font-weight: 800; }
+  @keyframes entre { from { opacity: 0; transform: translateX(20px); } }
+
+  /* --- célébrations -------------------------------------------------------- */
+  #confettis { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  .toast { position: fixed; left: 50%; bottom: 5vh; transform: translate(-50%, 160%); z-index: 6;
+    background: var(--carte); border: 2px solid var(--or); border-radius: 22px; padding: 2vh 2.4vw;
+    font-size: clamp(18px, 2.2vw, 40px); font-weight: 800; box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+    transition: transform .5s cubic-bezier(.2, 1.4, .4, 1), opacity .3s; max-width: 90vw; text-align: center;
+    opacity: 0; visibility: hidden; }
+  .toast.on { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
+  .toast small { display: block; color: var(--or); font-size: .7em; margin-top: .4vh; }
+  .ready { position: fixed; inset: 0; z-index: 7; display: none; place-items: center; text-align: center;
+    background: radial-gradient(circle, rgba(15, 47, 31, .96), rgba(11, 16, 32, .97)); }
+  .ready.on { display: grid; animation: apparait .5s ease; }
+  .ready b { display: block; font-size: clamp(40px, 7vw, 140px); color: var(--equipe); letter-spacing: .04em;
+    text-shadow: 0 0 40px rgba(34, 197, 94, .6); }
+  .ready span { font-size: clamp(18px, 2.2vw, 40px); color: var(--texte); }
+  @keyframes apparait { from { opacity: 0; transform: scale(.9); } }
+
+  .tuile, .puce { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .tuile:active, .puce:active { transform: scale(.98); }
+  .tuile .info { position: absolute; top: 1vh; right: .9vw; color: var(--doux); font-size: clamp(12px, 1vw, 18px); }
+
+  .fiche-fond { position: fixed; inset: 0; z-index: 9; display: none; place-items: center;
+    background: rgba(5, 8, 20, .78); padding: 3vh 3vw; }
+  .fiche-fond.on { display: grid; animation: apparait .25s ease; }
+  .fiche { width: min(1100px, 94vw); max-height: 92vh; overflow: auto; background: var(--carte);
+    border: 2px solid var(--trait); border-radius: 24px; padding: 2.6vh 2.4vw; position: relative; }
+  .fiche .tete { display: grid; grid-template-columns: auto 1fr auto; gap: 1.2vw; align-items: center; }
+  .fiche .tete .icone { font-size: clamp(40px, 4.5vw, 80px); }
+  .fiche .tete h3 { margin: 0; font-size: clamp(24px, 2.6vw, 48px); }
+  .fiche .tete .qui { color: var(--doux); font-size: clamp(14px, 1.2vw, 22px); }
+  .fiche .fermer { background: var(--carte-2); color: var(--texte); border: 1px solid var(--trait);
+    border-radius: 99px; font-size: clamp(16px, 1.4vw, 24px); padding: .6vh 1.2vw; }
+  .fiche p { font-size: clamp(16px, 1.45vw, 26px); line-height: 1.4; margin: 1.6vh 0 0; }
+  .fiche .analogie { color: var(--or); }
+  .fiche code { display: inline-block; margin-top: 1vh; padding: .6vh .8vw; border-radius: 10px;
+    background: var(--carte-2); font-size: clamp(14px, 1.15vw, 21px); }
+  .fiche h4 { margin: 2.4vh 0 1vh; color: var(--doux); text-transform: uppercase; letter-spacing: .1em;
+    font-size: clamp(12px, 1vw, 18px); }
+  .rendu { display: grid; grid-template-columns: 1fr auto; gap: 1vh 1vw; align-items: center;
+    padding: 1.2vh 1vw; border-radius: 14px; background: var(--carte-2); margin-bottom: 1vh;
+    font-size: clamp(14px, 1.2vw, 22px); }
+  .boutons { display: flex; flex-wrap: wrap; gap: .8vw; justify-content: flex-end; }
+  .bouton { display: inline-block; text-decoration: none; color: #0b1020; background: var(--equipe);
+    border-radius: 12px; padding: .9vh 1.2vw; font-weight: 800; font-size: clamp(14px, 1.15vw, 21px); border: 0; }
+  .bouton.ref { background: var(--ref); }
+  .bouton.test { background: var(--accent); color: #fff; }
+  .bouton[aria-disabled="true"] { background: var(--inconnu); color: #e2e8f0; pointer-events: none; }
+  .resultat { margin: 1.2vh 0 0; padding: 1.4vh 1.2vw; border-radius: 14px; background: #060a17;
+    border: 1px solid var(--trait); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(12px, 1.05vw, 19px); white-space: pre-wrap; word-break: break-word; max-height: 32vh; overflow: auto; }
+  .resultat:empty { display: none; }
+
+  .commande { position: fixed; bottom: 1vh; right: 1vw; z-index: 8; background: var(--carte-2); color: var(--doux);
+    border: 1px solid var(--trait); border-radius: 12px; padding: .8vh 1vw; font-size: 14px; opacity: .8; }
+  .commande[hidden] { display: none; }
+
+  @media (max-aspect-ratio: 4/3) {
+    body { overflow: auto; }
+    main { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="marque"><b>FARCI</b><span>LLMOps clinique — la salle</span></div>
+  <div class="phase">
+    <div class="nom" id="phase">—<small id="phase-reste"></small></div>
+    <div class="frise" id="frise"><div class="fait" id="frise-fait" style="width:0"></div></div>
+  </div>
+  <div class="heure"><b id="heure">--:--</b><div id="chrono">0:00 / 4:00</div></div>
+</header>
+
+<div class="bandeaux">
+  <div class="bandeau chaos" id="b-chaos" role="status"></div>
+  <div class="bandeau rescue" id="b-rescue" role="status"></div>
+  <div class="bandeau hors" id="b-hors" role="status">Connexion au Pi perdue — nouvel essai dans quelques secondes…</div>
+</div>
+
+<main>
+  <section class="colonne gauche">
+    <div class="carte pipeline">
+      <div>
+        <h2>Pipeline clinique</h2>
+        <div class="verdict" id="verdict">…</div>
+      </div>
+      <div class="exigences" id="exigences"></div>
+      <div class="detail" id="detail"></div>
+    </div>
+    <div class="tuiles" id="tuiles"></div>
+    <div class="carte bonus" id="bonus"><h2>Bonus</h2></div>
+  </section>
+  <section class="colonne droite">
+    <div class="carte">
+      <h2>Classement des équipes</h2>
+      <div class="classement" id="classement"><div class="vide">Aucune brique livrée pour l'instant : la référence 🛟 sert toute la salle.</div></div>
+    </div>
+    <div class="carte" style="overflow:hidden">
+      <h2>Fil de la séance</h2>
+      <ul class="fil" id="fil"></ul>
+    </div>
+  </section>
+</main>
+
+<canvas id="confettis"></canvas>
+<div class="toast" id="toast"></div>
+<div class="ready" id="ready"><div><b>CLINICAL PIPELINE READY</b><span>La chaîne est montée par les équipes. Bravo à toute la salle !</span></div></div>
+<div class="fiche-fond" id="fiche-fond" role="dialog" aria-modal="true" aria-labelledby="fiche-titre">
+  <div class="fiche" id="fiche"></div>
+</div>
+<button class="commande" id="plein-ecran" type="button">Plein écran · écran allumé</button>
+
+<script>
+"use strict";
+const ICONES = { "Network": "🌐", "Inference": "🧠", "LLM Gateway": "🚦", "Documents": "📄", "EDS-NLP": "🏥",
+  "Observability": "🔭", "Open WebUI": "💬" };
+const ETATS = { equipe: "✅ Équipe", reference: "🛟 Référence", partiel: "🛟 En partie", panne: "⛔ En panne", inconnu: "… Inconnu" };
+const EVT = { livraison: "🎉", badge: "🏅", ready: "🚀", relais: "🛟", retour: "💪", panne: "⛔", chaos: "⚡", reparation: "🔧" };
+const BADGES = { "Premiers !": "⭐ Premiers", "Pipeline READY": "🚀 READY", "Increvable": "🛡 Increvable" };
+const MEDAILLES = ["🥇", "🥈", "🥉"];
+const PHASES = [0, 20, 110, 120, 170, 190, 225, 240];
+
+const $ = (id) => document.getElementById(id);
+let dernierVu = null;      // dernier événement déjà montré (pas d'animation au chargement)
+const etatsPrecedents = {};
+const toasts = [];
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function hm(minutes) {
+  const m = Math.max(0, Math.floor(minutes));
+  return Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0");
+}
+function heure(ts) {
+  const d = new Date(ts * 1000);
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+
+function frise(chrono) {
+  const f = $("frise");
+  if (!f.dataset.pret) {
+    PHASES.slice(1, -1).forEach((m) => { const i = el("i"); i.style.left = (m / chrono.duree * 100) + "%"; f.appendChild(i); });
+    f.dataset.pret = "1";
+  }
+  $("frise-fait").style.width = Math.min(100, chrono.minutes / chrono.duree * 100) + "%";
+  const p = chrono.phase;
+  $("phase").firstChild.nodeValue = p.nom;
+  $("phase-reste").textContent = p.nom === "Fin" ? "" : "encore " + hm(p.fin_min - chrono.minutes);
+  $("chrono").textContent = hm(chrono.minutes) + " / " + hm(chrono.duree);
+}
+
+function pipeline(data) {
+  const p = data.pipeline;
+  const v = $("verdict");
+  v.textContent = p.state;
+  v.className = "verdict " + p.state.split(" ")[0];
+  const ex = $("exigences");
+  ex.replaceChildren();
+  const total = p.required, faites = p.met;
+  (p.exigences || []).forEach((x) => ex.appendChild(el("div", "exigence" + (x.ok ? " ok" : ""), (x.ok ? "✅ " : "") + x.nom)));
+  const rendu = data.service_rendu.state;
+  $("detail").textContent = faites + " / " + total + " exigences livrées par les équipes · service rendu à la salle : "
+    + rendu + (rendu === "READY" && p.state !== "READY" ? " grâce à la référence 🛟" : "");
+}
+
+function tuiles(lignes) {
+  const t = $("tuiles");
+  const b = $("bonus");
+  t.replaceChildren();
+  b.replaceChildren(el("h2", "", "Bonus"));
+  let bonusVus = 0;
+  lignes.forEach((l) => {
+    if (l.tier === "bonus") {
+      bonusVus++;
+      const puce = el("span", "puce" + (l.etat === "equipe" ? " equipe" : ""), (l.etat === "equipe" ? "✅ " : "") + l.label);
+      puce.addEventListener("click", () => ouvrirFiche(l.label));
+      b.appendChild(puce);
+      return;
+    }
+    const d = el("div", "tuile " + l.etat);
+    d.appendChild(el("div", "icone", ICONES[l.label] || "🧩"));
+    d.appendChild(el("div", "titre", l.label));
+    d.appendChild(el("div", "qui", "Équipe " + l.equipe + " · " + l.nom_equipe + (l.ip && l.etat === "equipe" ? " · " + l.ip : "")));
+    d.appendChild(el("div", "etat", ETATS[l.etat] || l.etat));
+    d.appendChild(el("span", "info", "ⓘ"));
+    d.addEventListener("click", () => ouvrirFiche(l.label));
+    const avant = etatsPrecedents[l.label];
+    if (avant !== undefined && avant !== "equipe" && l.etat === "equipe") d.classList.add("flash");
+    etatsPrecedents[l.label] = l.etat;
+    t.appendChild(d);
+  });
+  b.style.display = bonusVus ? "" : "none";
+}
+
+/* --- fiche d'un service (au toucher d'une tuile) ------------------------- */
+let lignesCourantes = [];
+let ficheOuverte = null;
+
+function ouvrirFiche(label) {
+  ficheOuverte = label;
+  dessinerFiche(true);
+  $("fiche-fond").classList.add("on");
+}
+function fermerFiche() {
+  ficheOuverte = null;
+  $("fiche-fond").classList.remove("on");
+}
+$("fiche-fond").addEventListener("click", (e) => { if (e.target.id === "fiche-fond") fermerFiche(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") fermerFiche(); });
+
+function lien(texte, url, cls) {
+  const a = el("a", "bouton " + cls, texte);
+  if (url) { a.href = url; a.target = "_blank"; a.rel = "noopener"; } else { a.setAttribute("aria-disabled", "true"); }
+  return a;
+}
+
+function dessinerFiche(complet) {
+  const l = lignesCourantes.find((x) => x.label === ficheOuverte);
+  const f = $("fiche");
+  if (!l) return;
+  const fiche = l.fiche || {};
+  if (complet) {
+    f.replaceChildren();
+    const tete = el("div", "tete");
+    tete.appendChild(el("div", "icone", ICONES[l.label] || "🧩"));
+    const titre = el("div");
+    const h = el("h3", "", l.label); h.id = "fiche-titre";
+    titre.appendChild(h);
+    titre.appendChild(el("div", "qui", "Équipe " + l.equipe + " · " + l.nom_equipe));
+    tete.appendChild(titre);
+    const fermer = el("button", "fermer", "✕ Fermer"); fermer.type = "button";
+    fermer.addEventListener("click", fermerFiche);
+    tete.appendChild(fermer);
+    f.appendChild(tete);
+    if (fiche.role) f.appendChild(el("p", "", fiche.role));
+    if (fiche.analogie) f.appendChild(el("p", "analogie", "🏥 " + fiche.analogie));
+    if (fiche.contrat) f.appendChild(el("code", "", fiche.contrat));
+    f.appendChild(el("h4", "", "Qui le rend en ce moment"));
+    const rendu = el("div"); rendu.id = "fiche-rendu"; f.appendChild(rendu);
+    if (fiche.demo) {
+      f.appendChild(el("h4", "", "Démonstration en direct, par l'accueil de la salle"));
+      const essai = el("button", "bouton test", "▶ Tester maintenant : " + fiche.demo.methode + " " + fiche.demo.chemin);
+      essai.type = "button";
+      essai.addEventListener("click", () => tester(fiche.demo));
+      f.appendChild(essai);
+      const res = el("pre", "resultat"); res.id = "fiche-resultat"; f.appendChild(res);
+    }
+  }
+  const rendu = $("fiche-rendu");
+  rendu.replaceChildren();
+  (l.services || []).forEach((s) => {
+    const ligne = el("div", "rendu");
+    const etat = s.servi_par === "equipe" ? "✅ par l'équipe " + s.equipe
+      : s.servi_par === "reference" ? "🛟 par la doublure du Pi" : "⛔ personne ne répond";
+    ligne.appendChild(el("div", "", s.label + " — " + etat));
+    const boutons = el("div", "boutons");
+    boutons.appendChild(lien(s.url_equipe ? "Ouvrir chez l'équipe " + s.equipe : "Équipe pas encore déclarée", s.url_equipe, ""));
+    if (s.url_reference) boutons.appendChild(lien("Ouvrir la doublure du Pi", s.url_reference, "ref"));
+    ligne.appendChild(boutons);
+    rendu.appendChild(ligne);
+  });
+}
+
+async function tester(demo) {
+  const res = $("fiche-resultat");
+  res.textContent = "… appel en cours";
+  const debut = performance.now();
+  try {
+    const opts = { method: demo.methode, cache: "no-store" };
+    if (demo.corps) { opts.body = JSON.stringify(demo.corps); opts.headers = { "Content-Type": "application/json" }; }
+    const r = await fetch(demo.chemin, opts);
+    const texte = await r.text();
+    let joli = texte;
+    try {
+      const data = JSON.parse(texte);
+      if (demo.resume === "status") {
+        joli = JSON.stringify({ status: data.status, pipeline: data.pipeline && data.pipeline.state,
+          service_rendu: data.service_rendu && data.service_rendu.state }, null, 2);
+      } else if (data.data && Array.isArray(data.data)) {
+        joli = "Modèles servis :\n" + data.data.map((m) => "  • " + m.id).join("\n");
+      } else {
+        joli = JSON.stringify(data, null, 2);
+      }
+    } catch (e) { /* réponse non JSON : affichée telle quelle */ }
+    res.textContent = "HTTP " + r.status + " en " + Math.round(performance.now() - debut) + " ms\n\n" + joli.slice(0, 3000);
+  } catch (err) {
+    res.textContent = "Échec de l'appel (" + err + ").\nOuvrir ce tableau par l'accueil de la salle : http://" + location.hostname + "/";
+  }
+}
+
+function classement(scores) {
+  const c = $("classement");
+  if (!scores.length) return;
+  c.replaceChildren();
+  const max = Math.max(...scores.map((s) => s.points), 1);
+  scores.forEach((s, i) => {
+    const r = el("div", "rang");
+    r.appendChild(el("div", "medaille", MEDAILLES[i] || String(i + 1)));
+    r.appendChild(el("div", "nom", "Équipe " + s.equipe + " · " + s.nom));
+    r.appendChild(el("div", "pts", s.points + " pts"));
+    const barre = el("div", "barre"); const i2 = el("i"); i2.style.width = (s.points / max * 100) + "%"; barre.appendChild(i2);
+    r.appendChild(barre);
+    const badges = s.badges.map((x) => BADGES[x] || x).join("  ");
+    r.appendChild(el("div", "badges", s.briques.length + " brique(s)" + (badges ? "  ·  " + badges : "")));
+    c.appendChild(r);
+  });
+}
+
+function fil(evenements) {
+  const f = $("fil");
+  f.replaceChildren();
+  if (!evenements.length) { f.appendChild(el("li", "vide", "La séance commence : les livraisons apparaîtront ici.")); return; }
+  evenements.slice(0, 9).forEach((e) => {
+    const li = el("li");
+    li.appendChild(el("time", "", heure(e.at)));
+    li.appendChild(el("span", "", EVT[e.type] || "•"));
+    li.appendChild(el("span", "", e.texte));
+    li.appendChild(el("span", "plus", e.points ? "+" + e.points : ""));
+    f.appendChild(li);
+  });
+}
+
+function bandeaux(data) {
+  const c = $("b-chaos");
+  c.textContent = "⚡ PANNE EN COURS — " + data.chaos.join(", ") + " : la salle observe, personne ne répare encore";
+  c.classList.toggle("on", data.chaos.length > 0);
+  const r = $("b-rescue");
+  r.textContent = "🛟 Référence forcée par le formateur : " + data.rescue.join(", ");
+  r.classList.toggle("on", data.rescue.length > 0);
+}
+
+/* --- célébrations ------------------------------------------------------- */
+function celebrer(evenements) {
+  const nouveaux = evenements.filter((e) => e.id > dernierVu).reverse();
+  nouveaux.forEach((e) => {
+    if (e.type === "ready") { $("ready").classList.add("on"); confettis(400); setTimeout(() => $("ready").classList.remove("on"), 7000); }
+    else if (e.type === "livraison" || e.type === "badge") { toasts.push(e); confettis(e.type === "badge" ? 120 : 220); }
+  });
+  if (nouveaux.length && !$("toast").classList.contains("on")) suivantToast();
+}
+function suivantToast() {
+  const e = toasts.shift();
+  const t = $("toast");
+  if (!e) return;
+  t.replaceChildren(el("span", "", (EVT[e.type] || "") + " " + e.texte), el("small", "", e.points ? "+" + e.points + " points" : ""));
+  t.classList.add("on");
+  setTimeout(() => { t.classList.remove("on"); setTimeout(suivantToast, 600); }, 4200);
+}
+
+const canvas = $("confettis");
+const ctx = canvas.getContext("2d");
+let morceaux = [];
+function taille() { canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; }
+addEventListener("resize", taille); taille();
+function confettis(n) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const couleurs = ["#22c55e", "#facc15", "#818cf8", "#f472b6", "#38bdf8", "#fb923c"];
+  for (let i = 0; i < n; i++) {
+    morceaux.push({ x: canvas.width * (0.2 + Math.random() * 0.6), y: canvas.height * 0.95,
+      vx: (Math.random() - 0.5) * 18 * devicePixelRatio, vy: -(12 + Math.random() * 16) * devicePixelRatio,
+      r: (4 + Math.random() * 6) * devicePixelRatio, c: couleurs[i % couleurs.length], a: Math.random() * 6, vie: 1 });
+  }
+  if (morceaux.length === n) requestAnimationFrame(anime);
+}
+function anime() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  morceaux.forEach((m) => {
+    m.vy += 0.45 * devicePixelRatio; m.x += m.vx; m.y += m.vy; m.a += 0.2; m.vie -= 0.006;
+    ctx.save(); ctx.globalAlpha = Math.max(0, m.vie); ctx.translate(m.x, m.y); ctx.rotate(m.a);
+    ctx.fillStyle = m.c; ctx.fillRect(-m.r, -m.r / 2, m.r * 2, m.r); ctx.restore();
+  });
+  morceaux = morceaux.filter((m) => m.vie > 0 && m.y < canvas.height + 50);
+  if (morceaux.length) requestAnimationFrame(anime); else ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+/* --- boucle ------------------------------------------------------------- */
+async function rafraichir() {
+  try {
+    const r = await fetch("/tableau/etat", { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    $("b-hors").classList.remove("on");
+    frise(data.chrono);
+    bandeaux(data);
+    pipeline(data);
+    tuiles(data.lignes);
+    lignesCourantes = data.lignes;
+    if (ficheOuverte) dessinerFiche(false);
+    // Lien direct vers une fiche : /tableau#fiche=Inference
+    const voulu = decodeURIComponent((location.hash.match(/^#fiche=(.+)$/) || [])[1] || "");
+    if (voulu && !ficheOuverte && dernierVu === null) ouvrirFiche(voulu);
+    classement(data.scores);
+    fil(data.evenements);
+    if (dernierVu !== null) celebrer(data.evenements);
+    dernierVu = data.dernier_evenement;
+  } catch (err) {
+    $("b-hors").classList.add("on");
+  }
+}
+function horloge() {
+  const d = new Date();
+  $("heure").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+horloge();
+setInterval(horloge, 1000);
+rafraichir();
+setInterval(rafraichir, 3000);
+
+/* --- iPad : plein écran et écran toujours allumé --------------------------- */
+let verrou = null;
+async function garderAllume() {
+  try { if ("wakeLock" in navigator) verrou = await navigator.wakeLock.request("screen"); } catch (e) { /* refusé : tant pis */ }
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && verrou) garderAllume(); });
+$("plein-ecran").addEventListener("click", async () => {
+  const d = document.documentElement;
+  try { await (d.requestFullscreen ? d.requestFullscreen() : d.webkitRequestFullscreen && d.webkitRequestFullscreen()); } catch (e) { /* iPad : « Sur l'écran d'accueil » */ }
+  await garderAllume();
+  $("plein-ecran").hidden = true;
+});
+if (navigator.standalone) $("plein-ecran").hidden = true;
+</script>
+</body>
+</html>

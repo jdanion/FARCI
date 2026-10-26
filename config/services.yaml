@@ -31,8 +31,24 @@ groups:
   RESEARCH_PIPELINE: Pipeline de recherche
   CLIENT_APPLICATIONS: Applications clientes
 
-# Le pipeline n'est "ready" que si TOUS les services marqués critical: true
-# sont joignables (FARCI §14).
+# CLINICAL PIPELINE READY (FARCI §14) — règle unique, calculée par
+# scripts/services.py (pipeline_state) pour le tableau ET pour le
+# health-aggregator :
+#   - tous les services `critical: true` répondent ;
+#   - pour chaque `critical_group`, AU MOINS UN service du groupe répond
+#     (un runtime suffit : c'est ce qui rend le scénario 01 observable).
+#
+# `tier` dit à qui revient la brique pendant les 4 h :
+#   core   objectif des équipes de l'étape 1 (ou de l'étape 2 pour Open WebUI)
+#   bonus  équipe volontaire ou démonstration du formateur ; jamais requis.
+# Phoenix est `core` mais pas critique : l'observabilité est hors du chemin
+# de production (scénario 07, ARCHITECTURE §7).
+#
+# `reference_port_var` : la pile de référence du formateur (reference/, sur
+# REFERENCE_IP) fournit ce service sur ce port. Quand la brique de l'équipe
+# ne répond pas, l'accueil de la salle sert celle de la référence, et le
+# tableau l'affiche avec 🛟. Les runtimes de référence sont le runtime rejoué
+# (REPLAY_PORT), ou le modèle de secours si le formateur l'a démarré.
 services:
   - id: gitea
     label: Gitea
@@ -46,7 +62,8 @@ services:
     health_paths:
       - /api/healthz
       - /healthz
-    critical: true
+    tier: bonus
+    critical: false
     phase: 2
 
   - id: caddy
@@ -55,9 +72,12 @@ services:
     compose: 01-network-dashboard
     group: CORE_INFRASTRUCTURE
     ip_var: CADDY_IP
-    port_var: CADDY_INTERNAL_PORT
+    port_var: CADDY_PORT
+    reference_port_var: ENTRY_PORT
+    # /livez répond par Caddy seul ; /healthz est relayé à l'agrégateur.
     health_paths:
-      - /healthz
+      - /livez
+    tier: core
     critical: true
     phase: 3
 
@@ -68,9 +88,13 @@ services:
     group: CORE_INFRASTRUCTURE
     ip_var: HEALTH_AGGREGATOR_IP
     port_var: HEALTH_AGGREGATOR_PORT
+    reference_port_var: HEALTH_AGGREGATOR_PORT
+    # /livez et non /healthz : l'agrégateur se sonde lui-même, et /healthz
+    # relancerait l'agrégation en boucle.
     health_paths:
-      - /healthz
-    critical: false
+      - /livez
+    tier: core
+    critical: true
     phase: 3
 
   - id: inference-ollama
@@ -79,11 +103,14 @@ services:
     compose: 02-inference
     group: AI_RUNTIMES
     ip_var: INFERENCE_A_IP
-    port_var: INFERENCE_PORT
+    port_var: INFERENCE_A_PORT
+    reference_port_var: REPLAY_PORT
     health_paths:
       - /v1/models
       - /api/tags
-    critical: true
+    tier: core
+    critical_group: runtime
+    critical: false
     phase: 4
 
   - id: inference-llamacpp
@@ -92,23 +119,33 @@ services:
     compose: 02-inference
     group: AI_RUNTIMES
     ip_var: INFERENCE_B_IP
-    port_var: INFERENCE_PORT
+    port_var: INFERENCE_B_PORT
+    reference_port_var: REPLAY_PORT
     health_paths:
       - /v1/models
       - /health
+    # Cœur comme Ollama : c'est le runtime des postes sans grosse
+    # configuration (Ollama + modèle 9B exigent un GPU ou 32 Go de RAM).
+    tier: core
+    critical_group: runtime
     critical: false
     phase: 4
 
+  # Hors atelier : ni proposé au casting, ni préchargé, ni sur le tableau
+  # (deux options par brique). Reste joignable si un Mac le sert.
   - id: inference-omlx
     label: Inference C (oMLX / Mac)
     team: "2"
     compose: 02-inference
     group: AI_RUNTIMES
     ip_var: INFERENCE_C_IP
-    port_var: INFERENCE_PORT
+    port_var: INFERENCE_C_PORT
+    reference_port_var: REPLAY_PORT
     health_paths:
       - /v1/models
       - /health
+    tier: bonus
+    critical_group: runtime
     critical: false
     phase: 4
 
@@ -118,10 +155,12 @@ services:
     compose: 03-llm-gateway
     group: LLM_GATEWAYS
     ip_var: GATEWAY_A_IP
-    port_var: GATEWAY_PORT
+    port_var: GATEWAY_A_PORT
+    reference_port_var: GATEWAY_A_PORT
     health_paths:
       - /health/liveliness
       - /health
+    tier: core
     critical: true
     phase: 5
 
@@ -131,10 +170,11 @@ services:
     compose: 03-llm-gateway
     group: LLM_GATEWAYS
     ip_var: GATEWAY_B_IP
-    port_var: GATEWAY_PORT
+    port_var: GATEWAY_B_PORT
     health_paths:
       - /health
       - /api/health
+    tier: bonus
     critical: false
     phase: 5
 
@@ -145,10 +185,29 @@ services:
     group: DOCUMENT_PIPELINE
     ip_var: DOCLING_IP
     port_var: DOCLING_PORT
+    reference_port_var: DOCLING_PORT
     health_paths:
       - /health
       - /v1/health
+    tier: core
     critical: true
+    phase: 6
+
+  # EDS-NLP (AP-HP) : pseudonymisation EDS-Pseudo + entités par LLM. Cœur
+  # pour l'équipe 4, doublé par le Pi, mais HORS de READY : sa panne ne doit
+  # jamais arrêter l'extraction principale.
+  - id: eds-nlp
+    label: EDS-NLP
+    team: "4"
+    compose: 04-clinical-documents/eds-nlp
+    group: DOCUMENT_PIPELINE
+    ip_var: EDS_NLP_IP
+    port_var: EDS_NLP_PORT
+    reference_port_var: EDS_NLP_PORT
+    health_paths:
+      - /health
+    tier: core
+    critical: false
     phase: 6
 
   - id: phoenix
@@ -158,10 +217,12 @@ services:
     group: OBSERVABILITY
     ip_var: OBSERVABILITY_A_IP
     port_var: PHOENIX_PORT
+    reference_port_var: PHOENIX_PORT
     health_paths:
       - /healthz
       - /
-    critical: true
+    tier: core
+    critical: false
     phase: 7
 
   - id: langfuse
@@ -174,6 +235,7 @@ services:
     health_paths:
       - /api/public/health
       - /health
+    tier: bonus
     critical: false
     phase: 7
 
@@ -187,7 +249,8 @@ services:
     health_paths:
       - /health
       - /version
-    critical: true
+    tier: bonus
+    critical: false
     phase: 8
 
   - id: uptime-kuma
@@ -199,6 +262,7 @@ services:
     port_var: UPTIME_KUMA_PORT
     health_paths:
       - /api/status-page/heartbeat/1
+    tier: bonus
     critical: false
     phase: 3
 
@@ -209,11 +273,14 @@ services:
     group: CLIENT_APPLICATIONS
     ip_var: OPEN_WEBUI_IP
     port_var: OPEN_WEBUI_PORT
+    reference_port_var: OPEN_WEBUI_PORT
     health_paths:
       - /health
+    tier: core
     critical: false
     phase: 9
 
+  # Démonstration du formateur, pas une option étudiante : hors tableau.
   - id: flowise
     label: Flowise
     team: "7"
@@ -223,29 +290,79 @@ services:
     port_var: FLOWISE_PORT
     health_paths:
       - /health
+    tier: bonus
     critical: false
     phase: 9
 
+# Routes de l'ACCUEIL DE LA SALLE (Caddy du Pi, et celui de l'équipe 1).
+# Pour chaque route : les services d'équipe essayés dans l'ordre, puis le
+# service de la référence (son `reference_port_var` sur REFERENCE_IP).
+# `./bin/farci rescue <route>` retire les services d'équipe : la référence
+# sert seule. scripts/services.py (commande upstreams) construit les listes,
+# 01-network-dashboard/caddy/Caddyfile les lit (variables UP_*).
+routes:
+  - name: passerelle
+    var: UP_PASSERELLE
+    services: [gateway-litellm, gateway-bifrost]
+    reference: gateway-litellm
+  - name: inference
+    var: UP_INFERENCE
+    services: [inference-ollama, inference-llamacpp, inference-omlx]
+    reference: inference-ollama
+  - name: documents
+    var: UP_DOCUMENTS
+    services: [docling]
+    reference: docling
+  - name: observabilite
+    var: UP_OBSERVABILITE
+    services: [phoenix]
+    reference: phoenix
+  - name: eds
+    var: UP_EDS
+    services: [eds-nlp]
+    reference: eds-nlp
+
 # Lignes du tableau de progression projeté dans l'amphithéâtre (FARCI §49).
-# Onze lignes, pas plus : au-delà, personne ne lit depuis le fond de la salle.
+# Les lignes `core` sont toujours affichées ; les lignes `bonus` sont résumées
+# en une seule ligne (sauf ./bin/farci status --all). Au-delà d'une dizaine
+# de lignes, personne ne lit depuis le fond de la salle.
 status_rows:
-  - label: GitOps
-    check: [gitea]
   - label: Network
-    check: [caddy]
-  - label: Inference Primary
-    check: [inference-ollama]
-  - label: Inference Secondary
-    check: [inference-llamacpp]
-  - label: Inference Mac
-    check: [inference-omlx]
+    tier: core
+    check: [caddy, health-aggregator]
+  # une_parmi : la ligne est verte dès qu'UNE de ses briques est livrée
+  # (l'équipe choisit sa stack selon son poste).
+  - label: Inference
+    tier: core
+    une_parmi: true
+    check: [inference-ollama, inference-llamacpp]
   - label: LLM Gateway
+    tier: core
     check: [gateway-litellm]
-  - label: Docling
+  - label: Documents
+    tier: core
     check: [docling]
+  - label: EDS-NLP
+    tier: core
+    check: [eds-nlp]
   - label: Observability
+    tier: core
     check: [phoenix]
-  - label: Evaluation
-    check: [mlflow]
-  - label: Client
+  - label: Open WebUI
+    tier: core
     check: [open-webui]
+  - label: GitOps
+    tier: bonus
+    check: [gitea]
+  - label: Bifrost
+    tier: bonus
+    check: [gateway-bifrost]
+  - label: Langfuse
+    tier: bonus
+    check: [langfuse]
+  - label: MLflow
+    tier: bonus
+    check: [mlflow]
+  - label: Uptime Kuma
+    tier: bonus
+    check: [uptime-kuma]

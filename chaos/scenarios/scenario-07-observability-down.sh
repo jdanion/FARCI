@@ -1,26 +1,26 @@
 #!/usr/bin/env bash
-# FARCI — scénario 07 : arrêt de l'observabilité
+# FARCI — scénario 07 : observabilité indisponible
 #
-# Attendu : extraction réussie, traces perdues uniquement
+# Action    : l'accueil ne reçoit plus AUCUNE trace (Phoenix d'équipe et de
+#             référence injoignables).
+# Attendu   : l'extraction réussit, seules les traces sont perdues ;
+#             CLINICAL PIPELINE reste READY. Ce scénario doit rester VERT.
+# Leçon     : l'observabilité n'est pas sur le chemin de production.
+
+SCENARIO_TITLE="Observabilité indisponible"
+SCENARIO_ATTENDU="extraction réussie, traces perdues"
 
 chaos_scenario_apply() {
-  local duration="${1:-}"
-  info "arrêt de Phoenix et Langfuse..."
-  docker stop farci-phoenix 2>/dev/null || warn "Phoenix introuvable"
-  docker stop farci-langfuse 2>/dev/null || warn "Langfuse introuvable"
-  echo '{"scenario":"07","action":"stop","target":"phoenix,langfuse"}' > "$CHAOS_STATE_FILE"
+  chaos_route block observabilite
+}
 
-  if [[ -n "$duration" ]]; then
-    info "auto-revert dans ${duration}s..."
-    sleep "$duration"
-    chaos_scenario_revert
-  fi
+chaos_scenario_check() {
+  local written errors
+  read -r written _ errors <<< "$(chaos_extract 2)"
+  chaos_expect "2 dossiers extraits sans observabilité ($written écrits, $errors erreurs)" test "$written" = 2
 }
 
 chaos_scenario_revert() {
-  info "redémarrage de Phoenix et Langfuse..."
-  docker start farci-phoenix 2>/dev/null || warn "Phoenix introuvable"
-  docker start farci-langfuse 2>/dev/null || warn "Langfuse introuvable"
-  echo '{}' > "$CHAOS_STATE_FILE"
-  ok "observabilité restaurée"
+  chaos_route_clear observabilite
+  ok "observabilité rendue à l'accueil"
 }

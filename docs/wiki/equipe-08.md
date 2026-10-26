@@ -1,97 +1,49 @@
-# Équipe 8 — Agents Arcane & GitOps
+# Équipe 8 — Agents Arcane (bonus)
 
-## Attendus pédagogiques
+> Fiche débutant. La référence technique complète est
+> `08-arcane-agents/TUTORIAL.md` (`./bin/farci read 8`).
 
-- Comprendre le rôle d'un agent de supervision
-- Comprendre la notion de webhook et son intégration avec Git
-- Comprendre le principe GitOps (pull + apply)
-- Comprendre la notion d'idempotence dans les déploiements
-- Savoir vérifier la signature HMAC d'un webhook
+## Votre objectif
 
-## Solution simple (scripts)
+Placer un **petit agent de surveillance** à côté des briques, et
+**redéployer automatiquement** une brique quand une Pull Request est
+fusionnée dans la forge. Brique **bonus** : démonstration du formateur si
+personne ne la prend.
 
-```bash
-# 1. Démarrer les agents + webhook
-cd 08-arcane-agents
-docker compose up -d
+C'est l'infirmier de garde : il passe toutes les 30 secondes et note l'état
+de chaque patient.
 
-# 2. Vérifier les agents
-docker logs farci-agent-ollama
-docker logs farci-agent-gateway
+## Les étapes
 
-# 3. Tester le webhook
-curl -X POST http://192.168.50.60:9000/webhook \
-  -H "Content-Type: application/json" \
-  -H "X-Gitea-Signature: <signature>" \
-  -d '{"ref":"refs/heads/main"}'
-```
+1. **Vérifier la machine** — `./bin/farci doctor`.
+2. **Préparer le secret** — `WEBHOOK_SECRET` dans `.env`.
+3. **Démarrer** — `./bin/farci up 08-arcane-agents`.
+4. **Lire les rondes** — `./bin/farci logs 08-arcane-agents` : chaque agent
+   écrit l'état de sa brique toutes les 30 s.
+5. **Comparer au tableau** — `./bin/farci status` : les agents et le tableau
+   disent-ils la même chose ?
+6. **Brancher la forge** (si l'équipe 0 l'a montée) — un webhook Gitea vers
+   le récepteur ; fusionner une PR sur la branche `seance`.
+7. **Observer le redéploiement** — `webhook-handler.sh`, puis `gitops.sh`,
+   apparaissent dans les journaux.
 
-## Solution from scratch
-
-### 1. Démarrer un agent Arcane
-
-```bash
-docker run -d \
-  --name farci-agent-ollama \
-  --network farci \
-  -e TARGET_SERVICE=ollama \
-  -e TARGET_URL=http://192.168.50.20:8080 \
-  -e CHECK_INTERVAL=30 \
-  -v $(pwd)/arcane-agent:/app:ro \
-  python:3.13.15-slim-trixie \
-  python /app/agent.py
-```
-
-### 2. Démarrer le webhook receiver
+## La sonde : comment savoir que c'est fini
 
 ```bash
-docker run -d \
-  --name farci-webhook-receiver \
-  --network farci \
-  -p 9000:9000 \
-  -e WEBHOOK_SECRET=mon-secret \
-  -e GITOPS_SCRIPT=/app/gitops/gitops.sh \
-  -v $(pwd)/gitops:/app/gitops:ro \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  python:3.13.15-slim-trixie \
-  python /app/webhook/webhook.py
+./bin/farci logs 08-arcane-agents     # une ronde toutes les 30 s
 ```
 
-### 3. Configurer le webhook Gitea
+## Bloqué depuis 10 minutes ?
 
-```
-URL : http://192.168.50.60:9000/webhook
-Content type : application/json
-Secret : mon-secret
-Events : Push, Pull Request
-```
+Levez la main : rien dans la séance n'attend cette brique.
 
-### 4. Tester le flux GitOps
+| Ce que vous voyez | À essayer |
+|---|---|
+| `WEBHOOK_SECRET requis` | l'ajouter dans `.env` |
+| un agent signale « down » en boucle | la brique surveillée n'est pas démarrée : `./bin/farci status` |
+| la construction échoue | image `python` absente : `./bin/farci verify-images` |
 
-```bash
-# Un push sur main déclenche :
-# 1. Gitea → webhook
-# 2. webhook.py vérifie la signature
-# 3. gitops.sh pull + apply
-# 4. Les agents Arcane supervisent
+## Bonus
 
-git push origin main
-```
-
-### 5. Vérifier la signature HMAC
-
-```python
-import hmac, hashlib
-
-secret = b"mon-secret"
-payload = b'{"ref":"refs/heads/main"}'
-signature = hmac.new(secret, payload, hashlib.sha256).hexdigest()
-# → signature à envoyer dans X-Gitea-Signature
-```
-
-## Vérifications
-
-- [ ] 5 agents Arcane actifs (ollama, llamacpp, gateway, docling, mlflow)
-- [ ] Webhook receiver écoute sur :9000
-- [ ] Push sur main déclenche GitOps
-- [ ] Déploiement idempotent
+- Expliquer la différence entre « surveiller » (agents, tableau) et
+  « réparer » (repli de l'accueil, `rescue`) : qui décide, et quand ?

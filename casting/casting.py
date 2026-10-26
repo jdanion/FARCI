@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from roles import ROLES, Role, Option, get_critical_roles, get_optional_roles
+from roles import GROSSE_RAM_GO, ROLES, Role, Option, get_critical_roles, get_optional_roles
 
 
 @dataclass
@@ -39,9 +39,16 @@ class Student:
             return False
         if option.requires_gpu and not self.has_gpu:
             return False
+        if option.grosse_config and not self.grosse_config:
+            return False
         if option.min_vram_gb > 0 and self.vram_gb < option.min_vram_gb:
             return False
         return True
+
+    @property
+    def grosse_config(self) -> bool:
+        """GPU, ou assez de RAM pour le modèle 9B sur CPU."""
+        return self.has_gpu or self.ram_gb >= GROSSE_RAM_GO
 
     @property
     def power_score(self) -> int:
@@ -50,7 +57,7 @@ class Student:
         if self.has_gpu:
             score += self.vram_gb * 2
         if self.has_mac:
-            score += 4  # Bonus Mac (oMLX possible)
+            score += 4  # Bonus Mac (mémoire unifiée)
         return score
 
 
@@ -78,11 +85,15 @@ class CastingResult:
     """Résultat du casting."""
     assignments: list[Assignment] = field(default_factory=list)
     unassigned: list[Student] = field(default_factory=list)
+    # Rôles cœur sans aucun étudiant : le formateur les sert depuis sa pile
+    # de référence. Le dire AVANT la séance évite de le découvrir à 0:45.
+    uncovered: list[Role] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
             "assignments": [a.to_dict() for a in self.assignments],
             "unassigned": [s.name for s in self.unassigned],
+            "uncovered": [r.name for r in self.uncovered],
         }
 
     def summary(self) -> str:
@@ -100,6 +111,12 @@ class CastingResult:
             for a in role_assignments:
                 primary = "⭐" if a.is_primary else "  "
                 lines.append(f"  {primary} {a.student.name} → {a.option.label}")
+            lines.append("")
+
+        if self.uncovered:
+            lines.append("## Briques cœur sans équipe (servies par le formateur)")
+            for role in self.uncovered:
+                lines.append(f"  ! {role.label}")
             lines.append("")
 
         if self.unassigned:
@@ -135,8 +152,9 @@ def cast_teams(
     result = CastingResult()
     assigned_students: set[str] = set()
 
-    # 1. Assigner les rôles critiques (choix n°1)
-    for role in get_critical_roles():
+    # 1. Assigner les rôles critiques (choix n°1) ; d'abord ceux qui exigent
+    # une grosse configuration, pour ne pas la dépenser sur une brique légère.
+    for role in sorted(get_critical_roles(), key=lambda r: not r.primary_option.grosse_config):
         # Trouver les étudiants qui peuvent exécuter l'option principale
         eligible = [
             s for s in sorted_students
@@ -206,8 +224,10 @@ def cast_teams(
                 ))
                 assigned_students.add(student.name)
 
-    # 4. Étudiants non assignés
+    # 4. Étudiants non assignés, rôles cœur non couverts
     result.unassigned = [s for s in students if s.name not in assigned_students]
+    covered = {a.role.name for a in result.assignments}
+    result.uncovered = [r for r in get_critical_roles() if r.name not in covered]
 
     return result
 

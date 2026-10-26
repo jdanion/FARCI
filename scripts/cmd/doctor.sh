@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # FARCI — ./bin/farci doctor
 # Diagnostic de la machine AVANT de lancer quoi que ce soit.
-# Sort en 1 si un prérequis indispensable manque, 0 sinon (les avertissements
-# n'échouent pas : un poste 8 Go est utilisable, un poste sans Docker ne l'est pas).
+# Sort en 1 si un prérequis indispensable manque (python3, git, curl…), 0 sinon.
+# Un poste sans Docker reste utilisable : il ne peut pas héberger de brique,
+# mais il fait les étapes 2 et 3 (le diagnostic le dit).
 
 set -uo pipefail
 # shellcheck source=scripts/lib/common.sh
@@ -20,7 +21,7 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 section "Outils indispensables"
-for tool in docker git python3 curl tar sha256sum; do
+for tool in git python3 curl tar sha256sum; do
   if have "$tool"; then
     line "$tool" "${C_GREEN}présent${C_RESET}"
   else
@@ -28,19 +29,26 @@ for tool in docker git python3 curl tar sha256sum; do
     FATAL=1
   fi
 done
-if have docker; then
-  if docker info >/dev/null 2>&1; then
-    line "démarrage docker" "${C_GREEN}joignable${C_RESET}"
-  else
-    line "démarrage docker" "${C_RED}injoignable (le service docker est-il démarré ?)${C_RESET}"
-    FATAL=1
-  fi
-  if docker compose version >/dev/null 2>&1; then
-    line "docker compose" "${C_GREEN}$(docker compose version --short 2>/dev/null || echo présent)${C_RESET}"
-  else
-    line "docker compose" "${C_RED}plugin absent${C_RESET}"
-    FATAL=1
-  fi
+
+# Sans Docker, le poste ne peut pas HÉBERGER une brique, mais il fait toute
+# l'étape 2 (parcours Python, Open WebUI du Pi) et l'étape 3 : ce n'est pas
+# bloquant, c'est un changement de rôle (binôme pour l'étape 1).
+DOCKER_OK=0
+section "Docker (pour héberger une brique)"
+DOCKER_WHY="$(docker_diagnose)"
+if ! have docker; then
+  line "docker" "${C_YELLOW}absent${C_RESET}"
+elif [[ -n "$DOCKER_WHY" ]]; then
+  line "docker" "${C_YELLOW}${DOCKER_WHY}${C_RESET}"
+elif ! docker compose version >/dev/null 2>&1; then
+  line "docker compose" "${C_YELLOW}plugin absent${C_RESET}"
+else
+  line "docker" "${C_GREEN}joignable, compose $(docker compose version --short 2>/dev/null)${C_RESET}"
+  DOCKER_OK=1
+fi
+if (( ! DOCKER_OK )); then
+  line "→ plan B" "étape 1 en binôme avec un poste qui a Docker ;"
+  line "" "étapes 2 et 3 sans Docker : ./bin/farci extract, Open WebUI du Pi"
 fi
 python3 -c "import sys; sys.exit(0 if sys.version_info>=(3,11) else 1)" 2>/dev/null \
   && line "python3 >= 3.11" "${C_GREEN}ok${C_RESET}" \
@@ -48,6 +56,9 @@ python3 -c "import sys; sys.exit(0 if sys.version_info>=(3,11) else 1)" 2>/dev/n
 
 section "Outils pratiques (absents = warnings)"
 have make && line "make" "présent" || line "make" "${C_YELLOW}absent — ./bin/farci fait le même travail${C_RESET}"
+python3 -c "import pydantic" 2>/dev/null \
+  && line "dépendances Python" "${C_GREEN}ok (pydantic)${C_RESET}" \
+  || line "dépendances Python" "${C_YELLOW}absentes — ./bin/farci bootstrap (installe .venv/ hors ligne)${C_RESET}"
 have jq && line "jq" "présent" || line "jq" "${C_DIM}absent — inutile, les tests utilisent python3${C_RESET}"
 have shellcheck && line "shellcheck" "présent" \
   || line "shellcheck" "${C_DIM}absent — le lint le signalera en SKIP${C_RESET}"
@@ -84,10 +95,14 @@ else
 fi
 
 section "Ressources de la machine"
-mem_gb="$(awk '/MemTotal/ {printf "%.1f", $2/1048576}' /proc/meminfo 2>/dev/null || echo "?")"
+mem_gb="$(awk '/MemTotal/ {printf "%.1f", $2/1048576}' /proc/meminfo 2>/dev/null || true)"
+if [[ -z "$mem_gb" ]] && have sysctl; then
+  mem_gb="$(sysctl -n hw.memsize 2>/dev/null | awk '{printf "%.1f", $1/1073741824}')"
+fi
+mem_gb="${mem_gb:-?}"
 if [[ "$mem_gb" != "?" ]] && awk "BEGIN{exit !($mem_gb < 8)}"; then
   line "RAM" "${C_YELLOW}${mem_gb} Go — insuffisant pour le modèle 9B (il en faut ~8 Go)${C_RESET}"
-  line "" "${C_DIM}→ utiliser FARCI_MODEL_CI (2 Go) pour développer et valider la CI${C_RESET}"
+  line "" "${C_DIM}→ modèle de secours : 02-inference/ollama/create-model.sh secours${C_RESET}"
 else
   line "RAM" "${C_GREEN}${mem_gb} Go${C_RESET}"
 fi
@@ -95,7 +110,19 @@ line "CPU" "$(nproc 2>/dev/null || echo '?') cœurs"
 gpus="$(command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -3 | paste -sd' ' - || true)"
 line "GPU" "${gpus:-${C_DIM}aucun (CPU uniquement)${C_RESET}}"
 
-section "Réseau"
+section "Réseau de la salle"
+ips="$( (hostname -I 2>/dev/null || ipconfig getifaddr en0 2>/dev/null || true) | tr ' ' '\n' \
+        | grep -E '^[0-9]+(\.[0-9]+){3}$' | grep -vE '^(127|172\.(1[6-9]|2[0-9]|3[01]))\.' | paste -sd' ' - || true)"
+line "IP de cette machine" "${ips:-${C_YELLOW}introuvable${C_RESET}}  ${C_DIM}(à donner au formateur pour ./bin/farci room set)${C_RESET}"
+if [[ -n "${FARCI_ENTRY_URL:-}" ]]; then
+  if [[ "$(http_code "$FARCI_ENTRY_URL/livez" 3)" == "200" ]]; then
+    line "accueil de la salle" "${C_GREEN}joignable${C_RESET} ($FARCI_ENTRY_URL)"
+  else
+    line "accueil de la salle" "${C_YELLOW}injoignable${C_RESET} ($FARCI_ENTRY_URL) — bon Wi-Fi ? REFERENCE_IP ?"
+  fi
+else
+  line "accueil de la salle" "${C_YELLOW}REFERENCE_IP absente de config/network.env${C_RESET}"
+fi
 if curl -s --max-time 3 -o /dev/null https://example.com 2>/dev/null; then
   line "accès internet" "${C_GREEN}disponible${C_RESET} (préchargement possible)"
 else

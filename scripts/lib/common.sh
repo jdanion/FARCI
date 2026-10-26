@@ -16,8 +16,9 @@ FARCI_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FARCI_ROOT="${FARCI_ROOT:-$(cd "$FARCI_LIB_DIR/../.." && pwd)}"
 export FARCI_ROOT FARCI_LIB_DIR
 
-FARCI_DATA_DIR="${FARCI_DATA_DIR:-/srv/farci}"
-export FARCI_DATA_DIR
+# FARCI_DATA_DIR n'a PAS de valeur ici : farci_load_env (scripts/dev-env.sh)
+# la lit dans .env, puis applique /srv/farci par défaut. Une valeur posée ici
+# passerait pour « déjà dans l'environnement » et masquerait celle de .env.
 
 # Horodatage et couleur ------------------------------------------------------
 if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then
@@ -47,6 +48,29 @@ need() {
   have "$1" || die "commande manquante : $1  ${2:+($2)}"
 }
 
+# Pourquoi Docker ne répond pas, et quoi faire : un démon arrêté et un
+# utilisateur hors du groupe docker donnent la même erreur à `docker info`.
+#   docker_diagnose  → vide si Docker répond, sinon une phrase d'action
+docker_diagnose() {
+  local out
+  have docker || { printf 'Docker n'"'"'est pas installé sur cette machine'; return; }
+  out="$(docker info 2>&1 >/dev/null)" && return 0
+  case "$out" in
+    *"permission denied"*)
+      printf 'l'"'"'utilisateur %s n'"'"'a pas accès à Docker : sudo usermod -aG docker %s, puis se déconnecter et se reconnecter (ou : newgrp docker)' "${USER:-$(id -un)}" "${USER:-$(id -un)}" ;;
+    *"Cannot connect"*|*"Is the docker daemon running"*|*"No such file"*)
+      printf 'le service Docker est arrêté : sudo systemctl enable --now docker (Mac : lancer Docker Desktop)' ;;
+    *)
+      printf 'Docker ne répond pas : %s' "$(printf '%s' "$out" | head -1)" ;;
+  esac
+}
+
+need_docker() {
+  local why
+  why="$(docker_diagnose)"
+  [[ -z "$why" ]] || die "$why"
+}
+
 need_python() {
   have python3 || die "python3 est requis (>= ${FARCI_MIN_PYTHON:-3.11})"
   python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, ${FARCI_MIN_PYTHON:-11}) else 1)" \
@@ -71,8 +95,11 @@ retry() {
 # Code HTTP d'une URL, sans échouer si la connexion est refusée.
 #   http_code "$BASE_URL/health"   ->  200 | 000 | 503
 http_code() {
-  local url="$1" timeout="${2:-3}"
-  curl -s -o /dev/null -w '%{http_code}' --max-time "$timeout" "$url" 2>/dev/null || echo "000"
+  local url="$1" timeout="${2:-3}" code
+  # curl écrit déjà « 000 » quand la connexion échoue, PUIS sort en erreur :
+  # un « || echo 000 » produirait « 000000 », pris pour une réponse.
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time "$timeout" "$url" 2>/dev/null)" || true
+  printf '%s\n' "${code:-000}"
 }
 
 # Attend qu'une URL réponde 200.
@@ -164,7 +191,7 @@ code_lines() {
 }
 
 # Emplacement de stockage lourd (§0.1 du plan).
-farci_data_dir() { printf '%s\n' "$FARCI_DATA_DIR"; }
+farci_data_dir() { printf '%s\n' "${FARCI_DATA_DIR:-/srv/farci}"; }
 
 # Vrai si la machine n'a normalement plus d'accès Internet.
 # best-effort : ne jamais échouer, ne jamais bloquer plus de 2s.

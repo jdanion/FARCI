@@ -4,34 +4,36 @@ agent:
   name: farci-arcane-agent
   version: "1.0"
 
-# Healthcheck par brique
+# Healthcheck par brique. Aucune adresse ici : chaque agent reçoit son URL
+# complète par TARGET_URL (08-arcane-agents/docker-compose.yml), construite
+# depuis config/network.env. url_var nomme la variable d'origine.
 services:
   ollama:
-    url: http://192.168.50.20:8080
+    url_var: INFERENCE_A_URL
     health_path: /api/tags
     interval: 30
     timeout: 5
 
   llamacpp:
-    url: http://192.168.50.21:8081
+    url_var: INFERENCE_B_URL
     health_path: /health
     interval: 30
     timeout: 5
 
   gateway:
-    url: http://192.168.50.15/v1
+    url_var: CADDY_URL
     health_path: /healthz
     interval: 30
     timeout: 5
 
   docling:
-    url: http://192.168.50.40:5001
+    url_var: DOCLING_URL
     health_path: /health
     interval: 30
     timeout: 5
 
   mlflow:
-    url: http://192.168.50.50:5000
+    url_var: MLFLOW_URL
     health_path: /health
     interval: 30
     timeout: 5

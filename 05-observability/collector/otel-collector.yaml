@@ -17,12 +17,12 @@ processors:
 
 exporters:
   otlphttp/phoenix:
-    endpoint: http://192.168.50.51:6006
+    endpoint: ${env:PHOENIX_URL}
     headers:
       Content-Type: application/x-protobuf
 
   otlphttp/langfuse:
-    endpoint: http://192.168.50.52:3000/api/public/otel
+    endpoint: ${env:LANGFUSE_URL}/api/public/otel
     headers:
       Content-Type: application/x-protobuf
 

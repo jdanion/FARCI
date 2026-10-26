@@ -1,0 +1,190 @@
+# FARCI — pile de référence : la chaîne cœur complète sur UNE machine du
+# formateur (Raspberry Pi 5, 8 Go, arm64), démarrée avant l'arrivée des
+# étudiants.
+#
+#   ./bin/farci up reference                 accueil + agrégateur + runtime rejoué
+#                                            + LiteLLM + Phoenix + Open WebUI + EDS-NLP
+#   ./bin/farci up reference ollama          + vrai modèle de secours (2B, lent)
+#   ./bin/farci up reference docling         + Docling (lourd : à tester sur le Pi)
+#
+# Rôles :
+#   - caddy : L'ACCUEIL DE LA SALLE (REFERENCE_IP:ENTRY_PORT). Même Caddyfile
+#     que l'équipe 1 ; pour chaque route, brique de l'équipe puis référence.
+#   - replay : runtime rejoué (plan C) — réponses enregistrées, aucun calcul.
+#     C'est le runtime par défaut de la référence : un Pi ne sert pas un
+#     modèle à dix machines.
+#   - litellm : la même configuration que l'équipe 3
+#     (03-llm-gateway/litellm/config.yaml), branchée sur le runtime de la
+#     référence (REFERENCE_RUNTIME_HOST : replay:8090 ou ollama:11434).
+#   - open-webui : l'interface des étudiants sans machine utilisable.
+#
+# Les limites mémoire gardent le Pi utilisable si un service s'emballe.
+
+services:
+  caddy:
+    image: caddy:${CADDY_VERSION}
+    container_name: farci-ref-caddy
+    restart: unless-stopped
+    environment:
+      UP_PASSERELLE: ${UP_PASSERELLE:?UP_PASSERELLE manquant, démarrer avec ./bin/farci up reference}
+      UP_INFERENCE: ${UP_INFERENCE:?UP_INFERENCE manquant, démarrer avec ./bin/farci up reference}
+      UP_DOCUMENTS: ${UP_DOCUMENTS:?UP_DOCUMENTS manquant, démarrer avec ./bin/farci up reference}
+      UP_OBSERVABILITE: ${UP_OBSERVABILITE:?UP_OBSERVABILITE manquant, démarrer avec ./bin/farci up reference}
+      UP_EDS: ${UP_EDS:?UP_EDS manquant, démarrer avec ./bin/farci up reference}
+    ports:
+      - "${ENTRY_PORT:?ENTRY_PORT manquant (config/network.env)}:80"
+    volumes:
+      - ../01-network-dashboard/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ref-caddy-data:/data
+      # Ce que le Pi distribue (./bin/farci partage) et son offline/ arm64.
+      - ${FARCI_DATA_DIR:?FARCI_DATA_DIR manquant (.env)}/partage:/srv/partage:ro
+      - ${FARCI_DATA_DIR:?FARCI_DATA_DIR manquant (.env)}/offline:/srv/offline-arm64:ro
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/livez"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  health-aggregator:
+    image: python:${PYTHON_IMAGE_TAG}
+    container_name: farci-ref-aggregator
+    restart: unless-stopped
+    # Le dépôt en lecture seule : registre, bascules (config/rescue.env) et
+    # pannes de chaos (.chaos/) sont ainsi visibles du tableau de la salle.
+    working_dir: /farci/01-network-dashboard/health-aggregator
+    command: ["python", "app.py"]
+    env_file:
+      - ../config/network.env
+    environment:
+      FARCI_ROOT: /farci
+      AGGREGATOR_LISTEN_PORT: "8081"
+      TABLEAU_STATE: /data/tableau.json
+    ports:
+      - "${HEALTH_AGGREGATOR_PORT:?HEALTH_AGGREGATOR_PORT manquant (config/network.env)}:8081"
+    volumes:
+      - ..:/farci:ro
+      - ref-tableau:/data
+    mem_limit: 128m
+
+  replay:
+    image: python:${PYTHON_IMAGE_TAG}
+    container_name: farci-ref-replay
+    restart: unless-stopped
+    working_dir: /app
+    command: ["python", "reference/replay/server.py", "--port", "8090"]
+    environment:
+      REPLAY_DELAY: ${REPLAY_DELAY:-0.3}
+    ports:
+      - "${REPLAY_PORT:?REPLAY_PORT manquant (config/network.env)}:8090"
+    volumes:
+      - ./replay:/app/reference/replay:ro
+      - ../datasets/raw:/app/datasets/raw:ro
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health', timeout=2)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  litellm:
+    image: ghcr.io/berriai/litellm:${LITELLM_VERSION}
+    container_name: farci-ref-litellm
+    restart: unless-stopped
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    environment:
+      FARCI_RUNTIME_URL: http://${REFERENCE_RUNTIME_HOST:-replay:8090}/v1
+      FARCI_CHAOS_RUNTIME_URL: http://replay:8090/v1
+      LITELLM_LOG: "INFO"
+      LITELLM_LOCAL_MODEL_COST_MAP: "True"
+    ports:
+      - "${GATEWAY_A_PORT:?GATEWAY_A_PORT manquant (config/network.env)}:4000"
+    volumes:
+      - ../03-llm-gateway/litellm/config.yaml:/app/config.yaml:ro
+    mem_limit: 1g
+
+  phoenix:
+    image: arizephoenix/phoenix:${PHOENIX_VERSION}
+    container_name: farci-ref-phoenix
+    restart: unless-stopped
+    environment:
+      PHOENIX_WORKING_DIR: /phoenix
+    ports:
+      - "${PHOENIX_PORT:?PHOENIX_PORT manquant (config/network.env)}:6006"
+    volumes:
+      - ref-phoenix-data:/phoenix
+    mem_limit: 1g
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:${OPEN_WEBUI_VERSION}
+    container_name: farci-ref-open-webui
+    restart: unless-stopped
+    environment:
+      # Par l'accueil, comme toute application : la référence sert si besoin.
+      OPENAI_API_BASE_URL: http://caddy:80/v1
+      OPENAI_API_KEY: farci
+      ENABLE_OLLAMA_API: "False"
+      DEFAULT_MODELS: med-extraction
+      # Une seule session partagée, sans compte : données synthétiques, et
+      # aucun étudiant ne doit perdre cinq minutes à créer un compte.
+      WEBUI_AUTH: "False"
+      OFFLINE_MODE: "True"
+    ports:
+      - "${OPEN_WEBUI_PORT:?OPEN_WEBUI_PORT manquant (config/network.env)}:8080"
+    volumes:
+      - ref-open-webui-data:/app/backend/data
+    mem_limit: 1536m
+
+  # Doublure du service EDS-NLP de l'équipe 4 (image construite au
+  # préchargement sur le Pi : ./preload.sh --reference).
+  eds-nlp:
+    image: farci/eds-nlp:${EDSNLP_VERSION}
+    container_name: farci-ref-eds-nlp
+    restart: unless-stopped
+    environment:
+      FARCI_GATEWAY_URL: http://caddy:80/v1
+      EDS_LLM_MODEL: ${EDS_LLM_MODEL:-med-extraction}
+    ports:
+      - "${EDS_NLP_PORT:?EDS_NLP_PORT manquant (config/network.env)}:8000"
+    mem_limit: 768m
+
+  # --- options ---------------------------------------------------------------
+  # Vrai modèle de secours (Qwen3.5-2B) : lent sur un Pi, pour démontrer
+  # « un vrai modèle, même petit ». REFERENCE_RUNTIME_HOST=ollama:11434 pour
+  # y brancher la LiteLLM de référence ; importer avec
+  #   OLLAMA_CONTAINER=farci-ref-ollama 02-inference/ollama/create-model.sh secours
+  ollama:
+    profiles: [modele]
+    image: ollama/ollama:${OLLAMA_VERSION}
+    container_name: farci-ref-ollama
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_KEEP_ALIVE: "-1"
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - ${FARCI_MODELS_DIR:?FARCI_MODELS_DIR manquant}:/gguf:ro
+      - ref-ollama-data:/root/.ollama
+    mem_limit: 4g
+
+  docling:
+    profiles: [documents]
+    image: ghcr.io/docling-project/docling-serve-cpu:v${DOCLING_SERVE_VERSION}
+    container_name: farci-ref-docling
+    restart: unless-stopped
+    environment:
+      DOCLING_DO_OCR: "false"
+      DOCLING_DO_TABLE_STRUCTURE: "false"
+    ports:
+      - "${DOCLING_PORT:?DOCLING_PORT manquant (config/network.env)}:5001"
+    volumes:
+      - ref-docling-cache:/root/.cache
+    mem_limit: 3g
+
+volumes:
+  ref-tableau:
+  ref-caddy-data:
+  ref-phoenix-data:
+  ref-open-webui-data:
+  ref-ollama-data:
+  ref-docling-cache:

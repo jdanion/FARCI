@@ -3,19 +3,28 @@
 # Affiche les cibles, lues dans scripts/targets.def (source de vérité).
 
 set -euo pipefail
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  set --
+fi
 # shellcheck source=scripts/lib/common.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"
 
 DEFINITIONS="$FARCI_ROOT/scripts/targets.def"
 CMD_DIR="$FARCI_ROOT/scripts/cmd"
 
+# Un groupe absent de GROUP_ORDER rendrait ses cibles invisibles :
+# scripts/check_targets.py (selftest) lit cette liste pour l'interdire.
 declare -A GROUP_TITLES=(
   [atelier]="Atelier"
+  [airgap]="Préchargement et air-gap"
+  [dataset]="Données, extraction, évaluation"
+  [chaos]="Pannes (étape 3)"
+  [secours]="Plans B (formateur)"
   [qualité]="Qualité"
-  [reseau]="Réseau"
   [nettoyage]="Nettoyage"
 )
-GROUP_ORDER=(atelier qualité reseau nettoyage)
+GROUP_ORDER=(atelier airgap dataset chaos secours qualité nettoyage)
 
 group_title() {
   local key="$1"

@@ -9,17 +9,20 @@ services:
     container_name: farci-open-webui
     restart: unless-stopped
     environment:
-      OAI_API_BASE_URL: http://192.168.50.15/v1
-      DEFAULT_MODEL: med-extraction
-      ENABLE_SIGNUP: "false"
-      ENABLE_LOGIN_FORM: "true"
+      # Point d'entrée stable (Caddy), construit depuis config/network.env.
+      OPENAI_API_BASE_URL: ${FARCI_GATEWAY_URL:?FARCI_GATEWAY_URL manquante (REFERENCE_IP, config/network.env)}
+      OPENAI_API_KEY: ${GATEWAY_KEY_STANDARD:?GATEWAY_KEY_STANDARD manquant (.env)}
+      ENABLE_OLLAMA_API: "False"
+      DEFAULT_MODELS: med-extraction
+      # Une seule session partagée, sans compte (comme la référence) : données
+      # synthétiques, et l'inscription fermée sans compte existant bloquait
+      # tout le monde à la porte.
+      WEBUI_AUTH: "False"
+      OFFLINE_MODE: "True"
     volumes:
       - open-webui-data:/app/backend/data
     ports:
-      - "8080:8080"
-    networks:
-      farci:
-        ipv4_address: ${OPEN_WEBUI_IP}
+      - "${OPEN_WEBUI_PORT:?OPEN_WEBUI_PORT manquant (config/network.env)}:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
@@ -28,7 +31,3 @@ services:
 
 volumes:
   open-webui-data:
-
-networks:
-  farci:
-    external: true

@@ -4,7 +4,7 @@
 
 services:
   mlflow:
-    image: mlflow/mlflow:${MLFLOW_VERSION}
+    image: ghcr.io/mlflow/mlflow:v${MLFLOW_VERSION}
     container_name: farci-mlflow
     restart: unless-stopped
     command: >
@@ -16,10 +16,7 @@ services:
     volumes:
       - mlflow-data:/mlflow
     ports:
-      - "5000:5000"
-    networks:
-      farci:
-        ipv4_address: ${MLFLOW_IP}
+      - "${MLFLOW_PORT:?MLFLOW_PORT manquant (config/network.env)}:5000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 10s
@@ -28,7 +25,3 @@ services:
 
 volumes:
   mlflow-data:
-
-networks:
-  farci:
-    external: true

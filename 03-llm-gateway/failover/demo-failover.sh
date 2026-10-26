@@ -16,7 +16,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 
 farci_load_env
 
-GATEWAY_URL="${GATEWAY_URL:-http://192.168.50.30:4000}"
+GATEWAY_URL="${GATEWAY_A_URL:?GATEWAY_A_IP/GATEWAY_A_PORT manquants : voir config/network.env}"
 PRIMARY="${PRIMARY:-farci-ollama}"
 SECONDARY="${SECONDARY:-farci-llamacpp}"
 

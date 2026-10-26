@@ -1,24 +1,28 @@
-# FARCI — parcours Flowise
+# FARCI — parcours Flowise (démonstration du formateur)
 
-## Démarrage
+Flowise montre l'orchestration sous forme de graphe : document → Docling →
+prompt → LLM → validation. Pendant l'atelier, c'est une **démonstration**
+du formateur, pas un parcours noté.
+
+## Démarrage (depuis la racine du dépôt)
 
 ```bash
-cd 07-applications/flowise
-docker compose up -d
+./bin/farci up 07-applications/flowise
 ```
 
-## Import du flow
+L'adresse est `FLOWISE_IP:FLOWISE_PORT` (`config/network.env`), ou
+`/flowise` derrière Caddy.
 
-1. Ouvrir http://192.168.50.61:3000
-2. Se connecter avec `admin` / `farci-admin`
-3. Importer `flowise.json`
+## Le flow
 
-## Utilisation
-
-1. Téléverser un PDF
-2. Le pipeline : Docling → Prompt → LLM → Validation
-3. Le JSON validé est affiché
+`07-applications/flowise/flowise.json` est un **schéma illustratif** du
+graphe, pas un export importable tel quel : les nœuds sont à recréer dans
+l'éditeur (Document → requête HTTP Docling sur `FARCI_DOCLING_URL` → prompt
+`07-applications/common/prompts/extraction_v1.md` → modèle `med-extraction`
+via `FARCI_GATEWAY_URL`). À valider sur la machine du formateur avant la
+séance.
 
 ## Export
 
-Copier le JSON de sortie vers `datasets/extracted/flowise/`.
+Copier chaque JSON de sortie dans `datasets/extracted/flowise/patient_<IPP>.json`,
+puis `./bin/farci evaluate`.

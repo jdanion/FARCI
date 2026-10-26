@@ -4,6 +4,8 @@
 # Ces fichiers sont CRÉÉS par ./bin/farci bootstrap à partir de leurs exemples.
 .env
 config/network.env
+# État des bascules forcées sur la référence (./bin/farci rescue), propre au Pi
+config/rescue.env
 config/workshop.env
 
 # ---------------------------------------------------------------------------
@@ -34,6 +36,9 @@ offline
 # Les extractions des étudiants ne sont PAS commitées : elles sont volumineuses
 # etouraient chaque commit de plusieurs Mo (FARCI §33, §53).
 datasets/extracted/*
+# PDF de démonstration Docling (./bin/farci generate-dataset --pdf)
+datasets/pdf/
+datasets/reports/
 !datasets/extracted/.gitignore
 datasets/pseudonymized/*
 !datasets/pseudonymized/.gitignore
@@ -66,3 +71,6 @@ Thumbs.db
 .vscode/
 *.swp
 *~
+
+# Sources d'EDS-Pseudo clonées au préchargement (image farci/eds-nlp)
+04-clinical-documents/eds-nlp/vendor/

@@ -10,9 +10,10 @@ services:
     restart: unless-stopped
     command: >
       llama-server
-      --model /models/Ornith-1.5-9B-Q5_K_M.gguf
+      --model /models/${LLAMACPP_GGUF:-Ornith-1.5-9B-Q5_K_M.gguf}
+      --alias med-extraction
       --host 0.0.0.0
-      --port 8081
+      --port 8080
       --ctx-size ${LLAMACPP_CTX_SIZE:-8192}
       --n-gpu-layers ${LLAMACPP_GPU_LAYERS:-0}
       --threads ${LLAMACPP_THREADS:-4}
@@ -23,16 +24,9 @@ services:
       - ${FARCI_MODELS_DIR}:/models:ro
       - ./grammar:/app/grammar:ro
     ports:
-      - "8081:8081"
-    networks:
-      farci:
-        ipv4_address: ${INFERENCE_B_IP}
+      - "${INFERENCE_B_PORT:?INFERENCE_B_PORT manquant (config/network.env)}:8080"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-networks:
-  farci:
-    external: true

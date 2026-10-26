@@ -13,10 +13,7 @@ services:
     volumes:
       - flowise-data:/root/.flowise
     ports:
-      - "3000:3000"
-    networks:
-      farci:
-        ipv4_address: ${FLOWISE_IP}
+      - "${FLOWISE_PORT:?FLOWISE_PORT manquant (config/network.env)}:3000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/health"]
       interval: 10s
@@ -25,7 +22,3 @@ services:
 
 volumes:
   flowise-data:
-
-networks:
-  farci:
-    external: true

@@ -1,127 +1,56 @@
-# Équipe 2 — Inférence (Ollama, llama.cpp, oMLX)
+# Équipe 2 — Inférence
 
-## Attendus pédagogiques
+> Fiche débutant. La référence technique complète est
+> `02-inference/TUTORIAL.md` (`./bin/farci read 2`).
 
-- Comprendre la différence entre un modèle et un runtime
-- Comprendre ce qu'est un fichier GGUF et la quantification
-- Comprendre la notion de contrat d'inférence (API OpenAI-compatible)
-- Comprendre pourquoi `reasoning_content` est un problème et comment le gérer
-- Savoir comparer deux runtimes à poids constants
+## Votre objectif
 
-## Solution simple (scripts)
+Faire tourner **un modèle de langage sur votre machine** (Ollama) et le
+servir sous le nom `med-extraction` : la ligne `Inference` passe de
+`🛟 REF` à `✅ UP`.
 
-```bash
-# 1. Démarrer Ollama
-cd 02-inference/ollama
-docker compose up -d
+Le modèle est le fichier de connaissances, le runtime est le logiciel qui
+le lit : comme un livre et la personne qui le lit à voix haute.
 
-# 2. Importer les modèles
-./create-model.sh
+## Les étapes
 
-# 3. Démarrer llama.cpp
-cd ../llamacpp
-docker compose up -d
+1. **Vérifier la machine** — `./bin/farci doctor` : notez la RAM et la ligne
+   « IP de cette machine ».
+2. **Vérifier les poids** — `./bin/farci verify-models` : au minimum le
+   modèle de secours `Qwen3.5-2B` doit être présent.
+3. **Démarrer le runtime** — `./bin/farci up 02-inference/ollama`.
+4. **Importer le modèle** — `02-inference/ollama/create-model.sh`. Il choisit
+   seul : le modèle principal (9B) si la machine a 16 Go de RAM ou plus,
+   sinon le modèle de secours (2B). Le nom servi est **toujours**
+   `med-extraction`.
+5. **Tester chez vous** — `./bin/farci test` : la ligne `inference-contract`
+   doit être `PASS`.
+6. **Vous déclarer** — donnez votre IP au formateur
+   (`./bin/farci room set 2 <votre-ip>` sur le Pi).
+7. **Regarder l'écran projeté** — la ligne `Inference` passe à `✅ UP` : la
+   salle utilise maintenant **votre** modèle.
 
-# 4. Vérifier le contrat
-BASE_URL=http://192.168.50.20:8080/v1 ./tests/test_inference_contract.sh
-```
-
-## Solution from scratch
-
-### 1. Démarrer Ollama
-
-```bash
-docker run -d \
-  --name farci-ollama \
-  --network farci \
-  -p 8080:8080 \
-  -e OLLAMA_HOST=0.0.0.0:8080 \
-  -e OLLAMA_KEEP_ALIVE=-1 \
-  -e OLLAMA_NO_CLOUD=1 \
-  -v /srv/farci/offline/models:/models:ro \
-  -v ollama-data:/root/.ollama \
-  ollama/ollama:0.34.4
-```
-
-### 2. Importer un modèle GGUF
+## La sonde : comment savoir que c'est fini
 
 ```bash
-# Créer un Modelfile
-cat > Modelfile << 'EOF'
-FROM /models/Ornith-1.5-9B-Q5_K_M.gguf
-PARAMETER temperature 0
-PARAMETER num_ctx 8192
-EOF
-
-# Importer dans Ollama
-curl -X POST http://192.168.50.20:8080/api/create \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "ornith-1.5-9b-q5km",
-    "modelfile": "FROM /models/Ornith-1.5-9B-Q5_K_M.gguf\nPARAMETER temperature 0\n"
-  }'
+./bin/farci test        # inference-contract   PASS   http://127.0.0.1:11434/v1
 ```
 
-### 3. Démarrer llama.cpp
+Et sur l'écran de la salle : `Inference ✅ UP`.
 
-```bash
-docker run -d \
-  --name farci-llamacpp \
-  --network farci \
-  -p 8081:8081 \
-  -v /srv/farci/offline/models:/models:ro \
-  -v $(pwd)/grammar:/app/grammar:ro \
-  farci/llamacpp:server-b10600 \
-  llama-server \
-  --model /models/Ornith-1.5-9B-Q5_K_M.gguf \
-  --host 0.0.0.0 \
-  --port 8081 \
-  --ctx-size 8192 \
-  --n-gpu-layers 0 \
-  --threads 4 \
-  --jinja \
-  --reasoning off \
-  --grammar-file /app/grammar/clinical.gbnf
-```
+## Bloqué depuis 10 minutes ?
 
-### 4. Tester le contrat
+Levez la main. La salle ne vous attend pas : le runtime de la référence
+(🛟) répond à votre place.
 
-```bash
-# Lister les modèles
-curl http://192.168.50.20:8080/api/tags
+| Ce que vous voyez | À essayer |
+|---|---|
+| le conteneur s'arrête, `out of memory` | `02-inference/ollama/create-model.sh secours` (même nom, modèle plus petit) |
+| `create-model.sh` : GGUF manquant | `./bin/farci verify-models` ; demander la clé USB au formateur |
+| une réponse prend plus d'une minute | normal sur un petit processeur : le formateur peut lancer `./bin/farci rescue inference`, vous continuez à comprendre |
+| Docker absent ou cassé | travaillez en binôme sur la machine d'une autre équipe |
 
-# Healthcheck
-curl http://192.168.50.21:8081/health
+## Bonus
 
-# Complétion
-curl -X POST http://192.168.50.20:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "ornith-1.5-9b-q5km",
-    "messages": [{"role": "user", "content": "test"}],
-    "temperature": 0,
-    "max_tokens": 16
-  }'
-```
-
-### 5. Gérer reasoning_content
-
-```bash
-# Ollama : think: false
-curl -X POST http://192.168.50.20:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "ornith-1.5-9b-q5km",
-    "messages": [{"role": "user", "content": "test"}],
-    "think": false
-  }'
-
-# llama.cpp : --reasoning off (déjà dans la commande)
-```
-
-## Vérifications
-
-- [ ] Ollama répond sur :8080
-- [ ] llama.cpp répond sur :8081
-- [ ] Contrat respecté (models, chat/completions, health)
-- [ ] reasoning_content neutralisé
+- llama.cpp sur le **même** fichier GGUF : `./bin/farci up 02-inference/llamacpp`.
+- Mesurer : `02-inference/bench/bench.sh` (même modèle, runtime différent).

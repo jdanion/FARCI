@@ -1,0 +1,7 @@
+# FARCI — dépendances du service EDS-NLP (image farci/eds-nlp)
+# edsnlp et eds-pseudo sont figés dans versions.env (EDSNLP_VERSION,
+# EDS_PSEUDO_COMMIT) et passés au Dockerfile ; le reste est figé ici.
+spacy==3.8.16
+openai==3.37.0            # client OpenAI d'eds.llm_markup_extractor
+bm25s==0.3.15             # sélection d'exemples (requis à l'import du composant)
+PyStemmer==3.1.0
