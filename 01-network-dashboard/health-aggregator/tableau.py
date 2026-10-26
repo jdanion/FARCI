@@ -159,6 +159,8 @@ class Scoreboard:
                 self.__dict__.update(json.loads(self.path.read_text(encoding="utf-8")))
             except (ValueError, OSError):
                 pass  # état illisible : on repart de zéro plutôt que de planter
+        # Noms affichés : ceux de l'onglet formateur (salle.py), sinon le rôle.
+        self.noms: dict[str, str] = dict(TEAMS)
 
     def reset(self, now: float | None = None) -> None:
         self.debut = now if now is not None else time.time()
@@ -195,7 +197,7 @@ class Scoreboard:
         if any(b["equipe"] == team and b["badge"] == badge for b in self.badges):
             return
         self.badges.append({"equipe": team, "badge": badge, "at": now, "points": points})
-        self._event("badge", f"Équipe {team} — {TEAMS.get(team, '')} : badge « {badge} »", now, team, points)
+        self._event("badge", f"Équipe {team} — {self.noms.get(team, '')} : badge « {badge} »", now, team, points)
 
     def update(self, room: dict, services: list[dict], now: float | None = None) -> None:
         now = now if now is not None else time.time()
@@ -212,7 +214,7 @@ class Scoreboard:
                     tier = service.get("tier", "core")
                     points = POINTS["core"] if tier == "core" else POINTS["bonus"]
                     self.livres[sid] = {"equipe": team, "tier": tier, "at": now, "points": points}
-                    self._event("livraison", f"Équipe {team} livre {label}", now, team, points)
+                    self._event("livraison", f"Équipe {team} — {self.noms.get(team, '')} livre {label}", now, team, points)
                     if len({v["equipe"] for v in self.livres.values()}) == 1 and len(self.livres) == 1:
                         self._badge(team, "Premiers !", now, POINTS["premiers"])
                 elif before not in ("equipe", "absent"):
@@ -252,7 +254,7 @@ class Scoreboard:
             entry = teams.setdefault(badge["equipe"], {"points": 0, "briques": [], "badges": []})
             entry["points"] += badge["points"]
             entry["badges"].append(badge["badge"])
-        ranked = [{"equipe": t, "nom": TEAMS.get(t, ""), **v} for t, v in teams.items()]
+        ranked = [{"equipe": t, "nom": self.noms.get(t, ""), **v} for t, v in teams.items()]
         return sorted(ranked, key=lambda e: (-e["points"], e["equipe"]))
 
     @staticmethod
@@ -281,7 +283,7 @@ class Scoreboard:
             team = str(first.get("team", ""))
             ip = env.get(str(first.get("ip_var", "")), "")
             lignes.append({"label": row["label"], "tier": row.get("tier", "core"), "etat": row_state(effectifs),
-                           "equipe": team, "nom_equipe": TEAMS.get(team, ""), "ip": ip,
+                           "equipe": team, "nom_equipe": self.noms.get(team, ""), "ip": ip,
                            "fiche": FICHES.get(row["label"], {}),
                            "services": [self._service_links(by_id.get(m["id"], {}), m, env) for m in members]})
         minutes = (now - self.debut) / 60

@@ -49,12 +49,14 @@ status	ok	./bin/farci status --watch	en continu, pour l'écran de la salle
 status	ok	./bin/farci test	le contrat de votre brique est-il tenu ?
 status	echec	./bin/farci room	une brique non déclarée ? (sur le Pi : room set)
 status	echec	./bin/farci rescue	sur le Pi : faire servir une brique par la référence
+room	ok	http://{salle}/tableau/formateur	ou dans le navigateur : onglet formateur du tableau
 room	ok	./bin/farci room set <équipe> <ip>	sur le Pi : déclarer le poste d'une équipe
 room	ok	./bin/farci status	le tableau de la salle
 room set	ok	./bin/farci status	la brique passe au ✅ dès qu'elle répond
 room set	ok	./bin/farci tableau	l'adresse du tableau projeté
 room set	echec	./bin/farci room	cibles et adresses acceptées
 room unset	ok	./bin/farci status	la référence reprend la brique (🛟)
+tableau	ok	http://{salle}/tableau/formateur	onglet formateur : équipes, étudiants, IP, suivi en direct
 tableau	ok	./bin/farci tableau reset	sur le Pi, avant l'arrivée des étudiants
 tableau	ok	./bin/farci partage maj	publier le dépôt pour qui arrive sans git clone
 tableau reset	ok	./bin/farci partage maj	publier la version du jour (http://{salle}/rejoindre)
@@ -74,6 +76,7 @@ core-up	echec	./bin/farci logs reference	ce que disent les conteneurs
 core-up	echec	./bin/farci verify-images --reference	une image manque-t-elle ?
 dashboard-up	ok	./bin/farci health	le service rendu à la salle
 dashboard-up	ok	./bin/farci tableau	l'adresse à ouvrir sur l'iPad
+dashboard-up	ok	http://{salle}/tableau/formateur	nommer les équipes et déclarer leurs adresses
 dashboard-up	echec	./bin/farci logs reference caddy	l'accueil de la salle
 health	ok	./bin/farci tableau	l'adresse à ouvrir sur l'iPad
 health	ok	./bin/farci rehearse	J-1 : la répétition générale

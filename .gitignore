@@ -7,6 +7,8 @@ config/network.env
 # État des bascules forcées sur la référence (./bin/farci rescue), propre au Pi
 config/rescue.env
 config/workshop.env
+# Noms des équipes et des étudiants (onglet formateur du tableau) : jamais dans Git
+config/salle.json
 
 # ---------------------------------------------------------------------------
 # Données lourdes : JAMAIS dans Git (contrainte du plan, §0.1)

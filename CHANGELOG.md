@@ -6,6 +6,21 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Onglet formateur du tableau
+
+- `/tableau/formateur` (bouton **Formateur** du tableau) : nom de chaque
+  équipe, ses étudiants, l'adresse IP de la machine de chaque brique, et le
+  suivi en direct (UP / DOWN depuis…, qui sert la brique). Pas de code.
+- Enregistrer écrit `config/salle.json` (noms, hors Git) et
+  `config/network.env` (adresses, mêmes règles que `room set`), puis recharge
+  l'accueil par l'API d'administration de Caddy (port 2019 non publié).
+  L'agrégateur relit les adresses à chaque sondage et rétablit les amonts si
+  Caddy redémarre avec son ancien environnement.
+- Les noms d'équipe remplacent ceux des rôles sur le tableau, dans le fil et
+  le classement ; `./bin/farci room` les affiche.
+- L'accueil de l'équipe 1 montre l'onglet en lecture seule : les adresses se
+  déclarent sur le Pi.
+
 ### « Ensuite : » à la fin de chaque commande
 
 - Chaque `./bin/farci <cible>` se termine par la ou les commandes à lancer

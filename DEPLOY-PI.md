@@ -184,6 +184,27 @@ par brique cœur, 50 par brique bonus, +50 « Premiers ! », +50 « Pipeline
 READY » à chaque équipe ayant livré, +50 « Increvable » après 30 minutes
 sans interruption. Une panne ne coûte rien.
 
+### L'onglet formateur : équipes, étudiants, adresses
+
+Sur le tableau, bouton **Formateur** (en bas à gauche), ou directement
+`http://farci.local/tableau/formateur` :
+
+- nom de chaque équipe (il remplace le nom du rôle sur le tableau projeté et
+  dans le classement) et ses étudiants ;
+- adresse IP de la machine de l'équipe (« ↓ aux briques » la recopie dans
+  ses briques cœur), ou brique par brique ;
+- **Enregistrer et appliquer** : écrit `config/salle.json` et
+  `config/network.env` sur le Pi (les mêmes règles que `./bin/farci room
+  set` : IPv4, dans `FARCI_SUBNET`, un port par adresse), puis recharge
+  l'accueil sans redémarrer de conteneur ;
+- le suivi est en direct : l'agrégateur sonde chaque adresse toutes les 5 s ;
+  chaque brique affiche **UP depuis…** / **DOWN depuis…** et qui la sert
+  (l'équipe, ou 🛟 le Pi).
+
+Au début de la séance, tout est servi par le Pi ; chaque brique passe au
+vert dès que le poste de l'étudiant répond. Après une mise à jour du dépôt :
+`make core-up` pour que l'agrégateur reçoive `config/` en écriture.
+
 ### Un étudiant arrive sans avoir cloné le projet
 
 Le Pi distribue le dépôt et ce qu'il faut pour l'installer, par l'accueil

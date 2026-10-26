@@ -8,6 +8,10 @@
 # l'accueil (le Pi : farci-ref-aggregator ; l'équipe 1 : farci-health-aggregator).
 # Les points se gagnent seuls : une brique livrée = une brique servie par
 # l'accueil (✅), pas une déclaration.
+#
+# Onglet formateur : /tableau/formateur — noms d'équipes, étudiants et adresse
+# de chaque brique (écrit config/salle.json et config/network.env sur le Pi,
+# comme ./bin/farci room set, puis recharge l'accueil).
 
 set -euo pipefail
 # shellcheck source=scripts/lib/common.sh
@@ -22,13 +26,15 @@ aggregator() {
 }
 
 case "${1:-}" in
-  -h|--help) sed -n '2,11p' "$0" | sed 's/^#\{0,1\} \{0,1\}//' ;;
+  -h|--help) sed -n '2,15p' "$0" | sed 's/^#\{0,1\} \{0,1\}//' ;;
   "")
     section "Tableau de la salle"
     printf '  %s/\n' "${FARCI_ENTRY_URL:-http://<REFERENCE_IP>}"
     [[ -n "${REFERENCE_IP:-}" ]] && printf '  http://%s:%s/tableau   (sans passer par l'"'"'accueil)\n' "$REFERENCE_IP" "${HEALTH_AGGREGATOR_PORT:-8088}"
     printf '\n  iPad : Safari → Partager → « Sur l'"'"'écran d'"'"'accueil » pour le plein écran,\n'
     printf '  puis toucher « Plein écran · écran allumé ».\n'
+    printf '\n  Onglet formateur (noms des équipes, étudiants, IP de chaque brique,\n'
+    printf '  suivi UP/DOWN en direct) : %s/tableau/formateur\n' "${FARCI_ENTRY_URL:-http://<REFERENCE_IP>}"
     ;;
   reset)
     need_docker

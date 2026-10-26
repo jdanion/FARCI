@@ -60,10 +60,17 @@ services:
       FARCI_ROOT: /farci
       AGGREGATOR_LISTEN_PORT: "8081"
       TABLEAU_STATE: /data/tableau.json
+      # Onglet formateur (/tableau/formateur) : recharge l'accueil par l'API
+      # d'administration de Caddy (réseau de cette compose seulement).
+      FARCI_CADDY_ADMIN: http://caddy:2019
+      FARCI_ACCUEIL: salle
     ports:
       - "${HEALTH_AGGREGATOR_PORT:?HEALTH_AGGREGATOR_PORT manquant (config/network.env)}:8081"
     volumes:
       - ..:/farci:ro
+      # config/ en écriture : l'onglet formateur y écrit salle.json (noms) et
+      # network.env (adresses), exactement comme ./bin/farci room set.
+      - ../config:/farci/config
       - ref-tableau:/data
     mem_limit: 128m
 

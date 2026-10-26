@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>FARCI — formateur</title>
+<!--
+  FARCI — l'onglet du formateur : nom des équipes, étudiants, adresse IP de
+  la machine de chaque brique, et suivi en direct (l'agrégateur sonde chaque
+  adresse toutes les quelques secondes). Servi par l'agrégateur :
+  http://<Pi>/tableau/formateur. « Enregistrer » écrit config/salle.json et
+  config/network.env sur le Pi, puis recharge l'accueil : comme room set.
+  Aucune ressource externe (air-gap).
+-->
+<style>
+  :root {
+    --fond: #0b1020; --carte: #141b33; --carte-2: #1b2445; --trait: #2a355f;
+    --texte: #eef2ff; --doux: #9aa6cf; --equipe: #22c55e; --equipe-fond: #0f2f1f;
+    --ref: #f59e0b; --ref-fond: #33270c; --panne: #ef4444; --panne-fond: #3a1216;
+    --inconnu: #64748b; --accent: #818cf8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fond); color: var(--texte); line-height: 1.4;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  header { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    padding: 12px 16px; background: rgba(11, 16, 32, .95); border-bottom: 1px solid var(--trait); }
+  header b { font-size: 22px; letter-spacing: .06em; margin-right: 8px; }
+  .onglets { display: flex; gap: 6px; }
+  .onglets a { padding: 8px 14px; border-radius: 10px; color: var(--doux); text-decoration: none; font-weight: 700; }
+  .onglets a.actif { background: var(--accent); color: #fff; }
+  .infos { color: var(--doux); font-size: 14px; margin-left: auto; }
+  main { max-width: 1200px; margin: 0 auto; padding: 16px 16px 110px; }
+  .aide { color: var(--doux); margin: 0 0 14px; }
+  .bandeau { padding: 10px 14px; border-radius: 12px; margin: 0 0 12px; font-weight: 600; }
+  .bandeau.lecture { background: var(--ref-fond); border: 1px solid var(--ref); }
+  .equipes { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+  .equipe { background: var(--carte); border: 1px solid var(--trait); border-radius: 16px; padding: 14px; }
+  .equipe h2 { margin: 0 0 10px; font-size: 17px; display: flex; gap: 8px; align-items: baseline; }
+  .equipe h2 .num { display: inline-grid; place-items: center; min-width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 14px; }
+  .equipe h2 small { color: var(--doux); font-weight: 500; }
+  label { display: block; font-size: 13px; color: var(--doux); margin: 8px 0 3px; }
+  input, textarea { width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--trait);
+    background: #060a17; color: var(--texte); font: inherit; font-size: 15px; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  input.modifie, textarea.modifie { border-color: var(--ref); }
+  input:disabled, textarea:disabled { opacity: .6; }
+  textarea { resize: vertical; min-height: 58px; }
+  .ip-machine { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+  .briques { margin-top: 10px; display: grid; gap: 6px; }
+  .brique { display: grid; grid-template-columns: 1fr 128px; gap: 4px 8px; align-items: center;
+    background: var(--carte-2); border-radius: 10px; padding: 8px 10px; }
+  .brique .nom { font-weight: 600; font-size: 14px; }
+  .brique .nom small { color: var(--doux); font-weight: 400; }
+  .brique input { padding: 5px 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  .etat { grid-column: 1 / -1; font-size: 13px; }
+  .pastille { display: inline-block; padding: 1px 8px; border-radius: 99px; font-weight: 700; margin-right: 6px; }
+  .pastille.up { background: var(--equipe); color: #052e16; }
+  .pastille.down { background: var(--panne); color: #fff; }
+  .pastille.ref { background: var(--ref); color: #2b1a00; }
+  .pastille.rien { background: var(--inconnu); color: #fff; }
+  .etat span.doux { color: var(--doux); }
+  button { border: 0; border-radius: 10px; padding: 9px 14px; font: inherit; font-weight: 700; cursor: pointer;
+    background: var(--carte-2); color: var(--texte); }
+  button.principal { background: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  .barre { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 10px;
+    align-items: center; padding: 12px 16px; background: rgba(11, 16, 32, .97); border-top: 1px solid var(--trait); }
+  .message { flex: 1 1 260px; font-size: 14px; }
+  .message.ok { color: var(--equipe); }
+  .message.erreur { color: #fca5a5; }
+  .message ul { margin: 4px 0 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+<header>
+  <b>FARCI</b>
+  <nav class="onglets"><a href="/tableau">Tableau</a><a href="/tableau/formateur" class="actif">Formateur</a></nav>
+  <div class="infos" id="infos">…</div>
+</header>
+<main>
+  <p class="aide">Nommez les équipes, listez les étudiants et saisissez l'adresse IP de la machine de chaque
+    brique (<code>./bin/farci doctor</code> l'affiche sur le poste de l'étudiant). Chaque adresse est sondée en
+    continu : la brique passe au vert dès qu'elle répond. Tant qu'elle ne répond pas, le Pi la sert (🛟).</p>
+  <div class="bandeau lecture" id="lecture" hidden></div>
+  <div class="equipes" id="equipes"><p class="aide">Chargement de la salle…</p></div>
+</main>
+<div class="barre">
+  <button class="principal" id="enregistrer" type="button">Enregistrer et appliquer</button>
+  <button id="sonder" type="button">Sonder maintenant</button>
+  <div class="message" id="message" role="status"></div>
+</div>
+<script>
+"use strict";
+let vue = null;          // dernière vue reçue du Pi
+let modifie = false;     // saisie en cours : on ne redessine pas les champs
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function duree(depuis) {
+  if (!depuis || !vue) return "";
+  const s = Math.max(0, Math.round(vue.maintenant + (Date.now() / 1000 - recuLe) - depuis));
+  if (s < 60) return s + " s";
+  if (s < 3600) return Math.floor(s / 60) + " min";
+  return Math.floor(s / 3600) + " h " + Math.floor((s % 3600) / 60) + " min";
+}
+let recuLe = Date.now() / 1000;
+
+function etatBrique(b) {
+  const e = el("div", "etat");
+  let p, texte;
+  if (!b.ip) {
+    p = b.servi_par === "reference" ? ["ref", "🛟 le Pi"] : ["rien", "pas déclarée"];
+    texte = b.servi_par === "reference" ? "aucune adresse : la référence sert la brique" : "aucune adresse";
+  } else if (b.equipe === "up") {
+    p = ["up", "UP"];
+    texte = "répond sur " + b.ip + ":" + b.port + (b.depuis ? " depuis " + duree(b.depuis) : "")
+      + (b.servi_par === "equipe" ? "" : " — l'accueil ne la sert pas (bascule ou chaos)");
+  } else {
+    p = ["down", "DOWN"];
+    texte = "ne répond pas sur " + b.ip + ":" + b.port + (b.depuis ? " depuis " + duree(b.depuis) : "")
+      + (b.servi_par === "reference" ? " — 🛟 le Pi la remplace" : "");
+  }
+  e.append(el("span", "pastille " + p[0], p[1]), el("span", "doux", texte));
+  return e;
+}
+
+function champ(input, initial) {
+  input.value = initial || "";
+  input.dataset.initial = input.value;
+  input.disabled = !vue.modifiable;
+  input.addEventListener("input", () => {
+    input.classList.toggle("modifie", input.value !== input.dataset.initial);
+    modifie = document.querySelector(".modifie") !== null;
+  });
+  return input;
+}
+
+function dessiner() {
+  const zone = document.getElementById("equipes");
+  zone.replaceChildren();
+  for (const eq of vue.equipes) {
+    const carte = el("section", "equipe");
+    carte.dataset.num = eq.num;
+    const h = el("h2");
+    h.append(el("span", "num", eq.num), document.createTextNode(eq.nom || eq.role));
+    if (eq.nom) h.append(el("small", "", eq.role));
+    carte.append(h);
+
+    carte.append(el("label", "", "Nom de l'équipe"));
+    const nom = champ(el("input"), eq.nom);
+    nom.placeholder = eq.role; nom.maxLength = 40; nom.dataset.champ = "nom";
+    carte.append(nom);
+
+    carte.append(el("label", "", "Étudiants (un par ligne)"));
+    const etu = champ(el("textarea"), (eq.etudiants || []).join("\n"));
+    etu.dataset.champ = "etudiants";
+    carte.append(etu);
+
+    const ligne = el("div", "ip-machine");
+    const bloc = el("div");
+    bloc.append(el("label", "", "IP de la machine de l'équipe (briques cœur)"));
+    const ip = champ(el("input"), eq.ip);
+    ip.placeholder = (vue.reseau || "").replace(/\.0\/\d+$/, ".") + "…"; ip.inputMode = "decimal";
+    bloc.append(ip);
+    const copier = el("button", "", "↓ aux briques");
+    copier.type = "button"; copier.disabled = !vue.modifiable;
+    copier.title = "Recopier cette adresse dans les briques cœur de l'équipe";
+    copier.addEventListener("click", () => {
+      carte.querySelectorAll(".brique input[data-tier=core]").forEach((i) => {
+        i.value = ip.value.trim(); i.dispatchEvent(new Event("input"));
+      });
+    });
+    ip.addEventListener("change", () => copier.click());
+    ligne.append(bloc, copier);
+    carte.append(ligne);
+
+    const briques = el("div", "briques");
+    for (const b of eq.briques) {
+      const r = el("div", "brique");
+      r.dataset.id = b.id;
+      const n = el("div", "nom", b.label + " ");
+      n.append(el("small", "", (b.tier === "core" ? "cœur" : "bonus") + " · port " + (b.port || "?")));
+      const i = champ(el("input"), b.ip);
+      i.dataset.brique = b.id; i.dataset.tier = b.tier; i.placeholder = "IP"; i.inputMode = "decimal";
+      r.append(n, i, etatBrique(b));
+      briques.append(r);
+    }
+    carte.append(briques);
+    zone.append(carte);
+  }
+  modifie = false;
+}
+
+function rafraichirEtats() {
+  for (const eq of vue.equipes) {
+    for (const b of eq.briques) {
+      const r = document.querySelector('.brique[data-id="' + b.id + '"]');
+      if (r) r.querySelector(".etat").replaceWith(etatBrique(b));
+    }
+  }
+}
+
+function infos() {
+  const up = vue.equipes.flatMap((e) => e.briques).filter((b) => b.ip && b.equipe === "up").length;
+  const decl = vue.equipes.flatMap((e) => e.briques).filter((b) => b.ip).length;
+  document.getElementById("infos").textContent = "Pi " + (vue.reference_ip || "?") + " · réseau " + (vue.reseau || "?")
+    + " · " + up + "/" + decl + " brique(s) déclarée(s) UP · sondage toutes les " + vue.tick + " s";
+  const lecture = document.getElementById("lecture");
+  lecture.hidden = vue.modifiable;
+  lecture.textContent = "Accueil de l'équipe 1 : lecture seule. Les adresses se déclarent sur le Pi : http://"
+    + (vue.reference_ip || "<IP du Pi>") + "/tableau/formateur";
+  document.getElementById("enregistrer").disabled = !vue.modifiable;
+}
+
+async function charger(sonder) {
+  try {
+    const r = await fetch("/tableau/salle" + (sonder ? "?sonder=1" : ""), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const premiere = vue === null;
+    vue = await r.json();
+    recuLe = Date.now() / 1000;
+    if (premiere || !modifie) dessiner(); else rafraichirEtats();
+    infos();
+  } catch (e) {
+    message("Pi injoignable (" + e.message + ") : nouvel essai dans quelques secondes…", "erreur");
+  }
+}
+
+function message(texte, cls, liste) {
+  const m = document.getElementById("message");
+  m.className = "message " + (cls || "");
+  m.textContent = texte;
+  if (liste && liste.length) {
+    const ul = el("ul");
+    liste.forEach((t) => ul.append(el("li", "", t)));
+    m.append(ul);
+  }
+}
+
+function corps() {
+  const equipes = {};
+  document.querySelectorAll(".equipe").forEach((carte) => {
+    const num = carte.dataset.num;
+    const eq = { briques: {} };
+    const nom = carte.querySelector('[data-champ="nom"]');
+    const etu = carte.querySelector('[data-champ="etudiants"]');
+    eq.nom = nom.value.trim();
+    eq.etudiants = etu.value.split("\n").map((s) => s.trim()).filter(Boolean);
+    carte.querySelectorAll("input[data-brique]").forEach((i) => { eq.briques[i.dataset.brique] = i.value.trim(); });
+    equipes[num] = eq;
+  });
+  return { equipes };
+}
+
+document.getElementById("enregistrer").addEventListener("click", async () => {
+  const bouton = document.getElementById("enregistrer");
+  bouton.disabled = true;
+  message("Enregistrement…");
+  try {
+    const r = await fetch("/tableau/salle", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps()),
+    });
+    const res = await r.json();
+    if (!res.ok) {
+      message("Rien n'a été modifié :", "erreur", res.erreurs);
+    } else {
+      vue = res.vue; recuLe = Date.now() / 1000;
+      dessiner(); infos();
+      if (res.avertissement) message("Enregistré, mais : " + res.avertissement, "erreur");
+      else message("✓ " + (vue.message || "enregistré"), "ok");
+    }
+  } catch (e) {
+    message("Échec de l'enregistrement : " + e.message, "erreur");
+  } finally {
+    bouton.disabled = !(vue && vue.modifiable);
+  }
+});
+document.getElementById("sonder").addEventListener("click", () => charger(true));
+
+charger(false);
+setInterval(() => charger(false), 4000);
+setInterval(() => { if (vue) rafraichirEtats(); }, 1000);
+</script>
+</body>
+</html>

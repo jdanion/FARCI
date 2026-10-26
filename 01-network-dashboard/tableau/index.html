@@ -173,6 +173,7 @@
   .commande { position: fixed; bottom: 1vh; right: 1vw; z-index: 8; background: var(--carte-2); color: var(--doux);
     border: 1px solid var(--trait); border-radius: 12px; padding: .8vh 1vw; font-size: 14px; opacity: .8; }
   .commande[hidden] { display: none; }
+  .commande.formateur { right: auto; left: 1vw; text-decoration: none; }
 
   @media (max-aspect-ratio: 4/3) {
     body { overflow: auto; }
@@ -230,6 +231,7 @@
 <div class="fiche-fond" id="fiche-fond" role="dialog" aria-modal="true" aria-labelledby="fiche-titre">
   <div class="fiche" id="fiche"></div>
 </div>
+<a class="commande formateur" href="/tableau/formateur">Formateur</a>
 <button class="commande" id="plein-ecran" type="button">Plein écran · écran allumé</button>
 
 <script>

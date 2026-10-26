@@ -12,6 +12,15 @@
 # elle ne répond pas, il passe à la suivante et l'écarte 20 secondes.
 #
 # HTTP seulement : l'air-gap prime sur TLS (§61.1).
+#
+# Onglet formateur du tableau (/tableau/formateur) : l'agrégateur recharge
+# l'accueil par l'API d'administration de Caddy, en lui envoyant ce fichier
+# avec les UP_* recalculés. Le port 2019 n'est PAS publié : seuls les
+# conteneurs de cette compose le joignent.
+
+{
+    admin 0.0.0.0:2019
+}
 
 (repli) {
     lb_policy first
