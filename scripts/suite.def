@@ -57,7 +57,7 @@ room set	ok	./bin/farci tableau	l'adresse du tableau projeté
 room set	echec	./bin/farci room	cibles et adresses acceptées
 room unset	ok	./bin/farci status	la référence reprend la brique (🛟)
 tableau	ok	http://{salle}/tableau/formateur	onglet formateur : équipes, étudiants, IP, suivi en direct
-tableau	ok	./bin/farci tableau reset	sur le Pi, avant l'arrivée des étudiants
+tableau	ok	./bin/farci seance nouvelle	sur le Pi, avant l'arrivée des étudiants
 tableau	ok	./bin/farci partage maj	publier le dépôt pour qui arrive sans git clone
 tableau reset	ok	./bin/farci partage maj	publier la version du jour (http://{salle}/rejoindre)
 tableau reset	ok	./bin/farci status --watch	suivre la salle dans le terminal
@@ -82,6 +82,11 @@ health	ok	./bin/farci tableau	l'adresse à ouvrir sur l'iPad
 health	ok	./bin/farci rehearse	J-1 : la répétition générale
 health	echec	./bin/farci logs reference	une brique démarre encore ? (Docling, Open WebUI : 1–2 min)
 health	echec	./bin/farci core-up	redémarrer la pile de référence
+
+seance	ok	http://{salle}/tableau/formateur	déclarer les équipes du jour : noms, étudiants, adresses
+seance	ok	./bin/farci status	la salle : tout est servi par le Pi (🛟) en attendant les équipes
+seance	echec	./bin/farci dashboard-up	l'accueil et l'agrégateur doivent tourner sur cette machine
+seance	echec	./bin/farci seance nouvelle	relancer après la correction indiquée ci-dessus
 
 # --- atelier : démarrer une brique -------------------------------------------
 up	ok	./bin/farci logs {1|dossier}	suivre le démarrage (Ctrl+C pour quitter)
@@ -213,9 +218,9 @@ rescue	ok	./bin/farci status	la brique est servie par la référence (🛟)
 rescue	ok	./bin/farci rescue --off {1|brique}	rendre la main à l'équipe
 rescue --off	ok	./bin/farci status	la brique revient à l'équipe dès qu'elle répond
 rescue	echec	./bin/farci rescue	les briques acceptées et l'état des routes
-reset-all	ok	./bin/farci tableau reset	si c'est une nouvelle séance
+reset-all	ok	./bin/farci seance nouvelle	si c'est une nouvelle séance (équipes et tableau à zéro)
 reset-all	tout	./bin/farci status	l'état de la salle
-rehearse	ok	./bin/farci tableau reset	avant l'arrivée des étudiants
+rehearse	ok	./bin/farci seance nouvelle	avant l'arrivée des étudiants : la répétition ne compte pas
 rehearse	ok	./bin/farci partage maj	publier la version du jour
 rehearse	echec	./bin/farci rehearse	relancer après la correction indiquée pour chaque FAIL
 replay	tout	./bin/farci extract --replay --subset quick	extraire sans réseau (plan C)

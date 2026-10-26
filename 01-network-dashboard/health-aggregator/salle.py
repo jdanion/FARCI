@@ -181,7 +181,11 @@ def caddy_a_jour(registry) -> bool | None:
     except OSError:
         return None
     voulus = {h for value in registry.upstreams().values() for h in value.split()}
-    return all(f'"{h}"' in config for h in voulus)
+    # Exactement les amonts voulus : un amont en TROP (équipe oubliée) est
+    # aussi un écart. Les amonts fixes du Caddyfile sont des noms
+    # (health-aggregator:8081), pas des adresses IP.
+    servis = set(re.findall(r'"dial":"(\d{1,3}(?:\.\d{1,3}){3}:\d+)"', config))
+    return servis == voulus
 
 
 # --- Suivi : depuis quand chaque brique est UP / DOWN ------------------------

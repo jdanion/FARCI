@@ -2,7 +2,8 @@
 # FARCI — ./bin/farci tableau : le tableau de la salle (écran projeté, iPad)
 #
 #   ./bin/farci tableau            adresses à ouvrir (iPad, vidéoprojecteur)
-#   ./bin/farci tableau reset      nouvelle séance : scores, badges, fil et chrono à zéro
+#   ./bin/farci tableau reset      scores, badges, fil et chrono à zéro (les noms d'équipe
+#                                  et les adresses restent : ./bin/farci seance nouvelle)
 #
 # Le tableau est servi par l'agrégateur de santé de la machine qui porte
 # l'accueil (le Pi : farci-ref-aggregator ; l'équipe 1 : farci-health-aggregator).
@@ -26,7 +27,7 @@ aggregator() {
 }
 
 case "${1:-}" in
-  -h|--help) sed -n '2,15p' "$0" | sed 's/^#\{0,1\} \{0,1\}//' ;;
+  -h|--help) sed -n '2,16p' "$0" | sed 's/^#\{0,1\} \{0,1\}//' ;;
   "")
     section "Tableau de la salle"
     printf '  %s/\n' "${FARCI_ENTRY_URL:-http://<REFERENCE_IP>}"
@@ -41,7 +42,9 @@ case "${1:-}" in
     name="$(aggregator)"
     [[ -n "$name" ]] || die "aucun agrégateur ne tourne ici : ./bin/farci up reference"
     docker exec "$name" rm -f /data/tableau.json
-    ok "nouvelle séance : le tableau repart de zéro (prochain sondage, quelques secondes)"
+    ok "tableau remis à zéro : scores, badges, fil et chrono (prochain sondage, quelques secondes)"
+    info "les briques encore servies par une équipe regagnent leurs points au sondage suivant,"
+    info "et les noms d'équipe restent (onglet formateur). Tout effacer : ./bin/farci seance nouvelle"
     ;;
   *) err "commande inconnue : $1"; exit 64 ;;
 esac

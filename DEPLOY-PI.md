@@ -176,8 +176,8 @@ salle. Pour un vrai modèle, voir § 7.
 3. Toucher « Plein écran · écran allumé » (en bas à droite) : l'iPad ne se
    met plus en veille tant que la page est ouverte.
 4. Recopie vidéo (AirPlay ou adaptateur) vers l'écran de la salle.
-5. Avant l'arrivée des étudiants, sur le Pi : `./bin/farci tableau reset`
-   (scores, badges, fil et chrono à zéro).
+5. Avant l'arrivée des étudiants, sur le Pi : `./bin/farci seance nouvelle`
+   (voir « Nouvelle séance » ci-dessous).
 
 Une équipe marque des points quand l'accueil sert **sa** brique (✅) : 100
 par brique cœur, 50 par brique bonus, +50 « Premiers ! » (première équipe
@@ -188,6 +188,24 @@ la première), +50 « Pipeline READY » à chaque équipe ayant livré, +50
 En haut du tableau : **Formateur** (équipes, adresses, suivi) et
 **Extraction** (`/tableau/extraction` : un dossier du jeu rapide, du texte
 brut à l'extraction en direct comparée au gold — à projeter à l'étape 2).
+
+### Nouvelle séance
+
+```bash
+./bin/farci seance nouvelle                    # tout à zéro, sauf les extractions
+./bin/farci seance nouvelle --garder-equipes   # même groupe : garder noms, étudiants, adresses
+./bin/farci seance nouvelle --tout             # ranger aussi les extractions des étudiants
+```
+
+Dans l'ordre : sauvegarde de la séance qui se termine dans
+`$FARCI_DATA_DIR/seances/<date>/` (adresses, équipes, scores, et avec
+`--tout` les extractions), adresses et noms des équipes oubliés (le Pi sert
+de nouveau toute la salle 🛟), `reset-all` (chaos réparé, fin des bascules,
+accueil rechargé), tableau à zéro, partage `/rejoindre` republié.
+
+`./bin/farci tableau reset` seul ne remet que les scores à zéro : une brique
+encore servie par une équipe regagne ses points au sondage suivant, et les
+noms d'équipe restent.
 
 ### L'onglet formateur : équipes, étudiants, adresses
 

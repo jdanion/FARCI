@@ -17,7 +17,7 @@ l'affiche.
 | J-1 | **sur le Pi** : `./bin/farci rehearse` → **PASS** (moins de 15 min) | ☐ |
 | J-1 | **sur un portable** branché au Wi-Fi du Pi : `./bin/farci rehearse` → **PASS** | ☐ |
 | J0 −30 min | `sudo nmcli con up farci-ap` puis `./bin/farci up reference` | ☐ |
-| J0 −20 min | écran projeté : l'iPad sur `http://<REFERENCE_IP>/` (tableau de la salle, tout en `🛟`), puis **`./bin/farci tableau reset`** sur le Pi : scores et chrono à zéro | ☐ |
+| J0 −20 min | écran projeté : l'iPad sur `http://<REFERENCE_IP>/` (tableau de la salle, tout en `🛟`), puis **`./bin/farci seance nouvelle`** sur le Pi : équipes, adresses, scores et chrono à zéro (la séance précédente est sauvegardée) | ☐ |
 | J0 −20 min | `./bin/farci partage maj` sur le Pi ; au tableau : **`http://<REFERENCE_IP>/rejoindre`** pour qui arrive sans `git clone` | ☐ |
 | J0 −10 min | au tableau : SSID, `REFERENCE_IP`, adresse Open WebUI `REFERENCE_IP:3080` | ☐ |
 

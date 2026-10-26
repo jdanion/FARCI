@@ -6,6 +6,20 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Nouvelle séance en une commande
+
+- `./bin/farci seance nouvelle [--garder-equipes] [--tout]` : sauvegarde la
+  séance dans `$FARCI_DATA_DIR/seances/<date>/`, oublie adresses et noms des
+  équipes, `reset-all`, tableau à zéro, partage republié. `--tout` range aussi
+  les extractions (déplacées dans la sauvegarde, jamais effacées).
+- Correctif : après des adresses saisies dans l'onglet formateur, oublier une
+  équipe (`room unset`, `seance nouvelle`) laissait Caddy router vers elle
+  (compose ne le recréait pas). Le rechargement de l'accueil lui fait
+  désormais relire sa configuration, et l'agrégateur vérifie l'ensemble EXACT
+  des amonts servis (un amont en trop est corrigé en 30 s).
+- `tableau reset` dit ce qu'il ne fait pas : les briques encore servies
+  regagnent leurs points, les noms d'équipe restent.
+
 ### Tableau : liens, page Extraction, bonus, stacks au choix
 
 - En haut du tableau : liens **Formateur** et **Extraction**.
