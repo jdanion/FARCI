@@ -135,5 +135,4 @@ if (( FATAL )); then
   exit 1
 fi
 ok "machine utilisable"
-printf '  suite : ./bin/farci bootstrap   puis   ./bin/farci status\n\n'
 exit 0

@@ -101,6 +101,11 @@ de l'étape 1, et c'est la démonstration en direct de ce qu'un atelier construi
 ./bin/farci help
 ```
 
+Inutile de les retenir : chaque commande se termine par **« ➜ Ensuite : »**,
+la ou les commandes à lancer après (en cas d'échec : « Pour comprendre et
+réparer : »). Elles sont toutes dans `scripts/suite.def` ; `FARCI_SUITE=0`
+les masque.
+
 ---
 
 ## Les modèles

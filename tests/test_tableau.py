@@ -54,7 +54,17 @@ class Points(unittest.TestCase):
         self.tick(60, caddy="equipe")
         self.tick(120, caddy="equipe", **{"gateway-bifrost": "equipe"})
         points = {s["equipe"]: s["points"] for s in self.board.scores()}
-        self.assertEqual(points, {"1": 150, "3": 50})
+        self.assertEqual(points, {"1": 150, "3": 80})    # 50 + « Ça tourne ! » (pas la première de la salle)
+
+    def test_ca_tourne_une_seule_fois_par_equipe_jamais_pour_la_premiere(self):
+        self.tick(60, caddy="equipe")
+        self.tick(120, caddy="equipe", **{"inference-ollama": "equipe"})
+        self.tick(180, caddy="equipe", **{"inference-ollama": "equipe", "gateway-bifrost": "equipe"})
+        badges = {(b["equipe"], b["badge"]) for b in self.board.badges}
+        self.assertEqual(badges, {("1", "Premiers !"), ("2", "Ça tourne !"), ("3", "Ça tourne !")})
+        self.board.update(room({**BASE, "caddy": "equipe", "inference-ollama": "equipe", "gateway-bifrost": "equipe"}),
+                          SERVICES + [{"id": "autre", "team": "2", "tier": "core"}], now=240)
+        self.assertEqual(sum(1 for b in self.board.badges if b["badge"] == "Ça tourne !"), 2)
 
     def test_une_panne_ne_coute_rien_et_se_raconte(self):
         self.tick(60, caddy="equipe")

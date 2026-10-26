@@ -234,14 +234,5 @@ if (( CHANGES )); then
 else
   ok "bootstrap terminé (rien à faire)"
 fi
-cat <<'NEXT'
-
-  Prochaines étapes selon votre rôle :
-
-    lire sa fiche d'équipe   ./bin/farci read <équipe>
-    préparation air-gap     ./preload.sh --equipe <équipe>   (formateur : --core)
-    développement           ./bin/farci doctor
-    suivre la construction  ./bin/farci status --watch
-
-NEXT
+# La suite (preload, doctor, read) : affichée par bin/farci (scripts/suite.def).
 exit 0

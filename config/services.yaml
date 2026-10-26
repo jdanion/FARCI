@@ -160,8 +160,10 @@ services:
     health_paths:
       - /health/liveliness
       - /health
+    # Une passerelle suffit : LiteLLM OU Bifrost (l'équipe choisit sa stack).
     tier: core
-    critical: true
+    critical_group: passerelle
+    critical: false
     phase: 5
 
   - id: gateway-bifrost
@@ -174,7 +176,8 @@ services:
     health_paths:
       - /health
       - /api/health
-    tier: bonus
+    tier: core
+    critical_group: passerelle
     critical: false
     phase: 5
 
@@ -235,7 +238,9 @@ services:
     health_paths:
       - /api/public/health
       - /health
-    tier: bonus
+    # Alternative à Phoenix : la ligne Observability passe au vert avec l'une
+    # ou l'autre (hors CLINICAL PIPELINE READY, comme Phoenix).
+    tier: core
     critical: false
     phase: 7
 
@@ -338,7 +343,8 @@ status_rows:
     check: [inference-ollama, inference-llamacpp]
   - label: LLM Gateway
     tier: core
-    check: [gateway-litellm]
+    une_parmi: true
+    check: [gateway-litellm, gateway-bifrost]
   - label: Documents
     tier: core
     check: [docling]
@@ -347,19 +353,14 @@ status_rows:
     check: [eds-nlp]
   - label: Observability
     tier: core
-    check: [phoenix]
+    une_parmi: true
+    check: [phoenix, langfuse]
   - label: Open WebUI
     tier: core
     check: [open-webui]
   - label: GitOps
     tier: bonus
     check: [gitea]
-  - label: Bifrost
-    tier: bonus
-    check: [gateway-bifrost]
-  - label: Langfuse
-    tier: bonus
-    check: [langfuse]
   - label: MLflow
     tier: bonus
     check: [mlflow]

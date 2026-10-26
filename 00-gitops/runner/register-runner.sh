@@ -11,6 +11,8 @@ export FARCI_ROOT
 
 # shellcheck source=scripts/lib/common.sh
 source "$FARCI_ROOT/scripts/lib/common.sh"
+# « Ensuite : » quand le script est lancé directement (scripts/suite.def).
+[[ -n "${FARCI_SUITE_PARENT:-}" ]] || trap 'farci_suite 00-gitops/runner/register-runner.sh $?' EXIT
 # shellcheck source=scripts/dev-env.sh
 source "$FARCI_ROOT/scripts/dev-env.sh"
 

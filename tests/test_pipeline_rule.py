@@ -51,6 +51,12 @@ class RegleDuPipeline(unittest.TestCase):
             if service.get("critical") is True:
                 self.assertEqual(service.get("tier"), "core", service["id"])
 
+    def test_une_passerelle_suffit_litellm_ou_bifrost(self):
+        self.assertEqual(state(**{"gateway-litellm": False, "gateway-bifrost": True}), "READY")
+        self.assertNotEqual(state(**{"gateway-litellm": False, "gateway-bifrost": False}), "READY")
+        noms = [e["nom"] for e in services.pipeline_state(CORE_UP)["exigences"]]
+        self.assertIn("Une passerelle", noms)
+
     def test_scenario_01_un_runtime_suffit(self):
         self.assertEqual(state(**{"inference-ollama": False, "inference-llamacpp": True}), "READY")
 

@@ -29,6 +29,9 @@ export FARCI_ROOT
 
 # shellcheck source=scripts/lib/common.sh
 source "$FARCI_ROOT/scripts/lib/common.sh"
+# « Ensuite : » quand le script est lancé directement (scripts/suite.def).
+PRELOAD_ARGV=("$@")
+[[ -n "${FARCI_SUITE_PARENT:-}" ]] || trap 'farci_suite preload $? "${PRELOAD_ARGV[@]}" --equipe "${PRELOAD_EQUIPE:-}"' EXIT
 # shellcheck source=scripts/dev-env.sh
 source "$FARCI_ROOT/scripts/dev-env.sh"
 # shellcheck source=scripts/preload_lib.sh

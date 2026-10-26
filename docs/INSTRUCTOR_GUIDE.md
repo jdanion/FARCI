@@ -75,8 +75,9 @@ Reste à faire à la main :
       `http://<REFERENCE_IP>/` (un iPad ou un navigateur suffit ; à défaut,
       `./bin/farci status --watch` sur le Pi). Tout est `🛟`, c'est **normal et
       voulu** — aucune équipe n'a encore livré, la référence rend le service
-- [ ] `./bin/farci tableau reset` sur le Pi : scores, badges, fil et chrono à
-      zéro (la répétition de la veille ne compte pas)
+- [ ] `./bin/farci seance nouvelle` sur le Pi : équipes, adresses, scores et
+      chrono à zéro (la répétition de la veille ne compte pas ; elle est
+      sauvegardée dans `$FARCI_DATA_DIR/seances/`)
 - [ ] L'adresse d'Open WebUI de la référence (`REFERENCE_IP:OPEN_WEBUI_PORT`)
       est notée au tableau, pour qui n'a pas de machine utilisable
 - [ ] Les fiches d'équipe sont prêtes (`docs/wiki/equipe-XX.md`, `./bin/farci read <équipe>`)
@@ -90,7 +91,7 @@ Reste à faire à la main :
 |---|---|---|---|
 | 0:00 – 0:20 | Accueil | les 3 étapes, `make` ≠ obligatoire, `git clone` ne suffit pas ; chacun lance `./bin/farci doctor` | passer le vocabulaire en 5 min, il revient à la clôture |
 | 0:20 – 0:30 | Étape 1 : lancement | chaque équipe lit sa fiche, objectif minimal annoncé | — |
-| 0:30 – 1:15 | Étape 1 : objectif minimal | déclarer chaque machine (`room set`) ; faire applaudir chaque passage de 🛟 à ✅ | à **1:00**, une équipe encore 🛟 continue à diagnostiquer, la référence sert à sa place : personne n'attend |
+| 0:30 – 1:15 | Étape 1 : objectif minimal | déclarer chaque machine (onglet Formateur du tableau, ou `room set`) ; faire applaudir chaque passage de 🛟 à ✅ | à **1:00**, une équipe encore 🛟 continue à diagnostiquer, la référence sert à sa place : personne n'attend |
 | ~1:30 | **CLINICAL PIPELINE READY** | moment clé : on le montre à tous | ne pas attendre au-delà de **1:40** : la suite se joue avec ce que sert la salle (✅ ou 🛟) |
 | 1:35 – 1:50 | Bonus et démos | GitOps, Langfuse, MLflow, llama.cpp | **première marge** : supprimer les démos bonus |
 | 1:50 – 2:00 | Pause | — | **ne jamais la supprimer** : c'est là que le formateur répare |
@@ -150,7 +151,7 @@ pendant que l'équipe diagnostique. Toutes les commandes `room`, `rescue`,
 | Modèle trop lent (> 60 s par dossier) | extraction qui traîne, tableau ✅ mais salle bloquée | `./bin/farci rescue inference` ; plus tard `./bin/farci rescue --off inference` | 10 s |
 | Passerelle de l'équipe tombée | ligne `LLM Gateway` en `🛟 REF` | rien : l'accueil a basculé seul. Si elle répond mal : `./bin/farci rescue passerelle` | 0 / 10 s |
 | Conflit de port sur un poste | `port is already allocated` au `up` | `./bin/farci doctor` (section ports) ; arrêter le service qui occupe le port. Chaque service a son propre port (`config/network.env`) | 2 min |
-| Machine déclarée à la mauvaise IP | ligne restée `🛟 REF` alors que l'équipe est verte chez elle | `./bin/farci room` (IP déclarée) puis `./bin/farci room set <n> <ip>` | 1 min |
+| Machine déclarée à la mauvaise IP | ligne restée `🛟 REF` alors que l'équipe est verte chez elle | onglet Formateur (IP et état de chaque brique), ou `./bin/farci room` puis `./bin/farci room set <n> <ip>` | 1 min |
 | Wi-Fi de la salle tombé | plus aucun poste ne joint `REFERENCE_IP` | sur le Pi : `sudo nmcli con up farci-ap`. Sinon autre point d'accès et, sur chaque poste, `./bin/farci room set reference <ip du Pi>` (voir `reference/README.md`) | 1 / 5 min |
 | Plus de réseau du tout | idem, sans solution | chaque équipe continue sur sa machine (`./bin/farci test` vise la brique locale) ; étape 2 : `./bin/farci extract --replay` | 2 min |
 | Accueil de la salle (Pi) muet | `./bin/farci status` : tout DOWN | sur le Pi : `./bin/farci up reference` | 2 min |

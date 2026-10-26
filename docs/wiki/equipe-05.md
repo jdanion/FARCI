@@ -49,6 +49,6 @@ scénario 07) : rien n'attend votre équipe.
 
 ## Bonus
 
-- Langfuse en second backend sur le **même** flux OpenTelemetry :
+- Langfuse, l'autre stack au choix (grosse configuration), ou en second backend sur le **même** flux OpenTelemetry :
   `./bin/farci up 05-observability/langfuse` puis `05-observability/langfuse/bootstrap.sh`.
 - Collecteur OpenTelemetry en éventail : `./bin/farci up 05-observability/collector`.

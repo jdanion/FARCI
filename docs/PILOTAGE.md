@@ -17,7 +17,7 @@ l'affiche.
 | J-1 | **sur le Pi** : `./bin/farci rehearse` → **PASS** (moins de 15 min) | ☐ |
 | J-1 | **sur un portable** branché au Wi-Fi du Pi : `./bin/farci rehearse` → **PASS** | ☐ |
 | J0 −30 min | `sudo nmcli con up farci-ap` puis `./bin/farci up reference` | ☐ |
-| J0 −20 min | écran projeté : l'iPad sur `http://<REFERENCE_IP>/` (tableau de la salle, tout en `🛟`), puis **`./bin/farci tableau reset`** sur le Pi : scores et chrono à zéro | ☐ |
+| J0 −20 min | écran projeté : l'iPad sur `http://<REFERENCE_IP>/` (tableau de la salle, tout en `🛟`), puis **`./bin/farci seance nouvelle`** sur le Pi : équipes, adresses, scores et chrono à zéro (la séance précédente est sauvegardée) | ☐ |
 | J0 −20 min | `./bin/farci partage maj` sur le Pi ; au tableau : **`http://<REFERENCE_IP>/rejoindre`** pour qui arrive sans `git clone` | ☐ |
 | J0 −10 min | au tableau : SSID, `REFERENCE_IP`, adresse Open WebUI `REFERENCE_IP:3080` | ☐ |
 
@@ -32,7 +32,7 @@ donne la piste. Le rapport est dans `datasets/reports/rehearse-*.txt`.
 |---|---|---|
 | 0:00 | Accueil, `./bin/farci doctor` pour tous | Docker absent ou cassé → binôme, tout de suite |
 | 0:20 | Étape 1 : chaque équipe lit sa fiche (`docs/wiki/equipe-XX.md`) | — |
-| 0:30 → 1:15 | Objectif minimal ; je déclare chaque machine : `./bin/farci room set <n> <ip>` | **1:00** : une équipe encore `🛟` continue sans bloquer personne |
+| 0:30 → 1:15 | Objectif minimal ; je déclare chaque machine dans l'onglet **Formateur** du tableau (`/tableau/formateur`), ou `./bin/farci room set <n> <ip>` | **1:00** : une équipe encore `🛟` continue sans bloquer personne |
 | ~1:30 | **CLINICAL PIPELINE READY** : on le montre à tous | **1:40** au plus tard : on passe à la suite, avec ce qui sert (`✅` ou `🛟`) |
 | 1:50 | **Pause** — jamais supprimée | je répare pendant la pause |
 | 2:00 | Étape 2 : `./bin/farci extract --subset quick --run <équipe>` ; EDS-NLP : `./bin/farci eds compare --limit 2` | lent → `./bin/farci rescue inference` |
@@ -50,7 +50,7 @@ Pause, évaluation et clôture restent.
 | Je veux… | Commande |
 |---|---|
 | voir qui sert quoi | `./bin/farci room` |
-| déclarer une équipe | `./bin/farci room set <n> <ip>` |
+| déclarer une équipe | onglet **Formateur** du tableau (nom, étudiants, IP, suivi UP/DOWN), ou `./bin/farci room set <n> <ip>` |
 | forcer la référence sur une brique qui répond mal | `./bin/farci rescue <inference\|passerelle\|documents\|eds\|observabilite>` |
 | rendre la main à l'équipe | `./bin/farci rescue --off <brique>` |
 | jouer une panne | `./bin/farci chaos scenario-NN` |

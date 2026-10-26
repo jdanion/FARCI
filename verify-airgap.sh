@@ -18,6 +18,9 @@ export FARCI_ROOT
 
 # shellcheck source=scripts/lib/common.sh
 source "$FARCI_ROOT/scripts/lib/common.sh"
+# « Ensuite : » quand le script est lancé directement (scripts/suite.def).
+VERIFY_ARGV=("$@")
+[[ -n "${FARCI_SUITE_PARENT:-}" ]] || trap 'farci_suite verify-airgap $? "${VERIFY_ARGV[@]}"' EXIT
 # shellcheck source=scripts/dev-env.sh
 source "$FARCI_ROOT/scripts/dev-env.sh"
 # shellcheck source=scripts/preload_lib.sh

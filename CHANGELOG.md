@@ -6,6 +6,64 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Nouvelle séance en une commande
+
+- `./bin/farci seance nouvelle [--garder-equipes] [--tout]` : sauvegarde la
+  séance dans `$FARCI_DATA_DIR/seances/<date>/`, oublie adresses et noms des
+  équipes, `reset-all`, tableau à zéro, partage republié. `--tout` range aussi
+  les extractions (déplacées dans la sauvegarde, jamais effacées).
+- Correctif : après des adresses saisies dans l'onglet formateur, oublier une
+  équipe (`room unset`, `seance nouvelle`) laissait Caddy router vers elle
+  (compose ne le recréait pas). Le rechargement de l'accueil lui fait
+  désormais relire sa configuration, et l'agrégateur vérifie l'ensemble EXACT
+  des amonts servis (un amont en trop est corrigé en 30 s).
+- `tableau reset` dit ce qu'il ne fait pas : les briques encore servies
+  regagnent leurs points, les noms d'équipe restent.
+
+### Tableau : liens, page Extraction, bonus, stacks au choix
+
+- En haut du tableau : liens **Formateur** et **Extraction**.
+- Page **`/tableau/extraction`** : l'étape 2 sur les 10 dossiers du jeu
+  rapide — documents bruts, dossier pseudonymisé envoyé au modèle (étiquettes
+  surlignées), prompts v1/v2, extraction **en direct** par l'accueil (`/v1`)
+  comparée champ par champ au gold, et les runs déjà écrites sur la machine.
+- Nouveau badge **« Ça tourne ! » (+30)** : la première pile d'une équipe qui
+  n'a pas été la première de la salle.
+- Passerelle et observabilité comme l'inférence : **LiteLLM ou Bifrost**,
+  **Phoenix ou Langfuse** — la ligne passe au vert avec la stack que l'équipe
+  sert, et chacune compte comme brique cœur. `CLINICAL PIPELINE READY` exige
+  « une passerelle » (LiteLLM ou Bifrost) au lieu de LiteLLM seul.
+
+### Onglet formateur du tableau
+
+- `/tableau/formateur` (bouton **Formateur** du tableau) : nom de chaque
+  équipe, ses étudiants, l'adresse IP de la machine de chaque brique, et le
+  suivi en direct (UP / DOWN depuis…, qui sert la brique). Pas de code.
+- Enregistrer écrit `config/salle.json` (noms, hors Git) et
+  `config/network.env` (adresses, mêmes règles que `room set`), puis recharge
+  l'accueil par l'API d'administration de Caddy (port 2019 non publié).
+  L'agrégateur relit les adresses à chaque sondage et rétablit les amonts si
+  Caddy redémarre avec son ancien environnement.
+- Les noms d'équipe remplacent ceux des rôles sur le tableau, dans le fil et
+  le classement ; `./bin/farci room` les affiche.
+- L'accueil de l'équipe 1 montre l'onglet en lecture seule : les adresses se
+  déclarent sur le Pi.
+
+### « Ensuite : » à la fin de chaque commande
+
+- Chaque `./bin/farci <cible>` se termine par la ou les commandes à lancer
+  ensuite, différentes en cas d'échec (« Pour comprendre et réparer : »).
+  Elles tiennent compte de la brique (`up 02-inference/ollama` propose
+  `create-model.sh`), de l'équipe (`FARCI_EQUIPE`, `--equipe N`) et de
+  l'adresse de la salle. Aussi après `./preload.sh`, `./verify-airgap.sh` et
+  les scripts lancés directement (Gitea, runner, `create-model.sh`…).
+- Un seul registre : `scripts/suite.def` (clé, quand, commande, pourquoi),
+  vérifié par `./bin/farci selftest` : chaque cible a sa suite, chaque
+  commande citée existe.
+- Sur la sortie d'erreur, seulement dans un terminal : les sorties JSON et les
+  tubes restent propres. `FARCI_SUITE=0` les coupe, `FARCI_SUITE=1` les force.
+- llama.cpp sert Qwen3.5-2B quand le 9B n'est pas préchargé (poste léger).
+
 ### Deux stacks par brique, préchargement adapté au poste
 
 - `./preload.sh` (sans option) précharge **ce poste** : la brique de son équipe

@@ -204,3 +204,7 @@ farci_is_offline() {
 
 # Un chemin est-il dans un dépôt git ?
 farci_in_repo() { [[ -d "$FARCI_ROOT/.git" ]]; }
+
+# « Et ensuite ? » : farci_suite (scripts/suite.def).
+# shellcheck source=scripts/lib/suite.sh
+source "$(dirname "${BASH_SOURCE[0]}")/suite.sh"

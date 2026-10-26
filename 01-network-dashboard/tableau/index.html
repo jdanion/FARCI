@@ -30,7 +30,7 @@
 
   /* --- en-tête ------------------------------------------------------------ */
   header { display: grid; grid-template-columns: auto 1fr auto; gap: 2vw; align-items: center; }
-  .marque { display: flex; align-items: baseline; gap: .8vw; }
+  .marque { display: flex; align-items: center; gap: .8vw; }
   .marque b { font-size: clamp(28px, 3.6vw, 64px); letter-spacing: .06em; }
   .marque span { color: var(--doux); font-size: clamp(12px, 1.1vw, 20px); }
   .phase { min-width: 0; }
@@ -173,6 +173,10 @@
   .commande { position: fixed; bottom: 1vh; right: 1vw; z-index: 8; background: var(--carte-2); color: var(--doux);
     border: 1px solid var(--trait); border-radius: 12px; padding: .8vh 1vw; font-size: 14px; opacity: .8; }
   .commande[hidden] { display: none; }
+  .liens { display: flex; gap: .5vw; }
+  .liens a { color: var(--doux); text-decoration: none; font-weight: 700; font-size: clamp(12px, 1vw, 18px);
+    padding: .4vh .7vw; border: 1px solid var(--trait); border-radius: 10px; background: var(--carte); }
+  .liens a:hover { color: var(--texte); border-color: var(--accent); }
 
   @media (max-aspect-ratio: 4/3) {
     body { overflow: auto; }
@@ -185,7 +189,8 @@
 </head>
 <body>
 <header>
-  <div class="marque"><b>FARCI</b><span>LLMOps clinique — la salle</span></div>
+  <div class="marque"><b>FARCI</b><span>LLMOps clinique — la salle</span>
+    <nav class="liens"><a href="/tableau/formateur">Formateur</a><a href="/tableau/extraction">Extraction</a></nav></div>
   <div class="phase">
     <div class="nom" id="phase">—<small id="phase-reste"></small></div>
     <div class="frise" id="frise"><div class="fait" id="frise-fait" style="width:0"></div></div>
@@ -238,7 +243,8 @@ const ICONES = { "Network": "🌐", "Inference": "🧠", "LLM Gateway": "🚦", 
   "Observability": "🔭", "Open WebUI": "💬" };
 const ETATS = { equipe: "✅ Équipe", reference: "🛟 Référence", partiel: "🛟 En partie", panne: "⛔ En panne", inconnu: "… Inconnu" };
 const EVT = { livraison: "🎉", badge: "🏅", ready: "🚀", relais: "🛟", retour: "💪", panne: "⛔", chaos: "⚡", reparation: "🔧" };
-const BADGES = { "Premiers !": "⭐ Premiers", "Pipeline READY": "🚀 READY", "Increvable": "🛡 Increvable" };
+const BADGES = { "Premiers !": "⭐ Premiers", "Ça tourne !": "🔥 Ça tourne", "Pipeline READY": "🚀 READY",
+  "Increvable": "🛡 Increvable" };
 const MEDAILLES = ["🥇", "🥈", "🥉"];
 const PHASES = [0, 20, 110, 120, 170, 190, 225, 240];
 

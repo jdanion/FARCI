@@ -69,10 +69,10 @@ rejoué de la référence répond à votre place.
 02-inference/ollama/create-model.sh secours   # forcer le modèle de secours (machine faible, réponses lentes)
 ```
 
-Bonus :
+Poste sans grosse configuration (pas de GPU NVIDIA, moins de 32 Go de RAM) :
 
 ```bash
-./bin/farci up 02-inference/llamacpp
+./bin/farci up 02-inference/llamacpp      # sert le 9B s'il est préchargé, sinon le 2B
 ```
 
 

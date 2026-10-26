@@ -61,14 +61,24 @@ import os, sys
 sys.path.insert(0, os.path.join(os.environ["FARCI_ROOT"], "scripts"))
 import services
 room = services.room_state(float(os.environ.get("FARCI_HEALTH_TIMEOUT", "2")))
+# Noms des équipes saisis dans l'onglet formateur du tableau (config/salle.json).
+try:
+    import json
+    with open(os.path.join(os.environ["FARCI_ROOT"], "config", "salle.json"), encoding="utf-8") as handle:
+        noms = {k: v.get("nom", "") for k, v in json.load(handle).get("equipes", {}).items()}
+except (OSError, ValueError, AttributeError):
+    noms = {}
 labels = {"equipe": "✅ équipe", "reference": "🛟 référence", None: "—"}
 print(f"  {'SERVICE':<20} {'ÉQUIPE':>3} {'VARIABLE':<20} {'IP DÉCLARÉE':<16} SERVI PAR")
 by_id = {s["id"]: s for s in services.services()}
 for r in room["services"]:
     s = by_id[r["id"]]
     ip = os.environ.get(str(s["ip_var"]), "") or "-"
-    print(f"  {r['id']:<20} {str(s.get('team')):>3}    {str(s['ip_var']):<20} {ip:<16} {labels[r['served_by']]}")
-print(f"\n  Accueil de la salle : {os.environ.get('FARCI_ENTRY_URL', '?')}   "
+    nom = noms.get(str(s.get("team")), "")
+    print(f"  {r['id']:<20} {str(s.get('team')):>3}    {str(s['ip_var']):<20} {ip:<16} {labels[r['served_by']]}"
+          + (f"  ({nom})" if nom else ""))
+print(f"\n  Onglet formateur (équipes, étudiants, adresses) : {os.environ.get('FARCI_ENTRY_URL', '?')}/tableau/formateur")
+print(f"  Accueil de la salle : {os.environ.get('FARCI_ENTRY_URL', '?')}   "
       f"pipeline des équipes : {room['pipeline']['state']}, service rendu : {room['service_rendu']['state']}")
 PY
 }
