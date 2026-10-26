@@ -378,6 +378,17 @@ group_wheels() {
     2>/dev/null || warn "pip download a échoué — vérifier requirements.in"
 }
 
+# Pour les étudiants arrivés sans rien : wheels Python de toutes les
+# plateformes, servies par l'accueil du Pi (./bin/farci partage).
+group_partage() {
+  info "groupe : partage"
+  if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
+    printf '  [dry-run] ./bin/farci partage wheels\n'
+    return 0
+  fi
+  "$FARCI_ROOT/bin/farci" partage wheels || warn "wheels du partage incomplètes : ./bin/farci partage wheels"
+}
+
 group_manifest() {
   info "groupe : manifest"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then

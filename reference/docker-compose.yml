@@ -36,6 +36,9 @@ services:
     volumes:
       - ../01-network-dashboard/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ref-caddy-data:/data
+      # Ce que le Pi distribue (./bin/farci partage) et son offline/ arm64.
+      - ${FARCI_DATA_DIR:?FARCI_DATA_DIR manquant (.env)}/partage:/srv/partage:ro
+      - ${FARCI_DATA_DIR:?FARCI_DATA_DIR manquant (.env)}/offline:/srv/offline-arm64:ro
     mem_limit: 128m
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost/livez"]

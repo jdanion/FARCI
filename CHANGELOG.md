@@ -6,6 +6,22 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Rejoindre la salle sans rien (étudiant sans `git clone`)
+
+- `./bin/farci partage maj` : le Pi publie le dépôt (`git clone
+  http://<Pi>/farci.git`, HTTP simple servi par Caddy), `farci.tar.gz`,
+  `farci.zip` et un `network.env` étudiant (adresse de la salle, aucune IP
+  d'équipe). `partage wheels` (avec Internet, inclus dans `preload.sh --pi`)
+  télécharge les wheels Python pour Linux/WSL et Mac, Python 3.11–3.13
+  (`PARTAGE_*` dans `versions.env`) ; `partage offline-x86 <dossier>` partage
+  les images préparées sur une machine x86.
+- Page **`/rejoindre`** (servie par l'agrégateur) : les commandes à copier,
+  l'état de ce qui est publié, le lien de la forge si elle tourne.
+- `FARCI_WHEELS_URL=http://<Pi>/partage/wheels/ ./bin/farci bootstrap` :
+  installe `.venv/` depuis le Pi quand `offline/wheels/` est vide.
+- `preload.sh --pi` précharge aussi la forge (`gitops`) : Gitea peut tourner
+  sur le Pi (DEPLOY-PI.md).
+
 ### Le tableau de la salle (écran projeté, iPad)
 
 - Chaque tuile (et chaque puce bonus) s'ouvre en **fiche** : à quoi sert la

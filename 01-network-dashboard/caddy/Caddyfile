@@ -47,6 +47,24 @@
         redir * /tableau 302
     }
 
+    # Rejoindre la salle sans rien (sur le Pi : ./bin/farci partage maj) :
+    #   git clone http://<accueil>/farci.git farci
+    handle /rejoindre* {
+        reverse_proxy health-aggregator:8081
+    }
+    handle_path /farci.git/* {
+        root * /srv/partage/farci.git
+        file_server
+    }
+    handle_path /partage/offline-arm64/* {
+        root * /srv/offline-arm64
+        file_server browse
+    }
+    handle_path /partage/* {
+        root * /srv/partage
+        file_server browse
+    }
+
     # Passerelle LLM (API OpenAI) : le seul point d'entrée des applications
     handle /v1/* {
         reverse_proxy {$UP_PASSERELLE} {

@@ -20,6 +20,7 @@ doctor	atelier	Diagnostic de la machine (docker, python, RAM, disque)	doctor.sh
 bootstrap	atelier	Préparer la machine (hors ligne, .env, outils)	bootstrap.sh
 status	atelier	Tableau de progression du workshop (§49)	status.sh
 tableau	atelier	Tableau de la salle (page web, iPad) : adresses, reset	tableau.sh
+partage	atelier	Ce que le Pi distribue (git clone, archives, offline x86) : maj	partage.sh
 up	atelier	Démarrer une brique : up <dossier> (ex. 02-inference/ollama)	compose.sh
 down	atelier	Arrêter une brique : down <dossier>	compose.sh
 logs	atelier	Journaux d'une brique : logs <dossier>	compose.sh

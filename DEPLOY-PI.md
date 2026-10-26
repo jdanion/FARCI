@@ -104,7 +104,7 @@ dépôt n'écrit jamais de nom d'hôte dans sa configuration.
 ## 4. Précharger (avec Internet)
 
 ```bash
-./preload.sh --pi                          # images arm64, image EDS-NLP compilée ici, modèle 2B, wheels, manifeste
+./preload.sh --pi                          # images arm64 (+ forge), image EDS-NLP compilée ici, modèle 2B, wheels (Pi + étudiants), manifeste
 ./bin/farci bootstrap                      # installe .venv/ HORS LIGNE depuis offline/wheels
 ./bin/farci verify-images --reference      # attendu : 0 manquante(s)
 ./verify-airgap.sh
@@ -183,6 +183,56 @@ Une équipe marque des points quand l'accueil sert **sa** brique (✅) : 100
 par brique cœur, 50 par brique bonus, +50 « Premiers ! », +50 « Pipeline
 READY » à chaque équipe ayant livré, +50 « Increvable » après 30 minutes
 sans interruption. Une panne ne coûte rien.
+
+### Un étudiant arrive sans avoir cloné le projet
+
+Le Pi distribue le dépôt et ce qu'il faut pour l'installer, par l'accueil
+(Caddy, aucun service en plus). À refaire après chaque `git pull` :
+
+```bash
+./bin/farci partage maj      # farci.git clonable, farci.tar.gz/.zip, network.env étudiant
+./bin/farci partage wheels   # AVEC Internet, une fois (déjà fait par ./preload.sh --pi) : ~0,5–1 Go
+./bin/farci partage          # état et adresses
+```
+
+L'étudiant ouvre **`http://farci.local/rejoindre`** : cinq commandes à
+copier (`git clone http://farci.local/farci.git farci`, `network.env` de la
+salle, `FARCI_WHEELS_URL=… ./bin/farci bootstrap`, `doctor`, image de sa
+brique). Sans git, les archives `.tar.gz`/`.zip` suffisent. Sans machine
+utilisable : Open WebUI (`:3080`) dans un navigateur.
+
+Les wheels couvrent Linux/WSL et Mac (Intel, Apple Silicon), Python 3.11 à
+3.13 (`PARTAGE_PYTHONS`, `PARTAGE_PLATEFORMES` dans `versions.env`). Les
+**images** du Pi sont arm64 : elles servent aux Mac Apple Silicon
+(`/partage/offline-arm64/`), pas aux PC Intel/AMD. Pour eux, préparer
+`offline/` sur une machine x86 avec Internet (`./preload.sh --core`), puis
+sur le Pi :
+
+```bash
+rsync -a machine-x86:/srv/farci/offline/ /tmp/offline-x86/   # ou une clé USB
+./bin/farci partage offline-x86 /tmp/offline-x86
+```
+
+Le Wi-Fi de la salle est partagé : pour une image lourde, la clé USB reste
+plus rapide.
+
+#### Option : la forge Gitea sur le Pi
+
+`./preload.sh --pi` précharge aussi les images de la forge (`00-gitops`). Si
+aucune équipe 0 ne monte la forge, le Pi peut la tenir (~1 Go de RAM) :
+
+```bash
+# secrets GITEA_* dans .env (voir § 3), puis :
+./bin/farci room set gitea 192.168.0.222
+./bin/farci up 00-gitops
+00-gitops/gitea/bootstrap.sh
+./bin/farci forge-sync push          # Gitea main ← GitHub main (avec Internet)
+```
+
+`forge-sync` publie **`main` de GitHub** : la branche de travail doit y être
+fusionnée avant. La forge apparaît alors sur le tableau comme livrée
+(« GitOps »), et `/rejoindre` affiche son lien. Si une équipe monte sa
+propre forge : `./bin/farci room set gitea <son IP>`.
 
 ## 7. Option : un vrai modèle sur le Pi (Qwen3.5-2B)
 

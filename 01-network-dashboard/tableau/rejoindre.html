@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>FARCI — rejoindre la salle</title>
+<!--
+  FARCI — rejoindre la salle quand on arrive sans rien (pas de git clone,
+  pas d'images, pas de modèle). Servie par l'agrégateur : http://<Pi>/rejoindre
+  Tout vient du Pi (./bin/farci partage maj) ; aucune ressource externe.
+-->
+<style>
+  :root { --fond: #0b1020; --carte: #141b33; --carte-2: #1b2445; --trait: #2a355f; --texte: #eef2ff;
+    --doux: #9aa6cf; --ok: #22c55e; --ref: #f59e0b; --non: #64748b; --accent: #818cf8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fond); color: var(--texte); line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+  h1 { font-size: clamp(26px, 5vw, 40px); margin: 0 0 4px; }
+  .sous { color: var(--doux); margin: 0 0 24px; }
+  section { background: var(--carte); border: 1px solid var(--trait); border-radius: 16px; padding: 18px 18px 14px; margin: 0 0 14px; }
+  h2 { margin: 0 0 8px; font-size: 20px; display: flex; gap: 10px; align-items: baseline; }
+  h2 .num { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 16px; flex: none; }
+  p { margin: 6px 0; }
+  .cmd { display: flex; gap: 8px; align-items: stretch; margin: 8px 0; }
+  .cmd code { flex: 1; display: block; padding: 10px 12px; border-radius: 10px; background: #060a17;
+    border: 1px solid var(--trait); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px; overflow-x: auto; white-space: pre; }
+  .cmd button { flex: none; border: 0; border-radius: 10px; padding: 0 14px; background: var(--carte-2);
+    color: var(--texte); font-weight: 700; cursor: pointer; }
+  .cmd button.copie { background: var(--ok); color: #052e16; }
+  a { color: #a5b4fc; }
+  .etat { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 700; }
+  .etat.ok { background: var(--ok); color: #052e16; }
+  .etat.non { background: var(--non); color: #fff; }
+  .choix { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 8px; }
+  .choix div { background: var(--carte-2); border-radius: 12px; padding: 12px; }
+  .note { color: var(--doux); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Rejoindre la salle FARCI</h1>
+  <p class="sous">Vous arrivez sans avoir cloné le projet ? Tout est ici, servi par la machine du formateur,
+    sans Internet. Comptez 5 minutes pour les étapes 1 à 4.</p>
+
+  <section>
+    <h2><span class="num">1</span>Récupérer le projet</h2>
+    <p>Avec git (Mac, Linux, Windows avec WSL) :</p>
+    <div class="cmd"><code data-cmd>git clone http://HOTE/farci.git farci</code></div>
+    <p>Sans git : <a id="lien-tgz" href="/partage/farci.tar.gz">farci.tar.gz</a> ou
+      <a id="lien-zip" href="/partage/farci.zip">farci.zip</a>, à décompresser.
+      <span class="etat" id="etat-depot">…</span></p>
+    <p class="note" id="version"></p>
+    <p class="note" id="gitea" hidden></p>
+  </section>
+
+  <section>
+    <h2><span class="num">2</span>Pointer vers la salle</h2>
+    <div class="cmd"><code data-cmd>cd farci && curl -o config/network.env http://HOTE/partage/network.env</code></div>
+    <p class="note">Ce fichier contient seulement l'adresse de la salle et les ports : vous n'avez rien à modifier.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">3</span>Installer les dépendances Python</h2>
+    <div class="cmd"><code data-cmd>FARCI_WHEELS_URL=http://HOTE/partage/wheels/ ./bin/farci bootstrap</code></div>
+    <p class="note">Mac (Intel ou Apple Silicon), Linux ou Windows avec WSL ; Python 3.11 à 3.13.
+      <span class="etat" id="etat-wheels">…</span></p>
+  </section>
+
+  <section>
+    <h2><span class="num">4</span>Vérifier</h2>
+    <div class="cmd"><code data-cmd>./bin/farci doctor</code></div>
+    <p>Attendu : « accueil de la salle : joignable ». Le tableau de la salle :
+      <a href="/tableau">/tableau</a>.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">5</span>Votre brique : les images Docker</h2>
+    <p>Seulement si votre équipe héberge une brique (étape 1). Téléchargez <b>l'image de votre brique</b>
+      (votre fiche d'équipe dit laquelle), puis chargez-la :</p>
+    <div class="choix">
+      <div><b>PC Intel / AMD</b> <span class="etat" id="etat-x86">…</span><br>
+        <a href="/partage/offline-x86/images/">images x86</a></div>
+      <div><b>Mac Apple Silicon</b> <span class="etat" id="etat-arm">…</span><br>
+        <a href="/partage/offline-arm64/images/">images arm64</a></div>
+    </div>
+    <div class="cmd"><code data-cmd>curl -O http://HOTE/partage/offline-x86/images/NOM.tar && docker load -i NOM.tar</code></div>
+    <p class="note">Le Wi-Fi de la salle est partagé : une image lourde prend plusieurs minutes. Si une clé USB
+      circule, elle est plus rapide.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">★</span>Pas de machine utilisable ?</h2>
+    <p>Vous participez quand même : en binôme pour l'étape 1, et pour l'étape 2 avec l'interface de discussion
+      de la salle, dans un navigateur : <a id="webui" href="#">Open WebUI</a>.</p>
+  </section>
+</main>
+<script>
+"use strict";
+const hote = location.host;
+document.querySelectorAll("[data-cmd]").forEach((code) => {
+  code.textContent = code.textContent.replace(/HOTE/g, hote);
+  const bouton = document.createElement("button");
+  bouton.type = "button";
+  bouton.textContent = "Copier";
+  bouton.addEventListener("click", () => copier(code.textContent, bouton));
+  code.parentNode.appendChild(bouton);
+});
+document.getElementById("webui").href = "http://" + location.hostname + ":3080";
+
+function copier(texte, bouton) {
+  const fini = () => { bouton.textContent = "Copié ✓"; bouton.classList.add("copie");
+    setTimeout(() => { bouton.textContent = "Copier"; bouton.classList.remove("copie"); }, 1500); };
+  // Hors HTTPS, navigator.clipboard n'existe pas toujours : repli sur execCommand.
+  if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(texte).then(fini); return; }
+  const zone = document.createElement("textarea");
+  zone.value = texte; document.body.appendChild(zone); zone.select();
+  try { document.execCommand("copy"); fini(); } catch (e) { /* l'utilisateur copiera à la main */ }
+  zone.remove();
+}
+
+async function present(url) {
+  try { const r = await fetch(url, { method: "HEAD", cache: "no-store" }); return r.ok; } catch (e) { return false; }
+}
+function etat(id, ok, oui, non) {
+  const e = document.getElementById(id);
+  e.textContent = ok ? oui : non;
+  e.className = "etat " + (ok ? "ok" : "non");
+}
+(async () => {
+  etat("etat-depot", await present("/partage/farci.tar.gz"), "disponible", "pas encore publié");
+  etat("etat-wheels", await present("/partage/wheels/"), "disponible", "absent : clé USB");
+  etat("etat-x86", await present("/partage/offline-x86/images/"), "disponible", "absent : clé USB");
+  etat("etat-arm", await present("/partage/offline-arm64/images/"), "disponible", "absent : clé USB");
+  try {
+    const v = await fetch("/partage/VERSION.txt", { cache: "no-store" });
+    if (v.ok) document.getElementById("version").textContent = (await v.text()).split("\n").slice(1, 3).join(" · ");
+  } catch (e) { /* pas de version publiée */ }
+  try {
+    const t = await (await fetch("/tableau/etat", { cache: "no-store" })).json();
+    const forge = (t.lignes || []).find((l) => l.label === "GitOps");
+    const s = forge && (forge.services || [])[0];
+    if (s && s.servi_par === "equipe" && s.url_equipe) {
+      const g = document.getElementById("gitea");
+      g.hidden = false;
+      g.textContent = "La forge Gitea de la salle est ouverte : ";
+      const a = document.createElement("a"); a.href = s.url_equipe; a.textContent = s.url_equipe;
+      g.appendChild(a);
+    }
+  } catch (e) { /* pas de forge */ }
+})();
+</script>
+</body>
+</html>

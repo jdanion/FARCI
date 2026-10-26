@@ -17,6 +17,9 @@ Endpoints (relayés par Caddy) :
                 lui-même (sonder /healthz relancerait l'agrégation en boucle)
   GET /tableau        le tableau de la salle (page web, pour l'écran projeté)
   GET /tableau/etat   JSON du tableau : lignes, scores, badges, fil, chrono
+  GET /rejoindre      la marche à suivre d'un étudiant arrivé sans rien
+                      (les fichiers eux-mêmes sont servis par l'accueil :
+                      ./bin/farci partage)
 
 Le tableau est tenu par un fil de fond qui sonde la salle toutes les
 TABLEAU_TICK secondes (tableau.py) et sauvegarde les scores dans
@@ -55,6 +58,7 @@ CACHE_SECONDS = float(os.environ.get("FARCI_HEALTH_CACHE", "2"))
 _cache: tuple[float, dict] | None = None
 
 TABLEAU_HTML = Path(os.environ.get("TABLEAU_HTML", HERE.parent / "tableau" / "index.html"))
+REJOINDRE_HTML = TABLEAU_HTML.parent / "rejoindre.html"
 TABLEAU_TICK = float(os.environ.get("TABLEAU_TICK", "5"))
 _board = tableau.Scoreboard(os.environ.get("TABLEAU_STATE") or None)
 _board_lock = threading.Lock()
@@ -112,6 +116,8 @@ class HealthHandler(BaseHTTPRequestHandler):
             self._send_json(200, aggregate_status())
         elif path in ("/tableau", "/tableau/"):
             self._send_file(TABLEAU_HTML, "text/html; charset=utf-8")
+        elif path in ("/rejoindre", "/rejoindre/"):
+            self._send_file(REJOINDRE_HTML, "text/html; charset=utf-8")
         elif path == "/tableau/etat":
             self._send_json(200, board_view())
         elif path == "/healthz":

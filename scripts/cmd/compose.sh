@@ -70,6 +70,9 @@ explain_failure() {
 
 case "${FARCI_TARGET:-up}" in
   up)
+    # Dossiers montés par l'accueil du Pi : créés par l'utilisateur, pas par
+    # Docker (qui les créerait au nom de root).
+    mkdir -p "$FARCI_DATA_DIR/partage" "$FARCI_DATA_DIR/offline" 2>/dev/null || true
     # Air-gap : une image absente est une erreur franche, jamais un
     # téléchargement silencieux (docs/AIRGAP.md). Préparation avec Internet :
     # FARCI_ALLOW_PULL=1 ./bin/farci up <dossier>
