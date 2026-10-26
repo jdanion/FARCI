@@ -47,11 +47,20 @@ done < <(python3 "$FARCI_ROOT/scripts/services.py" upstreams)
 # Un échec de `compose up` a plusieurs causes fréquentes : dire laquelle.
 explain_failure() {
   local log="$1" names
-  local missing=0
+  local missing=0 ids id ghosts=""
   names="$(grep -oE 'container name "/[^"]+" is already in use' "$log" | sed -E 's|.*"/([^"]+)".*|\1|' | sort -u | tr '\n' ' ')"
+  ids="$(grep -oE 'in use by container "[0-9a-f]+"' "$log" | grep -oE '[0-9a-f]{12,}' | cut -c1-12 | sort -u)"
   grep -qiE 'no such image|pull access denied|image .* not found|not found: manifest' "$log" && missing=1
   rm -f "$log"
-  if [[ -n "$names" ]]; then
+  # Un nom peut rester réservé par un conteneur « fantôme » (création
+  # interrompue) que `docker ps -a` ne montre pas : seul un redémarrage du
+  # service Docker le libère.
+  for id in $ids; do
+    docker inspect "$id" >/dev/null 2>&1 || ghosts+="$id "
+  done
+  if [[ -n "$ghosts" ]]; then
+    die "nom réservé par un conteneur fantôme (${ghosts% }) invisible dans docker ps -a : sudo systemctl restart docker, puis docker ps -a --filter name=farci- -q | xargs -r docker rm -f, puis relancer"
+  elif [[ -n "$names" ]]; then
     die "un ancien conteneur porte déjà ce nom (lancé autrement, par exemple avec sudo ou un autre nom de projet) : docker rm -f ${names% } — puis relancer"
   elif (( missing )); then
     die "image absente : ./bin/farci verify-images, puis ./preload.sh (avec Internet) ou docker load"
