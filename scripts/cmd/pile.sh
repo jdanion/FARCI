@@ -50,7 +50,7 @@ case "${FARCI_TARGET:-}" in
     python3 "$FARCI_ROOT/scripts/board.py" --json | python3 -c '
 import json, sys
 state = json.load(sys.stdin)["service_rendu"]
-print("service rendu :", state["state"], "— il manque :", ", ".join(state.get("missing", [])) or "rien")
+print("service rendu à la salle :", state["state"], "— il manque :", ", ".join(state.get("missing", [])) or "rien")
 sys.exit(0 if state["state"] == "READY" else 1)'
     ;;
   *) die "ce script ne connaît pas la cible « ${FARCI_TARGET:-} » (voir scripts/targets.def)" ;;

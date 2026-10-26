@@ -107,7 +107,10 @@ def render(room: dict, show_all: bool) -> str:
         out.append(f"  {RED}PANNE EN COURS{RESET if COLOR else ''} — " + " ; ".join(parts))
     if team != "READY" and room["pipeline"]["missing"]:
         out.append("")
-        out.append("  Il manque, dans l'ordre de montage :")
+        if served == "READY":
+            out.append("  À livrer par les équipes (la référence 🛟 les remplace en attendant) :")
+        else:
+            out.append("  Il manque, dans l'ordre de montage :")
         out.append("    " + " → ".join(room["pipeline"]["missing"]))
     if any(s["served_by"] == "reference" for s in room["services"]):
         out.append("  🛟 = la référence du formateur remplace la brique de l'équipe")
