@@ -6,6 +6,20 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Tableau : liens, page Extraction, bonus, stacks au choix
+
+- En haut du tableau : liens **Formateur** et **Extraction**.
+- Page **`/tableau/extraction`** : l'étape 2 sur les 10 dossiers du jeu
+  rapide — documents bruts, dossier pseudonymisé envoyé au modèle (étiquettes
+  surlignées), prompts v1/v2, extraction **en direct** par l'accueil (`/v1`)
+  comparée champ par champ au gold, et les runs déjà écrites sur la machine.
+- Nouveau badge **« Ça tourne ! » (+30)** : la première pile d'une équipe qui
+  n'a pas été la première de la salle.
+- Passerelle et observabilité comme l'inférence : **LiteLLM ou Bifrost**,
+  **Phoenix ou Langfuse** — la ligne passe au vert avec la stack que l'équipe
+  sert, et chacune compte comme brique cœur. `CLINICAL PIPELINE READY` exige
+  « une passerelle » (LiteLLM ou Bifrost) au lieu de LiteLLM seul.
+
 ### Onglet formateur du tableau
 
 - `/tableau/formateur` (bouton **Formateur** du tableau) : nom de chaque

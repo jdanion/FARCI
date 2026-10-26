@@ -238,6 +238,10 @@ def cmd_critical() -> int:
 TIERS = ("core", "bonus")
 
 
+# Libellé d'un critical_group sur le tableau (« Un runtime », « Une passerelle »).
+GROUP_NAMES = {"runtime": "Un runtime", "passerelle": "Une passerelle"}
+
+
 def pipeline_state(states: dict[str, bool]) -> dict:
     """Règle unique de CLINICAL PIPELINE READY (tableau ET health-aggregator).
 
@@ -265,7 +269,7 @@ def pipeline_state(states: dict[str, bool]) -> dict:
             members = members_of[str(group)]
             label = f"1 {group} ({' | '.join(members)})"
             requirements.append((label, members))
-            names[label] = f"Un {group}"
+            names[label] = GROUP_NAMES.get(str(group), f"Un {group}")
 
     missing = [label for label, members in requirements
                if not any(states.get(m, False) for m in members)]

@@ -180,9 +180,14 @@ salle. Pour un vrai modèle, voir § 7.
    (scores, badges, fil et chrono à zéro).
 
 Une équipe marque des points quand l'accueil sert **sa** brique (✅) : 100
-par brique cœur, 50 par brique bonus, +50 « Premiers ! », +50 « Pipeline
-READY » à chaque équipe ayant livré, +50 « Increvable » après 30 minutes
-sans interruption. Une panne ne coûte rien.
+par brique cœur, 50 par brique bonus, +50 « Premiers ! » (première équipe
+de la salle), +30 « Ça tourne ! » (première pile d'une équipe qui n'a pas été
+la première), +50 « Pipeline READY » à chaque équipe ayant livré, +50
+« Increvable » après 30 minutes sans interruption. Une panne ne coûte rien.
+
+En haut du tableau : **Formateur** (équipes, adresses, suivi) et
+**Extraction** (`/tableau/extraction` : un dossier du jeu rapide, du texte
+brut à l'extraction en direct comparée au gold — à projeter à l'étape 2).
 
 ### L'onglet formateur : équipes, étudiants, adresses
 

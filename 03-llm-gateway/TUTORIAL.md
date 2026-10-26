@@ -5,9 +5,10 @@
 Exposer **un seul nom de modèle** (`med-extraction`) au format OpenAI, quel que
 soit le runtime derrière, avec clés, quotas et repli (`03-llm-gateway/CONTRACT.md`).
 
-- **Objectif minimal** : LiteLLM répond, la ligne `LLM Gateway` passe au vert.
+- **Objectif minimal** : votre passerelle répond, LiteLLM **ou** Bifrost (au
+  choix) : la ligne `LLM Gateway` passe au vert avec l'une ou l'autre.
 - **Bonus** : clés virtuelles et quotas (scénario 03), repli vers le runtime
-  secondaire, Bifrost en seconde implémentation.
+  secondaire, la seconde passerelle en plus de la première.
 
 ## Ce que votre service apporte
 
@@ -37,7 +38,7 @@ ce service :
 | Passerelle | Adresse | Port publié |
 |---|---|---|
 | LiteLLM (A) | `GATEWAY_A_IP` | `GATEWAY_A_PORT` |
-| Bifrost (B, bonus) | `GATEWAY_B_IP` | `GATEWAY_B_PORT` |
+| Bifrost (B, au choix) | `GATEWAY_B_IP` | `GATEWAY_B_PORT` |
 
 `./bin/farci doctor` affiche l'IP de votre machine ; le formateur la déclare
 sur le Pi (`./bin/farci room set 3 <ip>`). Les applications appellent
@@ -64,7 +65,7 @@ Image `litellm` préchargée (`./bin/farci verify-images`).
 ./bin/farci up 03-llm-gateway/litellm
 ```
 
-Bonus (configuration à valider sur le matériel avant l'atelier) :
+Ou Bifrost (l'autre stack, au choix ; configuration à valider sur le matériel avant l'atelier) :
 
 ```bash
 ./bin/farci up 03-llm-gateway/bifrost

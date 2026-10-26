@@ -35,7 +35,7 @@ Le réseau (équipe 1). Les applications vous envoient leurs traces.
 | Backend | Adresse | Port |
 |---|---|---|
 | Phoenix | `OBSERVABILITY_A_IP` | `PHOENIX_PORT` |
-| Langfuse (bonus) | `OBSERVABILITY_B_IP` | `LANGFUSE_PORT` |
+| Langfuse (au choix, grosse configuration) | `OBSERVABILITY_B_IP` | `LANGFUSE_PORT` |
 | Collecteur OTel (bonus) | `OTEL_COLLECTOR_IP` | 4317 / 4318 |
 
 `OTEL_EXPORTER_OTLP_ENDPOINT` est dérivée automatiquement (Phoenix,
@@ -57,7 +57,8 @@ Image `phoenix` préchargée (`./bin/farci verify-images`) ; bonus :
 ./bin/farci up 05-observability/phoenix
 ```
 
-Bonus :
+Ou Langfuse (l'autre stack, au choix ; grosse configuration) — la ligne
+`Observability` passe au vert avec l'une ou l'autre :
 
 ```bash
 ./bin/farci up 05-observability/langfuse

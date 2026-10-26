@@ -53,6 +53,6 @@ la référence (🛟) en attendant.
 ## Bonus
 
 - Démonstration du repli : `03-llm-gateway/failover/demo-failover.sh`.
-- Bifrost, seconde passerelle : `./bin/farci up 03-llm-gateway/bifrost`.
+- Bifrost : l'autre stack, au choix (la ligne passe au vert avec l'une ou l'autre), ou en seconde passerelle : `./bin/farci up 03-llm-gateway/bifrost`.
 - Clés virtuelles et quotas (scénario 03) : demandent une base PostgreSQL,
   voir le TUTORIAL.

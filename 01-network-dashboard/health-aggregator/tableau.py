@@ -9,6 +9,9 @@ Barème (positif seulement : une panne ne coûte rien, c'est la séance) :
   livraison d'une brique cœur      100   première fois servie par l'équipe
   livraison d'une brique bonus      50
   « Premiers ! »                    +50  première équipe à livrer une brique
+  « Ça tourne ! »                   +30  première pile lancée par une équipe qui
+                                         n'a pas été la première de la salle :
+                                         arriver après les autres compte aussi
   « Pipeline READY »                +50  chaque équipe ayant livré, quand le
                                          pipeline des équipes passe READY
   « Increvable »                    +50  une brique servie 30 min sans interruption
@@ -23,7 +26,7 @@ import os
 import time
 from pathlib import Path
 
-POINTS = {"core": 100, "bonus": 50, "premiers": 50, "ready": 50, "increvable": 50}
+POINTS = {"core": 100, "bonus": 50, "premiers": 50, "ca_tourne": 30, "ready": 50, "increvable": 50}
 INCREVABLE_SECONDS = 30 * 60
 MAX_EVENTS = 60
 
@@ -53,7 +56,8 @@ FICHES = {
     },
     "LLM Gateway": {
         "role": "La passerelle : le seul point d'entrée des applications vers les modèles. Elle réessaie, "
-                "bascule sur un modèle de secours et mesure chaque appel.",
+                "bascule sur un modèle de secours et mesure chaque appel. Deux stacks : LiteLLM ou Bifrost, "
+                "l'une ou l'autre suffit.",
         "analogie": "Le standard téléphonique : on appelle un service, pas un poste.",
         "contrat": "API OpenAI par l'accueil : /v1/models, /v1/chat/completions",
         "demo": {"methode": "GET", "chemin": "/v1/models"},
@@ -75,8 +79,8 @@ FICHES = {
                            "contexte": {"NOM": ["Dupont"], "PRENOM": ["Jean"], "IPP": ["1234567890123"]}}},
     },
     "Observability": {
-        "role": "Phoenix garde une trace de chaque appel au modèle : durée, tokens, erreurs. Si elle tombe, "
-                "l'extraction continue : elle n'est pas sur le chemin du soin.",
+        "role": "Le backend de traces (Phoenix ou Langfuse) garde une trace de chaque appel au modèle : durée, "
+                "tokens, erreurs. S'il tombe, l'extraction continue : il n'est pas sur le chemin du soin.",
         "analogie": "Le dossier de soins : on ne se souvient pas, on lit.",
         "contrat": "OpenTelemetry (OTLP) : /observability/v1/traces",
     },
@@ -88,10 +92,6 @@ FICHES = {
     },
     "GitOps": {"role": "La forge (Gitea) : chaque changement passe par une demande relue et vérifiée.",
                "analogie": "Le dossier de procédures : ce qui est écrit et relu est appliqué."},
-    "Bifrost": {"role": "Une seconde passerelle : le client ne change pas d'adresse si la première tombe.",
-                "analogie": "Un second standard téléphonique."},
-    "Langfuse": {"role": "Un second backend de traces, sur le même flux OpenTelemetry.",
-                 "analogie": "Une seconde lecture du même dossier de soins."},
     "MLflow": {"role": "Suit les expériences : une configuration (modèle, prompt) par essai, avec ses scores.",
                "analogie": "Le cahier de laboratoire."},
     "Uptime Kuma": {"role": "Sonde chaque service et garde l'historique de disponibilité.",
@@ -215,8 +215,10 @@ class Scoreboard:
                     points = POINTS["core"] if tier == "core" else POINTS["bonus"]
                     self.livres[sid] = {"equipe": team, "tier": tier, "at": now, "points": points}
                     self._event("livraison", f"Équipe {team} — {self.noms.get(team, '')} livre {label}", now, team, points)
-                    if len({v["equipe"] for v in self.livres.values()}) == 1 and len(self.livres) == 1:
+                    if len(self.livres) == 1:
                         self._badge(team, "Premiers !", now, POINTS["premiers"])
+                    elif sum(1 for v in self.livres.values() if v["equipe"] == team) == 1:
+                        self._badge(team, "Ça tourne !", now, POINTS["ca_tourne"])
                 elif before not in ("equipe", "absent"):
                     self._event("retour", f"{label} : l'équipe {team} reprend la main", now, team)
                 if now - self.servi_depuis[sid] >= INCREVABLE_SECONDS:

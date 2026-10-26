@@ -23,6 +23,11 @@ Endpoints (relayés par Caddy) :
   POST /tableau/salle      enregistrer : écrit config/salle.json et
                            config/network.env, puis recharge l'accueil
                            (Caddy) — comme room set
+  GET /tableau/extraction  l'étape 2 sur des exemples : documents, dossier
+                           pseudonymisé, prompts, gold, runs de la machine
+  GET /tableau/extraction/cas[/<IPP>]   les dossiers du jeu rapide
+  POST /tableau/extraction/direct       {"ipp", "prompt"} : extraction en
+                           direct par l'accueil (/v1), comparée au gold
   GET /rejoindre      la marche à suivre d'un étudiant arrivé sans rien
                       (les fichiers eux-mêmes sont servis par l'accueil :
                       ./bin/farci partage)
@@ -52,6 +57,7 @@ for candidate in (HERE / "scripts", *(parent / "scripts" for parent in HERE.pare
         os.environ.setdefault("FARCI_ROOT", str(candidate.parent))
         break
 
+import extraction  # noqa: E402
 import salle  # noqa: E402
 import services as registry  # noqa: E402
 import tableau  # noqa: E402
@@ -67,6 +73,7 @@ _cache: tuple[float, dict] | None = None
 TABLEAU_HTML = Path(os.environ.get("TABLEAU_HTML", HERE.parent / "tableau" / "index.html"))
 REJOINDRE_HTML = TABLEAU_HTML.parent / "rejoindre.html"
 FORMATEUR_HTML = TABLEAU_HTML.parent / "formateur.html"
+EXTRACTION_HTML = TABLEAU_HTML.parent / "extraction.html"
 TABLEAU_TICK = float(os.environ.get("TABLEAU_TICK", "5"))
 _board = tableau.Scoreboard(os.environ.get("TABLEAU_STATE") or None)
 _board_lock = threading.Lock()
@@ -133,7 +140,8 @@ def board_loop() -> None:
 
 
 def board_view() -> dict:
-    room = aggregate_status()
+    # Plusieurs écrans rafraîchissent toutes les 3 s : le sondage de fond suffit.
+    room = _last_room or aggregate_status()
     with _board_lock:
         return _board.view(room, registry.services(), registry.registry().get("status_rows", []),
                            dict(os.environ))
@@ -169,6 +177,16 @@ def salle_save(payload: dict) -> tuple[int, dict]:
 class HealthHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = self.path.split("?", 1)[0]
+        if path == "/tableau/extraction/direct":
+            try:
+                length = min(int(self.headers.get("Content-Length", "0")), 4096)
+                payload = json.loads(self.rfile.read(length) or b"{}")
+            except (ValueError, OSError):
+                self._send_json(400, {"ok": False, "erreur": "JSON illisible"})
+                return
+            code, body = extraction.extraire(str(payload.get("ipp", "")), str(payload.get("prompt", "v2")))
+            self._send_json(code, body)
+            return
         if path != "/tableau/salle":
             self._send_json(404, {"error": "not_found"})
             return
@@ -198,6 +216,13 @@ class HealthHandler(BaseHTTPRequestHandler):
             self._send_file(FORMATEUR_HTML, "text/html; charset=utf-8")
         elif path == "/tableau/salle":
             self._send_json(200, salle_view(fresh="sonder=1" in self.path))
+        elif path in ("/tableau/extraction", "/tableau/extraction/"):
+            self._send_file(EXTRACTION_HTML, "text/html; charset=utf-8")
+        elif path == "/tableau/extraction/cas":
+            self._send_json(200, {"cas": extraction.liste()})
+        elif path.startswith("/tableau/extraction/cas/"):
+            ex = extraction.exemple(path.rsplit("/", 1)[1])
+            self._send_json(200 if ex else 404, ex or {"error": "dossier inconnu"})
         elif path in ("/rejoindre", "/rejoindre/"):
             self._send_file(REJOINDRE_HTML, "text/html; charset=utf-8")
         elif path == "/tableau/etat":
