@@ -32,6 +32,9 @@ env-check	atelier	Valider la configuration (adresses, sous-réseau)	env.sh
 services	atelier	Lister le registre des services	services.sh
 network-check	atelier	Vérifier cohérence registre <-> adresses	network-check.sh
 room	atelier	Qui héberge quoi ; room set <équipe> <ip> (sur le Pi)	room.sh
+core-up	atelier	Machine seule : pile de référence + Docling (FARCI.md)	pile.sh
+dashboard-up	atelier	Machine seule : accueil + agrégateur, adresses utiles	pile.sh
+health	atelier	Tableau, code 0 si le service rendu est READY	pile.sh
 
 preload	airgap	Précharger les artefacts air-gap (avec Internet)	preload.sh
 verify-airgap	airgap	Vérifier que le workshop fonctionne hors ligne	verify-airgap.sh

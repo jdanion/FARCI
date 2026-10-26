@@ -113,10 +113,13 @@ check_versions() {
 check_compose() {
   # Vérifier qu'aucun compose n'utilise build: distant ou pull_policy: always
   local violations=()
+  # Une construction LOCALE (contexte = dossier du dépôt, image de base
+  # préchargée) fonctionne hors ligne ; une construction DISTANTE (contexte
+  # git ou http) ou un pull_policy: always ne fonctionnent pas.
   while IFS= read -r line; do
-    [[ "$line" == *"build:"* ]] && violations+=("$line")
-    [[ "$line" == *"pull_policy: always"* ]] && violations+=("$line")
-  done < <(grep -rn "build:\|pull_policy:" "$FARCI_ROOT" --include="docker-compose.yml" --include="compose.yml" 2>/dev/null || true)
+    violations+=("$line")
+  done < <(grep -rnE "(build|context):[[:space:]]*['\"]?(https?://|git@|git://|github\.com)|pull_policy:[[:space:]]*always" \
+             "$FARCI_ROOT" --include="docker-compose.yml" --include="compose.yml" 2>/dev/null || true)
 
   if (( ${#violations[@]} == 0 )); then
     record_check "compose" "PASS" "aucun build distant ni pull_policy: always"

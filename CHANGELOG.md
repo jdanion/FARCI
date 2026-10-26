@@ -6,6 +6,20 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Déploiement sur un Raspberry Pi 5 seul
+
+- `DEPLOY-PI.md` : séquence complète et vérifiée pour un Pi 5 (8 Go, Debian
+  13 arm64) seul sur un LAN : configuration, préchargement, démarrage,
+  vérifications, ports, disque, durée, état arm64 de chaque image.
+- `make core-up`, `make dashboard-up`, `make health` (cahier des charges
+  FARCI.md) : pile de référence + Docling, adresses utiles, code 0 si le
+  service rendu est READY.
+- `./preload.sh --pi` (alias de `--reference`, profil un seul modèle 2B) ;
+  le mode inclut désormais le manifeste.
+- `verify-airgap.sh` : le contrôle compose ne refuse plus les constructions
+  locales (agents Arcane), seulement les contextes distants et
+  `pull_policy: always`.
+
 ### EDS-NLP (AP-HP) — pseudonymiser et extraire des entités
 
 - Service `04-clinical-documents/eds-nlp/` (équipe 4) : `POST /v1/pseudonymiser`

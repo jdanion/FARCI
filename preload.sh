@@ -10,6 +10,7 @@
 #   ./preload.sh --core             strict nécessaire (~26 Go)
 #   ./preload.sh --models-ci        modèle CI uniquement (1.2 Go)
 #   ./preload.sh --reference        pile de référence, À LANCER SUR LE PI (arm64)
+#   ./preload.sh --pi               idem (profil « pi » : un seul modèle, Qwen3.5-2B Q4)
 #   ./preload.sh --only <groupe>     un seul groupe
 #   ./preload.sh --dry-run          simuler sans rien télécharger
 #   ./preload.sh --skip-existing    ignorer les fichiers déjà présents
@@ -56,6 +57,8 @@ Options :
   --reference         Pile de référence (reference/) : à lancer SUR la machine
                       de référence (Pi 5, arm64), car une image se télécharge
                       pour l'architecture de la machine qui la tire
+  --pi                Alias de --reference : profil « pi », un seul petit
+                      modèle (Qwen3.5-2B Q4_K_M, ~1,3 Go)
   --only <groupe>     Exécuter un seul groupe (voir --list)
   --list              Lister les groupes disponibles
   --dry-run           Simuler sans rien télécharger
@@ -84,7 +87,7 @@ parse_args() {
       --all)       PRELOAD_MODE="all" ;;
       --core)      PRELOAD_MODE="core" ;;
       --models-ci) PRELOAD_MODE="models-ci" ;;
-      --reference) PRELOAD_MODE="reference" ;;
+      --reference|--pi) PRELOAD_MODE="reference" ;;
       --only)      PRELOAD_ONLY="${2:?--only requiert un nom de groupe}"; shift ;;
       --list)      list_groups; exit 0 ;;
       --dry-run)   PRELOAD_DRY_RUN=1 ;;
@@ -113,7 +116,7 @@ select_groups() {
       SELECTED_GROUPS=("models_ci")
       ;;
     reference)
-      SELECTED_GROUPS=("reference" "build_eds_nlp" "models_ci" "wheels")
+      SELECTED_GROUPS=("reference" "build_eds_nlp" "models_ci" "wheels" "manifest")
       ;;
     *)
       err "mode inconnu : $PRELOAD_MODE"
