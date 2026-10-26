@@ -32,6 +32,84 @@ TEAMS = {
     "5": "Observabilité", "6": "Évaluation", "7": "Applications", "8": "Agents",
 }
 
+# Les fiches du tableau : ce que l'on montre en touchant une tuile. « demo » est
+# un appel en direct PAR L'ACCUEIL DE LA SALLE (même origine que la page).
+FICHES = {
+    "Network": {
+        "role": "L'accueil de la salle : une seule adresse pour tout. Il envoie chaque demande vers la brique "
+                "d'une équipe, ou vers la doublure du Pi si elle ne répond pas. L'agrégateur sonde tout le "
+                "monde et alimente ce tableau.",
+        "analogie": "L'accueil de l'hôpital : le patient ne connaît pas les numéros des services.",
+        "contrat": "/v1  /runtime  /docling  /eds  /observability  /status",
+        "demo": {"methode": "GET", "chemin": "/status", "resume": "status"},
+    },
+    "Inference": {
+        "role": "Le runtime fait tourner le modèle de langage (Ollama, llama.cpp) et le sert sous un nom "
+                "logique, med-extraction, avec l'API OpenAI.",
+        "analogie": "Le modèle est le livre, le runtime est la personne qui le lit à voix haute.",
+        "contrat": "API OpenAI : /v1/models, /v1/chat/completions  (accueil : /runtime/v1)",
+        "demo": {"methode": "GET", "chemin": "/runtime/v1/models"},
+    },
+    "LLM Gateway": {
+        "role": "La passerelle : le seul point d'entrée des applications vers les modèles. Elle réessaie, "
+                "bascule sur un modèle de secours et mesure chaque appel.",
+        "analogie": "Le standard téléphonique : on appelle un service, pas un poste.",
+        "contrat": "API OpenAI par l'accueil : /v1/models, /v1/chat/completions",
+        "demo": {"methode": "GET", "chemin": "/v1/models"},
+    },
+    "Documents": {
+        "role": "Docling convertit les PDF en texte structuré avant l'extraction.",
+        "analogie": "La secrétaire médicale qui retape un courrier reçu par fax.",
+        "contrat": "/docling/v1/convert/file",
+        "demo": {"methode": "GET", "chemin": "/docling/health"},
+    },
+    "EDS-NLP": {
+        "role": "La bibliothèque de l'AP-HP : EDS-Pseudo remplace nom, IPP, NIR, dates… avant tout envoi au "
+                "modèle, puis le LLM balise diagnostic, intervention, complication et stade.",
+        "analogie": "Le secret médical : le modèle lit le dossier, pas l'identité du patient.",
+        "contrat": "/eds/v1/pseudonymiser, /eds/v1/entites",
+        "demo": {"methode": "POST", "chemin": "/eds/v1/pseudonymiser",
+                 "corps": {"texte": "Patient : Jean Dupont, IPP 1234567890123, né le 15/03/1958. "
+                                    "DPC pour adénocarcinome du pancréas.",
+                           "contexte": {"NOM": ["Dupont"], "PRENOM": ["Jean"], "IPP": ["1234567890123"]}}},
+    },
+    "Observability": {
+        "role": "Phoenix garde une trace de chaque appel au modèle : durée, tokens, erreurs. Si elle tombe, "
+                "l'extraction continue : elle n'est pas sur le chemin du soin.",
+        "analogie": "Le dossier de soins : on ne se souvient pas, on lit.",
+        "contrat": "OpenTelemetry (OTLP) : /observability/v1/traces",
+    },
+    "Open WebUI": {
+        "role": "Une interface de discussion branchée sur la passerelle, pour essayer un prompt à la main "
+                "(et pour ceux qui n'ont pas de machine utilisable).",
+        "analogie": "La consultation : on pose la question, on lit la réponse.",
+        "contrat": "navigateur ; elle appelle /v1 comme toute application",
+    },
+    "GitOps": {"role": "La forge (Gitea) : chaque changement passe par une demande relue et vérifiée.",
+               "analogie": "Le dossier de procédures : ce qui est écrit et relu est appliqué."},
+    "Inference Secondary": {"role": "llama.cpp, un second runtime sur le même fichier de poids.",
+                            "analogie": "Un second lecteur pour le même livre."},
+    "Inference Mac": {"role": "oMLX, le runtime des Mac Apple Silicon.", "analogie": "Un lecteur spécialisé."},
+    "Bifrost": {"role": "Une seconde passerelle : le client ne change pas d'adresse si la première tombe.",
+                "analogie": "Un second standard téléphonique."},
+    "Langfuse": {"role": "Un second backend de traces, sur le même flux OpenTelemetry.",
+                 "analogie": "Une seconde lecture du même dossier de soins."},
+    "MLflow": {"role": "Suit les expériences : une configuration (modèle, prompt) par essai, avec ses scores.",
+               "analogie": "Le cahier de laboratoire."},
+    "Uptime Kuma": {"role": "Sonde chaque service et garde l'historique de disponibilité.",
+                    "analogie": "La surveillance continue au scope."},
+    "Flowise": {"role": "Construire une chaîne d'extraction à la souris, sans code.",
+                "analogie": "Le protocole dessiné plutôt qu'écrit."},
+}
+
+# La page utile de chaque service, ouverte depuis la fiche (sur sa machine).
+PAGES = {
+    "caddy": "/status", "health-aggregator": "/tableau", "gitea": "/",
+    "inference-ollama": "/v1/models", "inference-llamacpp": "/v1/models", "inference-omlx": "/v1/models",
+    "gateway-litellm": "/", "gateway-bifrost": "/", "docling": "/docs", "eds-nlp": "/health",
+    "phoenix": "/", "langfuse": "/", "mlflow": "/", "uptime-kuma": "/", "open-webui": "/", "flowise": "/",
+}
+
 # Le déroulé de la séance (docs/WORKSHOP_FLOW.md), en minutes depuis le début.
 PHASES = (
     (0, "Accueil"), (20, "Étape 1 — Construire"), (110, "Pause"), (120, "Étape 2 — Utiliser"),
@@ -172,6 +250,20 @@ class Scoreboard:
         ranked = [{"equipe": t, "nom": TEAMS.get(t, ""), **v} for t, v in teams.items()]
         return sorted(ranked, key=lambda e: (-e["points"], e["equipe"]))
 
+    @staticmethod
+    def _service_links(service: dict, state: dict, env: dict) -> dict:
+        """Qui rend ce service, et où l'ouvrir : chez l'équipe, ou sur le Pi."""
+        page = PAGES.get(str(service.get("id")), "/")
+        ip, port = env.get(str(service.get("ip_var", "")), ""), env.get(str(service.get("port_var", "")), "")
+        ref_ip, ref_port = env.get("REFERENCE_IP", ""), env.get(str(service.get("reference_port_var", "")), "")
+        return {
+            "id": service.get("id"), "label": state.get("label") or service.get("id"),
+            "equipe": str(service.get("team", "")), "etat_equipe": state.get("team"),
+            "servi_par": state.get("served_by"),
+            "url_equipe": f"http://{ip}:{port}{page}" if ip and port else "",
+            "url_reference": f"http://{ref_ip}:{ref_port}{page}" if ref_ip and ref_port else "",
+        }
+
     def view(self, room: dict, services: list[dict], rows: list[dict], env: dict, now: float | None = None) -> dict:
         now = now if now is not None else time.time()
         by_id = {s["id"]: s for s in services}
@@ -183,7 +275,9 @@ class Scoreboard:
             team = str(first.get("team", ""))
             ip = env.get(str(first.get("ip_var", "")), "")
             lignes.append({"label": row["label"], "tier": row.get("tier", "core"), "etat": row_state(members),
-                           "equipe": team, "nom_equipe": TEAMS.get(team, ""), "ip": ip})
+                           "equipe": team, "nom_equipe": TEAMS.get(team, ""), "ip": ip,
+                           "fiche": FICHES.get(row["label"], {}),
+                           "services": [self._service_links(by_id.get(m["id"], {}), m, env) for m in members]})
         minutes = (now - self.debut) / 60
         return {
             "lignes": lignes,

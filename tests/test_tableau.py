@@ -98,6 +98,24 @@ class VueEtPersistance(unittest.TestCase):
         self.assertEqual(view["chrono"]["phase"]["nom"], "Étape 1 — Construire")
         self.assertEqual(view["evenements"][0]["type"], "badge")  # le plus récent d'abord
 
+    def test_fiche_et_liens_vers_l_equipe_et_le_pi(self):
+        board = tableau.Scoreboard(now=0)
+        services = [{"id": "inference-ollama", "team": "2", "tier": "core", "ip_var": "INFERENCE_A_IP",
+                     "port_var": "INFERENCE_A_PORT", "reference_port_var": "REPLAY_PORT"}]
+        rows = [{"label": "Inference", "tier": "core", "check": ["inference-ollama"]}]
+        r = room({"inference-ollama": "equipe"})
+        env = {"INFERENCE_A_IP": "198.51.100.20", "INFERENCE_A_PORT": "11434",
+               "REFERENCE_IP": "198.51.100.1", "REPLAY_PORT": "8090"}
+        ligne = board.view(r, services, rows, env, now=60)["lignes"][0]
+        self.assertIn("runtime", ligne["fiche"]["role"])
+        self.assertEqual(ligne["fiche"]["demo"]["chemin"], "/runtime/v1/models")
+        lien = ligne["services"][0]
+        self.assertEqual(lien["url_equipe"], "http://198.51.100.20:11434/v1/models")
+        self.assertEqual(lien["url_reference"], "http://198.51.100.1:8090/v1/models")
+        self.assertEqual(lien["servi_par"], "equipe")
+        sans_ip = board.view(r, services, rows, {**env, "INFERENCE_A_IP": ""}, now=60)["lignes"][0]
+        self.assertEqual(sans_ip["services"][0]["url_equipe"], "")
+
     def test_sauvegarde_et_reprise(self):
         path = Path(tempfile.mkdtemp()) / "tableau.json"
         board = tableau.Scoreboard(path, now=0)

@@ -8,6 +8,11 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ### Le tableau de la salle (écran projeté, iPad)
 
+- Chaque tuile (et chaque puce bonus) s'ouvre en **fiche** : à quoi sert la
+  brique, l'analogie médicale, le contrat, qui la rend (bouton vers le service
+  **de l'étudiant** sur son poste dès qu'il est déclaré, et vers la doublure
+  du Pi), et un **test en direct** par l'accueil (modèles servis,
+  pseudonymisation d'une phrase…). Lien direct : `/tableau#fiche=<Ligne>`.
 - `http://<accueil>/` → `/tableau` : page web servie par l'agrégateur de
   santé, sans ressource externe. Tuiles par brique (✅ équipe, 🛟 référence,
   ⛔ panne), jauge du pipeline, classement des équipes, fil de la séance,
