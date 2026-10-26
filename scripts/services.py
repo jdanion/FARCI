@@ -353,6 +353,16 @@ def cmd_pipeline() -> int:
     return 0
 
 
+def row_members(row: dict, members: list[dict]) -> list[dict]:
+    """Les états qui font la couleur d'une ligne du tableau. Ligne
+    `une_parmi` : la meilleure de ses briques (équipe, puis référence) ;
+    sinon toutes. Même règle dans health-aggregator/tableau.py."""
+    if row.get("une_parmi") and members:
+        rank = {"equipe": 0, "reference": 1}
+        return [min(members, key=lambda s: rank.get(s.get("served_by") or "", 2))]
+    return members
+
+
 def validate_registry() -> list[str]:
     """Erreurs de cohérence du registre (vide = cohérent)."""
     problems = []

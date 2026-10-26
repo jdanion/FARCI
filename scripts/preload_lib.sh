@@ -45,7 +45,6 @@ declare -a PRELOAD_GROUPS=(
   dashboard
   build_llamacpp
   models_ornith
-  models_qwen38
   models_ci
   inference_ollama
   inference_llamacpp
@@ -57,6 +56,7 @@ declare -a PRELOAD_GROUPS=(
   build_eds_nlp
   evaluation
   clients
+  demo_flowise
   wheels
   manifest
   tools
@@ -216,47 +216,20 @@ group_dashboard() {
   preload_image uptime-kuma
 }
 
+# llama.cpp, compilé pour CETTE machine (GGML_NATIVE : les instructions de
+# son processeur). Le Dockerfile clone lui-même la version LLAMACPP_BUILD.
 group_build_llamacpp() {
-  info "groupe : build_llamacpp (compilation locale multi-arch)"
-  local src_dir="$FARCI_ROOT/02-inference/llamacpp"
-  local tarball="$FARCI_MODELS_DIR/llama.cpp-${LLAMACPP_BUILD}.tar.gz"
-  local tarball_sha="$FARCI_MODELS_DIR/llama.cpp-${LLAMACPP_BUILD}.tar.gz.sha256"
-
+  local image="farci/llamacpp:server-${LLAMACPP_BUILD}" dir="$FARCI_ROOT/02-inference/llamacpp"
+  info "groupe : build_llamacpp ($image, architecture $(uname -m))"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
-    printf '  [dry-run] buildx build --platform linux/amd64,linux/arm64 -t farci/llamacpp:server-%s\n' "$LLAMACPP_BUILD"
+    printf '  [dry-run] docker build -t %s %s\n' "$image" "$dir"
     return 0
   fi
-
-  # Télécharger les sources llama.cpp
-  local url="https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMACPP_BUILD}.tar.gz"
-  preload_download "$url" "$tarball"
-
-  # Vérifier le sha256 si le fichier .sha256 existe
-  if [[ -f "$tarball_sha" ]]; then
-    local expected_sha
-    expected_sha="$(cat "$tarball_sha")"
-    if ! echo "$expected_sha  $tarball" | sha256sum -c --quiet 2>/dev/null; then
-      err "sha256 mismatch pour llama.cpp source"
-      return 1
-    fi
-  fi
-
-  # Compiler et sauvegarder l'image
-  if [[ -f "$src_dir/Dockerfile" ]]; then
-    docker buildx build \
-      --platform linux/amd64,linux/arm64 \
-      -t "farci/llamacpp:server-${LLAMACPP_BUILD}" \
-      -f "$src_dir/Dockerfile" \
-      --load \
-      "$FARCI_ROOT" || {
-      err "échec de la compilation llama.cpp"
-      return 1
-    }
-    preload_docker_save "farci/llamacpp:server-${LLAMACPP_BUILD}" "llamacpp-server-${LLAMACPP_BUILD}.tar"
-  else
-    warn "Dockerfile llama.cpp absent : $src_dir/Dockerfile"
-    warn "  → créer 02-inference/llamacpp/Dockerfile (phase 4)"
-  fi
+  local -a extra=()
+  read -r -a extra <<< "${FARCI_DOCKER_BUILD_ARGS:-}"
+  docker build -t "$image" --build-arg "LLAMACPP_BUILD=$LLAMACPP_BUILD" \
+    "${extra[@]}" -f "$dir/Dockerfile" "$dir" || { err "échec de la compilation llama.cpp"; return 1; }
+  preload_docker_save "$image" "llamacpp-server-${LLAMACPP_BUILD}.tar"
 }
 
 # Image du service EDS-NLP (équipe 4, doublure du Pi). Construite pour
@@ -293,8 +266,10 @@ group_models_ornith() {
   preload_model ORNITH_1_5_9B_Q5KM
 }
 
+# Hors atelier (deux stacks par brique) : jamais dans un mode, seulement
+# ./preload.sh --only models_qwen38.
 group_models_qwen38() {
-  info "groupe : models_qwen38 (gros postes uniquement, ~16,5 Go)"
+  info "groupe : models_qwen38 (hors atelier, ~16,5 Go)"
   preload_model QWEN3_8_27B_Q4KM
 }
 
@@ -332,6 +307,7 @@ group_observability_phoenix() {
 group_observability_langfuse() {
   info "groupe : observability_langfuse"
   preload_image langfuse
+  preload_image postgres
   preload_image otel-collector
 }
 
@@ -348,7 +324,17 @@ group_evaluation() {
 group_clients() {
   info "groupe : clients"
   preload_image open-webui
+}
+
+# Démonstration Flowise du formateur (--all seulement).
+group_demo_flowise() {
+  info "groupe : demo_flowise"
   preload_image flowise
+}
+
+group_arcane() {
+  info "groupe : arcane (images construites sur la base python)"
+  preload_image python
 }
 
 # Pile de référence (reference/docker-compose.yml) : à lancer sur le Pi
@@ -376,6 +362,28 @@ group_wheels() {
     -r "$FARCI_ROOT/requirements.in" \
     -r "$FARCI_ROOT/requirements-eval.txt" \
     2>/dev/null || warn "pip download a échoué — vérifier requirements.in"
+}
+
+# Ce qu'un poste étudiant précharge (./preload.sh, mode poste) : la brique
+# de SON équipe, limitée à ce que la machine pourra servir le jour J.
+# Deux stacks au plus par brique ; Ollama + modèle 9B et Langfuse sont
+# réservés aux grosses configurations (scripts/lib/machine.sh).
+poste_groups() {
+  local team="$1" profil="$2"
+  case "$team" in
+    0) printf '%s\n' gitops ;;
+    1) printf '%s\n' dashboard ;;
+    2) if [[ "$profil" == grosse ]]; then printf '%s\n' inference_ollama models_ornith models_ci
+       else printf '%s\n' build_llamacpp models_ci; fi ;;
+    3) printf '%s\n' gateway_litellm gateway_bifrost ;;
+    4) printf '%s\n' documents build_eds_nlp ;;
+    5) if [[ "$profil" == grosse ]]; then printf '%s\n' observability_phoenix observability_langfuse
+       else printf '%s\n' observability_phoenix; fi ;;
+    6) printf '%s\n' evaluation ;;
+    7) printf '%s\n' clients ;;
+    8) printf '%s\n' arcane ;;
+    *) return 1 ;;
+  esac
 }
 
 # Pour les étudiants arrivés sans rien : wheels Python de toutes les

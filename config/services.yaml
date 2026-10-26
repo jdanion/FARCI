@@ -124,11 +124,15 @@ services:
     health_paths:
       - /v1/models
       - /health
-    tier: bonus
+    # Cœur comme Ollama : c'est le runtime des postes sans grosse
+    # configuration (Ollama + modèle 9B exigent un GPU ou 32 Go de RAM).
+    tier: core
     critical_group: runtime
     critical: false
     phase: 4
 
+  # Hors atelier : ni proposé au casting, ni préchargé, ni sur le tableau
+  # (deux options par brique). Reste joignable si un Mac le sert.
   - id: inference-omlx
     label: Inference C (oMLX / Mac)
     team: "2"
@@ -276,6 +280,7 @@ services:
     critical: false
     phase: 9
 
+  # Démonstration du formateur, pas une option étudiante : hors tableau.
   - id: flowise
     label: Flowise
     team: "7"
@@ -325,9 +330,12 @@ status_rows:
   - label: Network
     tier: core
     check: [caddy, health-aggregator]
+  # une_parmi : la ligne est verte dès qu'UNE de ses briques est livrée
+  # (l'équipe choisit sa stack selon son poste).
   - label: Inference
     tier: core
-    check: [inference-ollama]
+    une_parmi: true
+    check: [inference-ollama, inference-llamacpp]
   - label: LLM Gateway
     tier: core
     check: [gateway-litellm]
@@ -346,12 +354,6 @@ status_rows:
   - label: GitOps
     tier: bonus
     check: [gitea]
-  - label: Inference Secondary
-    tier: bonus
-    check: [inference-llamacpp]
-  - label: Inference Mac
-    tier: bonus
-    check: [inference-omlx]
   - label: Bifrost
     tier: bonus
     check: [gateway-bifrost]
@@ -364,6 +366,3 @@ status_rows:
   - label: Uptime Kuma
     tier: bonus
     check: [uptime-kuma]
-  - label: Flowise
-    tier: bonus
-    check: [flowise]

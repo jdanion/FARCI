@@ -14,11 +14,36 @@ sans réseau.
 
 | Phase | Quand | Internet | Commande |
 |---|---|---|---|
-| **Préchargement** | J-7 à J-1 | oui | `./preload.sh --core` |
+| **Préchargement** | J-7 à J-1 | oui | poste étudiant : `./preload.sh --equipe <N>` ; formateur : `./preload.sh --core` |
 | **Atelier** | J0 | **non** | `./bin/farci up <brique>`, `./bin/farci status`, … |
 
 Ce qui est téléchargé pendant la phase 1 est **figé** : ni le jour J, ni le mois
 suivant. Les empreintes SHA256 sont conservées pour le prouver.
+
+### Un poste étudiant : sa brique, selon sa machine
+
+`./preload.sh --equipe <N>` (ou `FARCI_EQUIPE` dans `config/workshop.env`)
+ne télécharge que la brique de l'équipe, et seulement ce que la machine
+pourra servir le jour J (`scripts/lib/machine.sh`). **Grosse configuration** :
+GPU NVIDIA, ou au moins 32 Go de RAM (`FARCI_GROSSE_RAM_GO`) ; `FARCI_MACHINE`
+force le profil.
+
+| Équipe | Grosse configuration | Configuration légère |
+|---|---|---|
+| 0 GitOps | Gitea, runner, PostgreSQL, Redis | idem |
+| 1 Réseau | Caddy, python, Uptime Kuma | idem |
+| 2 Inférence | **Ollama + Ornith-1.5-9B** (+ 2B de secours) | **llama.cpp** (compilé ici) **+ Qwen3.5-2B** |
+| 3 Passerelle | LiteLLM, Bifrost | idem |
+| 4 Documents | Docling, EDS-NLP (compilé ici) | idem |
+| 5 Observabilité | Phoenix, Langfuse | Phoenix |
+| 6 Évaluation | MLflow | idem |
+| 7 Applications | Open WebUI | idem |
+| 8 Arcane | python | idem |
+
+Toujours : les wheels Python et le manifeste. Vérification :
+`./verify-airgap.sh --equipe <N>`. Deux stacks au plus par brique : oMLX et
+Qwen3.8-27B sont hors atelier (`--only models_qwen38` reste possible),
+Flowise est une démonstration du formateur (`--all`).
 
 ---
 
@@ -108,13 +133,13 @@ Request, et de `verify-airgap.sh` avant la coupure.
 
 | Piège | Pourquoi c'est arrivé | Parade appliquée |
 |---|---|---|
-| L'image llama.cpp officielle n'a pas de tag semver | les images sont publiées par numéro de build ; certains builds n'ont jamais eu d'image | le dépôt **compile** l'image en multi-architecture pendant le préchargement, depuis les sources vérifiées |
-| L'image llama.cpp officielle n'existe pas en `linux/arm64` | la documentation le mentionne, l'image n'existe pas | idem : notre image est construite pour `linux/amd64` **et** `linux/arm64` |
+| L'image llama.cpp officielle n'a pas de tag semver | les images sont publiées par numéro de build ; certains builds n'ont jamais eu d'image | le dépôt **compile** l'image pendant le préchargement, pour la machine qui la servira |
+| L'image llama.cpp officielle n'existe pas en `linux/arm64` | la documentation le mentionne, l'image n'existe pas | idem : l'image est compilée sur la machine elle-même (amd64 ou arm64) |
 | EDS-NLP n'a pas de paquet précompilé pour ARM (Pi, Mac Apple Silicon) | `pip install edsnlp` compile, il faut un compilateur | l'image `farci/eds-nlp` est construite au préchargement, avec le compilateur seulement si nécessaire ; celle du Pi sert aux Mac |
 | `make` absent sur certains postes | la machine de référence est minimale | la `Makefile` ne fait qu'appeler `bin/farci` ; les deux marchent |
 | `jq` absent | idem | les tests utilisent un parseur JSON maison sur la stdlib Python |
 | Un modèle « léger » demande 8 Go de RAM | le cahier des charges visait 1–4 Go, indisponibles dans les familles retenues | un modèle de 2 Go est prévu pour la CI et le développement, **exclu du score** |
-| `preload.sh --all` dépasse l'espace disque | ~57 Go | `--core` par défaut, et l'espace disponible est vérifié par `./bin/farci doctor` |
+| `preload.sh --core` télécharge trop pour un poste étudiant | ~26 Go, dont des stacks que le poste ne pourra pas servir | par défaut, `./preload.sh` ne prend que la brique de l'équipe du poste, selon la machine (voir ci-dessous) ; deux stacks au plus par brique |
 | Deux images figées n'existaient pas (`ds4sd/docling-serve:0.5.1`, `mlflow/mlflow:3.16.1`) | noms recopiés sans vérification dans le registre | images corrigées (`docling-serve-cpu`, `ghcr.io/mlflow/mlflow`), tags vérifiés dans les registres le 2026-10-23 |
 
 ---

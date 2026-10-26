@@ -40,12 +40,12 @@ TUTORIAL) sont proposées.
 |---|---|
 | GitOps | Gitea |
 | Réseau | Caddy |
-| Inférence | Ollama → llama.cpp → oMLX (Mac) |
+| Inférence | Ollama (GPU ou 32 Go) → llama.cpp (tout poste) |
 | Gateway | LiteLLM → Bifrost |
 | Documents | Docling (+ pseudonymisation) |
 | Observabilité | Phoenix → Langfuse |
 | Évaluation | MLflow |
-| Applications | Python → Open WebUI → Flowise |
+| Applications | Python → Open WebUI |
 | Agents Arcane | Arcane |
 | Chaos (étape 3) | Chaos |
 
@@ -67,7 +67,7 @@ Role(
     options=[
         Option("ollama", "Ollama", min_ram_gb=8),
         Option("llamacpp", "llama.cpp", min_ram_gb=4),
-        Option("omlx", "oMLX", requires_mac=True, min_ram_gb=16),
+        Option("llamacpp", "llama.cpp", min_ram_gb=4),
         Option("vllm", "vLLM", requires_gpu=True, min_vram_gb=8),  # ← nouvelle option
     ],
     ...

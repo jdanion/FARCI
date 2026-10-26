@@ -6,8 +6,11 @@
 # workshop fonctionne SANS accès Internet.
 #
 # Usage :
-#   ./preload.sh --all              tout télécharger (~57 Go)
-#   ./preload.sh --core             strict nécessaire (~26 Go)
+#   ./preload.sh                    CE poste : la brique de son équipe, selon
+#                                   la machine (défaut, voir --poste)
+#   ./preload.sh --equipe 2         idem, en précisant l'équipe
+#   ./preload.sh --all              tout télécharger, poste formateur (~40 Go)
+#   ./preload.sh --core             toutes les briques cœur (~26 Go)
 #   ./preload.sh --models-ci        modèle CI uniquement (1.2 Go)
 #   ./preload.sh --reference        pile de référence, À LANCER SUR LE PI (arm64)
 #   ./preload.sh --pi               idem (profil « pi » : un seul modèle, Qwen3.5-2B Q4)
@@ -30,6 +33,8 @@ source "$FARCI_ROOT/scripts/lib/common.sh"
 source "$FARCI_ROOT/scripts/dev-env.sh"
 # shellcheck source=scripts/preload_lib.sh
 source "$FARCI_ROOT/scripts/preload_lib.sh"
+# shellcheck source=scripts/lib/machine.sh
+source "$FARCI_ROOT/scripts/lib/machine.sh"
 
 farci_load_env
 farci_load_versions
@@ -39,7 +44,8 @@ source "$FARCI_ROOT/scripts/lib/images.sh"
 # --------------------------------------------------------------------------
 # Options
 # --------------------------------------------------------------------------
-PRELOAD_MODE="core"
+PRELOAD_MODE="poste"
+PRELOAD_EQUIPE="${FARCI_EQUIPE:-}"
 PRELOAD_ONLY=""
 PRELOAD_DRY_RUN=0
 PRELOAD_SKIP_EXISTING=0
@@ -51,8 +57,14 @@ usage() {
 Usage : ./preload.sh [OPTIONS]
 
 Options :
-  --all               Tout télécharger (~57 Go)
-  --core              Strict nécessaire pour make health (~26 Go) [défaut]
+  --poste             [défaut] Ce poste : la brique de son équipe, seulement ce
+                      que la machine pourra servir (Ollama + modèle 9B et
+                      Langfuse : GPU NVIDIA ou 32 Go de RAM ; sinon llama.cpp
+                      + modèle 2B, Phoenix seul). Équipe : --equipe ou
+                      FARCI_EQUIPE (config/workshop.env)
+  --equipe <0-8>      L'équipe de ce poste (implique --poste)
+  --all               Tout télécharger, poste formateur (~40 Go)
+  --core              Toutes les briques cœur (~26 Go)
   --models-ci         Modèle CI uniquement (Qwen3.5-2B, ~1.2 Go)
   --reference         Pile de référence (reference/) : à lancer SUR la machine
                       de référence (Pi 5, arm64), car une image se télécharge
@@ -68,6 +80,7 @@ Options :
   -h, --help          Afficher cette aide
 
 Exemples :
+  ./preload.sh --equipe 2 --dry-run
   ./preload.sh --dry-run --core
   ./preload.sh --only models_ci
   ./preload.sh --all --parallel 4
@@ -84,6 +97,8 @@ list_groups() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      --poste)     PRELOAD_MODE="poste" ;;
+      --equipe)    PRELOAD_MODE="poste"; PRELOAD_EQUIPE="${2:?--equipe requiert un numéro (0 à 8)}"; shift ;;
       --all)       PRELOAD_MODE="all" ;;
       --core)      PRELOAD_MODE="core" ;;
       --models-ci) PRELOAD_MODE="models-ci" ;;
@@ -106,6 +121,16 @@ parse_args() {
 # --------------------------------------------------------------------------
 select_groups() {
   case "$PRELOAD_MODE" in
+    poste)
+      PRELOAD_PROFIL="$(farci_machine)"
+      local -a team_groups=()
+      if [[ -n "$PRELOAD_EQUIPE" ]]; then
+        mapfile -t team_groups < <(poste_groups "$PRELOAD_EQUIPE" "$PRELOAD_PROFIL") \
+          || { err "équipe inconnue : $PRELOAD_EQUIPE (0 à 8)"; exit 64; }
+        (( ${#team_groups[@]} )) || { err "équipe inconnue : $PRELOAD_EQUIPE (0 à 8)"; exit 64; }
+      fi
+      SELECTED_GROUPS=("${team_groups[@]}" "wheels" "manifest")
+      ;;
     all)
       SELECTED_GROUPS=("${PRELOAD_GROUPS[@]}")
       ;;
@@ -138,6 +163,18 @@ main() {
 
   section "FARCI — préchargement air-gap"
   printf 'Mode : %s\n' "$PRELOAD_MODE"
+  if [[ "$PRELOAD_MODE" == "poste" && -z "$PRELOAD_ONLY" ]]; then
+    printf 'Machine : %s — %s\n' "$( [[ "$PRELOAD_PROFIL" == grosse ]] && echo "grosse configuration" || echo "configuration légère")" \
+      "$(farci_machine_why)"
+    if [[ -z "$PRELOAD_EQUIPE" ]]; then
+      warn "équipe inconnue : seules les dépendances Python seront téléchargées"
+      printf '  → ./preload.sh --equipe <0-8>   (ou FARCI_EQUIPE dans config/workshop.env)\n'
+    elif [[ "$PRELOAD_EQUIPE" == 2 && "$PRELOAD_PROFIL" != grosse ]]; then
+      info "Ollama + modèle 9B réservés aux grosses configurations : llama.cpp + modèle 2B ici"
+    elif [[ "$PRELOAD_EQUIPE" == 5 && "$PRELOAD_PROFIL" != grosse ]]; then
+      info "Langfuse réservé aux grosses configurations : Phoenix seul ici"
+    fi
+  fi
   printf 'Groupes : %s\n' "${SELECTED_GROUPS[*]}"
   [[ "$PRELOAD_DRY_RUN" == "1" ]] && printf '%s[DRY-RUN]%s Aucun fichier ne sera téléchargé.\n' "$C_YELLOW" "$C_RESET"
   printf 'Data dir : %s\n' "$FARCI_DATA_DIR"

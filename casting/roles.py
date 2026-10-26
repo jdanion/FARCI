@@ -9,6 +9,10 @@ Chaque rôle a :
 - une liste d'options (la première = choix n°1, indispensable)
 - des exigences matérielles (RAM, GPU, Mac, etc.)
 - un nombre d'étudiants requis
+
+Deux options au plus par brique : chacune se télécharge et se prépare hors
+ligne, au-delà la préparation déborde (./preload.sh ne prend que celles que
+le poste peut servir).
 """
 
 from __future__ import annotations
@@ -16,14 +20,19 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
+# Seuil d'une « grosse configuration » sans GPU (même valeur que
+# FARCI_GROSSE_RAM_GO, scripts/lib/machine.sh).
+GROSSE_RAM_GO = 32
+
 
 @dataclass
 class Option:
-    """Une option pour un rôle (ex: Ollama, llama.cpp, oMLX)."""
+    """Une option pour un rôle (ex: Ollama, llama.cpp)."""
     name: str
     label: str
     requires_mac: bool = False
     requires_gpu: bool = False
+    grosse_config: bool = False  # GPU, ou au moins GROSSE_RAM_GO de RAM
     min_ram_gb: int = 0
     min_vram_gb: int = 0
     description: str = ""
@@ -82,9 +91,9 @@ ROLES: list[Role] = [
         name="inference",
         label="Inférence",
         options=[
-            Option("ollama", "Ollama", min_ram_gb=8, description="Runtime principal"),
-            Option("llamacpp", "llama.cpp", min_ram_gb=4, description="Runtime alternatif"),
-            Option("omlx", "oMLX", requires_mac=True, min_ram_gb=16, description="Mac uniquement"),
+            Option("ollama", "Ollama", grosse_config=True, min_ram_gb=8,
+                   description="Modèle 9B : GPU ou 32 Go de RAM"),
+            Option("llamacpp", "llama.cpp", min_ram_gb=4, description="Modèle 2B, tout poste"),
         ],
         min_students=2,
         max_students=4,
@@ -153,7 +162,6 @@ ROLES: list[Role] = [
         options=[
             Option("python", "Python", min_ram_gb=2, description="Parcours A"),
             Option("open-webui", "Open WebUI", min_ram_gb=4, description="Parcours B"),
-            Option("flowise", "Flowise", min_ram_gb=4, description="Parcours C"),
         ],
         min_students=2,
         max_students=4,

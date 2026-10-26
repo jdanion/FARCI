@@ -125,6 +125,19 @@ class VueEtPersistance(unittest.TestCase):
         self.assertEqual(again.scores(), board.scores())
         self.assertEqual(again.debut, 0)
 
+    def test_ligne_une_parmi_verte_avec_une_seule_stack(self):
+        board = tableau.Scoreboard(now=0)
+        services = SERVICES + [{"id": "inference-llamacpp", "team": "2", "tier": "core", "ip_var": "INFERENCE_B_IP"}]
+        rows = [{"label": "Inference", "tier": "core", "une_parmi": True,
+                 "check": ["inference-ollama", "inference-llamacpp"]}]
+        r = room({"inference-ollama": "reference", "inference-llamacpp": "equipe"})
+        ligne = board.view(r, services, rows, {"INFERENCE_B_IP": "198.51.100.21"}, now=60)["lignes"][0]
+        self.assertEqual(ligne["etat"], "equipe")
+        self.assertEqual(ligne["ip"], "198.51.100.21")   # l'adresse de la stack livrée
+        self.assertEqual(len(ligne["services"]), 2)       # les deux restent cliquables
+        sans = dict(rows[0], une_parmi=False)
+        self.assertEqual(board.view(r, services, [sans], {}, now=60)["lignes"][0]["etat"], "reference")
+
     def test_etats_de_ligne(self):
         self.assertEqual(tableau.row_state([{"served_by": "equipe"}, {"served_by": "reference"}]), "reference")
         self.assertEqual(tableau.row_state([{"served_by": None, "team": "down", "reference": "down"}]), "panne")

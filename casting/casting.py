@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from roles import ROLES, Role, Option, get_critical_roles, get_optional_roles
+from roles import GROSSE_RAM_GO, ROLES, Role, Option, get_critical_roles, get_optional_roles
 
 
 @dataclass
@@ -39,9 +39,16 @@ class Student:
             return False
         if option.requires_gpu and not self.has_gpu:
             return False
+        if option.grosse_config and not self.grosse_config:
+            return False
         if option.min_vram_gb > 0 and self.vram_gb < option.min_vram_gb:
             return False
         return True
+
+    @property
+    def grosse_config(self) -> bool:
+        """GPU, ou assez de RAM pour le modèle 9B sur CPU."""
+        return self.has_gpu or self.ram_gb >= GROSSE_RAM_GO
 
     @property
     def power_score(self) -> int:
@@ -50,7 +57,7 @@ class Student:
         if self.has_gpu:
             score += self.vram_gb * 2
         if self.has_mac:
-            score += 4  # Bonus Mac (oMLX possible)
+            score += 4  # Bonus Mac (mémoire unifiée)
         return score
 
 
@@ -145,8 +152,9 @@ def cast_teams(
     result = CastingResult()
     assigned_students: set[str] = set()
 
-    # 1. Assigner les rôles critiques (choix n°1)
-    for role in get_critical_roles():
+    # 1. Assigner les rôles critiques (choix n°1) ; d'abord ceux qui exigent
+    # une grosse configuration, pour ne pas la dépenser sur une brique légère.
+    for role in sorted(get_critical_roles(), key=lambda r: not r.primary_option.grosse_config):
         # Trouver les étudiants qui peuvent exécuter l'option principale
         eligible = [
             s for s in sorted_students

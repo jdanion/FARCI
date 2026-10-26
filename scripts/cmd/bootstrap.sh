@@ -137,8 +137,12 @@ Il n'est JAMAIS versionné : un modèle pèse 6 à 18 Go.
 
 Une seule fois, avec Internet, AVANT le workshop :
 
-    ./preload.sh --core
-    ./verify-airgap.sh
+    ./preload.sh --equipe <N>      poste étudiant : la brique de SON équipe,
+                                   selon la machine (ou FARCI_EQUIPE dans
+                                   config/workshop.env)
+    ./verify-airgap.sh --equipe <N>
+
+Poste du formateur : ./preload.sh --core (toutes les briques cœur, ~26 Go).
 
 Le jour J, rien ne doit être téléchargé. Si quelque chose tente de sortir sur
 Internet, c'est un défaut : `./verify-airgap.sh` le signale.
@@ -235,7 +239,7 @@ cat <<'NEXT'
   Prochaines étapes selon votre rôle :
 
     lire sa fiche d'équipe   ./bin/farci read <équipe>
-    préparation air-gap     ./preload.sh --core
+    préparation air-gap     ./preload.sh --equipe <équipe>   (formateur : --core)
     développement           ./bin/farci doctor
     suivre la construction  ./bin/farci status --watch
 

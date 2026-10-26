@@ -44,7 +44,7 @@ l'atelier.
 |---|---|---|
 | **LLM** (grand modèle de langage) | un **collaborateur junior** très instruit | un composant **probabiliste** : il écrit des phrases plausibles, il ne consulte pas une base de connaissances. Il peut donc se tromper avec beaucoup d'aplomb. |
 | **Modèle** (les poids) | l'**ensemble des connaissances** accumulées | un fichier de chiffres. Rien ne s'exécute tout seul. |
-| **Runtime d'inférence** (Ollama, llama.cpp, oMLX) | le **laboratoire** qui utilise ces connaissances | le logiciel qui charge le modèle et répond à des requêtes. **Le même modèle peut tourner dans deux runtimes différents, avec des performances différentes.** |
+| **Runtime d'inférence** (Ollama, llama.cpp) | le **laboratoire** qui utilise ces connaissances | le logiciel qui charge le modèle et répond à des requêtes. **Le même modèle peut tourner dans deux runtimes différents, avec des performances différentes.** |
 | **Passerelle LLM** (gateway : LiteLLM, Bifrost) | le **standard téléphonique** de l'hôpital | un point d'entrée unique qui sait : distribuer les appels, réessayer, changer de serveur en cas de panne, mesurer le débit, et donner des clés aux différents services. |
 | **Reverse proxy** (Caddy) | l'**accueil** de l'hôpital | une adresse unique et stable. Les patients ne connaissent pas les numéros de service. |
 | **Application** | le **protocole de soins** | la logique métier : ce qu'on fait du résultat. Elle ne doit connaître **ni** le modèle, **ni** le runtime. |
@@ -110,9 +110,8 @@ derrière la même passerelle :
 
 | Rôle | Modèle | Taille (Q4) | Licence | Où il tourne |
 |---|---|---|---|---|
-| Principal, commun à tous | **Ornith-1.5-9B** | ~5,9 Go | MIT | Ollama **et** llama.cpp **et** oMLX |
-| Gros poste / Mac ≥ 32 Go | **Qwen3.8-27B** | ~16,5 Go | Apache-2.0 | Ollama, llama.cpp, MLX |
-| Secours, développement et CI | Qwen3.5-2B | ~1,2 Go | Apache-2.0 | idem |
+| Principal, grosse configuration (GPU ou 32 Go) | **Ornith-1.5-9B** | ~5,9 Go | MIT | Ollama |
+| Postes légers, secours, développement et CI | Qwen3.5-2B | ~1,2 Go | Apache-2.0 | llama.cpp (et Ollama) |
 
 L'application ne voit que le nom logique `med-extraction`. Changer de modèle ne
 demande **aucune** modification du code métier : c'est l'objet même de l'atelier.

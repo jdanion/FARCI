@@ -77,7 +77,7 @@ def render(room: dict, show_all: bool) -> str:
                            time.strftime("%H:%M")), f"╠{bar}╣"]
     bonus_up, bonus_total, bonus_names = 0, 0, []
     for row in services.registry().get("status_rows", []):
-        states = [by_id[sid] for sid in row.get("check", []) if sid in by_id]
+        states = services.row_members(row, [by_id[sid] for sid in row.get("check", []) if sid in by_id])
         value, colour = row_value(states)
         if row.get("tier") == "bonus" and not show_all:
             bonus_total += 1

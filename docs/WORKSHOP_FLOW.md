@@ -55,7 +55,7 @@ arrêt ne doit pas arrêter l'extraction (scénario 07).
 | Équipe | Dossier | Cœur (étape 1) | Bonus ou démo du formateur |
 |---|---|---|---|
 | 1 | `01-network-dashboard/` | Caddy + health-aggregator | Uptime Kuma |
-| 2 | `02-inference/` | Ollama | llama.cpp (même fichier de poids), oMLX |
+| 2 | `02-inference/` | Ollama + 9B (GPU ou 32 Go) **ou** llama.cpp + 2B (tout poste) | — |
 | 3 | `03-llm-gateway/` | LiteLLM | clés et quotas, Bifrost |
 | 4 | `04-clinical-documents/` | Docling + pseudonymisation + EDS-NLP (hors READY) | PDF convertis par Docling |
 | 5 | `05-observability/` | Phoenix | Langfuse, collecteur OTel |

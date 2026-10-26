@@ -1,6 +1,7 @@
 # FARCI — llama.cpp server (construit localement, phase 1)
 #
-# Image multi-architecture (amd64 + arm64) compilée depuis les sources.
+# Compilée depuis les sources pour la machine qui la construit
+# (./preload.sh : groupe build_llamacpp).
 # Aucune dépendance GHCR : air-gap parfait.
 
 FROM --platform=$BUILDPLATFORM gcc:13 AS builder

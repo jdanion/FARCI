@@ -14,9 +14,12 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 - [ ] Cloner le dépôt sur une machine x86 pour préparer les postes étudiants
 - [ ] Vérifier Docker et Python : `./bin/farci doctor`
 - [ ] Les versions sont figées dans `versions.env` (tags vérifiés dans les registres)
-- [ ] `./preload.sh --core` (compter **une bonne demi-journée** selon le débit) :
-      images sauvegardées en `.tar`, modèle principal **et** modèle de secours 2B
-- [ ] `./preload.sh --only models_qwen38` si des postes le justifient
+- [ ] Poste du formateur : `./preload.sh --core` (compter **une bonne demi-journée**
+      selon le débit) : images sauvegardées en `.tar`, modèle principal **et** modèle 2B
+- [ ] Postes étudiants : `./preload.sh --equipe <N>` sur chaque poste (ou
+      `FARCI_EQUIPE` dans `config/workshop.env`) : seulement la brique de l'équipe,
+      selon la machine — Ollama + 9B et Langfuse sur les grosses configurations
+      (GPU NVIDIA ou 32 Go), llama.cpp + 2B et Phoenix seul ailleurs
 - [ ] `scripts/lock-requirements.sh` pour verrouiller et télécharger les wheels
 - [ ] Vérifier les empreintes : `./bin/farci verify-manifest`
 - [ ] `./bin/farci verify-airgap`
@@ -113,8 +116,8 @@ briques encore `🛟` y restent : la suite ne dépend pas d'elles.
 | 5 Observabilité | ligne Observability | `./bin/farci up 05-observability/phoenix` |
 | 7 Applications | ligne Open WebUI | `./bin/farci up 07-applications/open-webui` |
 
-Les briques bonus (GitOps, MLflow, Langfuse, Bifrost, Uptime Kuma, Flowise,
-oMLX, agents Arcane) n'entrent **jamais** dans `CLINICAL PIPELINE READY` : elles
+Les briques bonus (GitOps, MLflow, Langfuse, Bifrost, Uptime Kuma, agents
+Arcane) n'entrent **jamais** dans `CLINICAL PIPELINE READY` : elles
 apparaissent sur la ligne « Bonus » du tableau (`./bin/farci status --all` pour
 le détail).
 

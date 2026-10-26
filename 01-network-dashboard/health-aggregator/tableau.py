@@ -44,8 +44,9 @@ FICHES = {
         "demo": {"methode": "GET", "chemin": "/status", "resume": "status"},
     },
     "Inference": {
-        "role": "Le runtime fait tourner le modèle de langage (Ollama, llama.cpp) et le sert sous un nom "
-                "logique, med-extraction, avec l'API OpenAI.",
+        "role": "Le runtime fait tourner le modèle de langage et le sert sous un nom logique, "
+                "med-extraction, avec l'API OpenAI. Deux stacks : Ollama et le modèle 9B (GPU ou 32 Go "
+                "de RAM), ou llama.cpp et le modèle 2B (tout poste).",
         "analogie": "Le modèle est le livre, le runtime est la personne qui le lit à voix haute.",
         "contrat": "API OpenAI : /v1/models, /v1/chat/completions  (accueil : /runtime/v1)",
         "demo": {"methode": "GET", "chemin": "/runtime/v1/models"},
@@ -87,9 +88,6 @@ FICHES = {
     },
     "GitOps": {"role": "La forge (Gitea) : chaque changement passe par une demande relue et vérifiée.",
                "analogie": "Le dossier de procédures : ce qui est écrit et relu est appliqué."},
-    "Inference Secondary": {"role": "llama.cpp, un second runtime sur le même fichier de poids.",
-                            "analogie": "Un second lecteur pour le même livre."},
-    "Inference Mac": {"role": "oMLX, le runtime des Mac Apple Silicon.", "analogie": "Un lecteur spécialisé."},
     "Bifrost": {"role": "Une seconde passerelle : le client ne change pas d'adresse si la première tombe.",
                 "analogie": "Un second standard téléphonique."},
     "Langfuse": {"role": "Un second backend de traces, sur le même flux OpenTelemetry.",
@@ -98,8 +96,6 @@ FICHES = {
                "analogie": "Le cahier de laboratoire."},
     "Uptime Kuma": {"role": "Sonde chaque service et garde l'historique de disponibilité.",
                     "analogie": "La surveillance continue au scope."},
-    "Flowise": {"role": "Construire une chaîne d'extraction à la souris, sans code.",
-                "analogie": "Le protocole dessiné plutôt qu'écrit."},
 }
 
 # La page utile de chaque service, ouverte depuis la fiche (sur sa machine).
@@ -126,6 +122,15 @@ def phase_at(minutes: float) -> dict:
     index = PHASES.index(current)
     end = PHASES[index + 1][0] if index + 1 < len(PHASES) else DURATION_MIN
     return {"nom": current[1], "debut_min": current[0], "fin_min": end}
+
+
+def row_members(row: dict, members: list[dict]) -> list[dict]:
+    """Ligne `une_parmi` : la meilleure de ses briques (équipe, puis
+    référence) fait la couleur. Même règle que scripts/services.py."""
+    if row.get("une_parmi") and members:
+        rank = {"equipe": 0, "reference": 1}
+        return [min(members, key=lambda s: rank.get(s.get("served_by") or "", 2))]
+    return members
 
 
 def row_state(states: list[dict]) -> str:
@@ -271,10 +276,11 @@ class Scoreboard:
         lignes = []
         for row in rows:
             members = [states[sid] for sid in row.get("check", []) if sid in states]
-            first = by_id.get(row.get("check", [""])[0], {})
+            effectifs = row_members(row, members)
+            first = by_id.get(effectifs[0]["id"] if effectifs else row.get("check", [""])[0], {})
             team = str(first.get("team", ""))
             ip = env.get(str(first.get("ip_var", "")), "")
-            lignes.append({"label": row["label"], "tier": row.get("tier", "core"), "etat": row_state(members),
+            lignes.append({"label": row["label"], "tier": row.get("tier", "core"), "etat": row_state(effectifs),
                            "equipe": team, "nom_equipe": TEAMS.get(team, ""), "ip": ip,
                            "fiche": FICHES.get(row["label"], {}),
                            "services": [self._service_links(by_id.get(m["id"], {}), m, env) for m in members]})

@@ -54,4 +54,3 @@ Levez la main. La salle ne vous attend pas : le runtime de la référence
 
 - llama.cpp sur le **même** fichier GGUF : `./bin/farci up 02-inference/llamacpp`.
 - Mesurer : `02-inference/bench/bench.sh` (même modèle, runtime différent).
-- Mac Apple Silicon : oMLX, `02-inference/omlx/README.md`.

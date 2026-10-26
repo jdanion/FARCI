@@ -6,6 +6,26 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Deux stacks par brique, préchargement adapté au poste
+
+- `./preload.sh` (sans option) précharge **ce poste** : la brique de son équipe
+  (`--equipe N` ou `FARCI_EQUIPE`), seulement ce que la machine pourra servir.
+  Grosse configuration (GPU NVIDIA ou 32 Go de RAM, `scripts/lib/machine.sh`) :
+  Ollama + Ornith-1.5-9B, Langfuse ; sinon llama.cpp + Qwen3.5-2B, Phoenix seul.
+  `--core` et `--all` restent pour le poste du formateur ; `bootstrap` ne
+  conseille plus `--core` aux étudiants. `verify-airgap.sh --equipe N` vérifie
+  le poste.
+- Deux options au plus par brique : oMLX et Qwen3.8-27B sont hors atelier
+  (plus au casting, ni au préchargement, ni au tableau) ; Flowise devient une
+  démonstration du formateur (`--all`). Les alias de la passerelle ne changent pas.
+- Casting : Ollama exige une grosse configuration ; les rôles qui en ont besoin
+  sont servis en premier.
+- Tableau : la ligne Inference est verte avec Ollama **ou** llama.cpp
+  (`une_parmi`) ; llama.cpp devient une brique cœur.
+- llama.cpp est compilé pour la machine qui le servira (plus de build
+  multi-architecture qui échouait sans `containerd`) ; le groupe Langfuse
+  précharge aussi PostgreSQL.
+
 ### Rejoindre la salle sans rien (étudiant sans `git clone`)
 
 - `./bin/farci partage maj` : le Pi publie le dépôt (`git clone

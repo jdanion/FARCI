@@ -12,7 +12,7 @@ l'affiche.
 | Quand | Quoi | Fait |
 |---|---|---|
 | J-7 | Pi préparé (Internet) : `./preload.sh --reference`, `./bin/farci bootstrap`, point d'accès `farci-ap` | ☐ |
-| J-7 | postes étudiants : clé USB `offline/` prête (`./preload.sh --core`) | ☐ |
+| J-7 | postes étudiants : `./preload.sh --equipe <N>` sur chaque poste (sa brique, selon la machine) ; clé USB `offline/` du formateur (`--core`) en secours | ☐ |
 | J-1 | `./bin/farci forge-sync bundle farci.bundle` (si la forge Gitea est jouée) → clé USB | ☐ |
 | J-1 | **sur le Pi** : `./bin/farci rehearse` → **PASS** (moins de 15 min) | ☐ |
 | J-1 | **sur un portable** branché au Wi-Fi du Pi : `./bin/farci rehearse` → **PASS** | ☐ |

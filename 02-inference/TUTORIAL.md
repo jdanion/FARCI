@@ -8,7 +8,7 @@ Faire tourner le modèle et l'exposer derrière le contrat d'inférence
 - **Objectif minimal** : Ollama sert le modèle, la ligne `Inference Primary`
   passe au vert.
 - **Bonus** : llama.cpp sert **le même fichier de poids** (ligne
-  `Inference Secondary`), benchmark comparé ; oMLX sur un Mac.
+  `Inference Secondary`), benchmark comparé ; selon le poste.
 
 ## Ce que votre service apporte
 
@@ -39,7 +39,6 @@ ce service :
 |---|---|---|
 | Ollama (primaire) | `INFERENCE_A_IP` | `INFERENCE_A_PORT` |
 | llama.cpp (secondaire, bonus) | `INFERENCE_B_IP` | `INFERENCE_B_PORT` |
-| oMLX (Mac, bonus) | `INFERENCE_C_IP` | `INFERENCE_C_PORT` |
 
 `./bin/farci doctor` affiche l'IP de votre machine ; le formateur la déclare
 sur le Pi (`./bin/farci room set 2 <ip>`). Tous les runtimes servent le
@@ -49,9 +48,11 @@ rejoué de la référence répond à votre place.
 
 ## Installation
 
+- Deux stacks, selon le poste (`./preload.sh --equipe 2` choisit seul) :
+  **grosse configuration** (GPU NVIDIA ou 32 Go de RAM) → Ollama + Ornith-1.5-9B ;
+  **sinon** → llama.cpp (compilé pour la machine) + Qwen3.5-2B. Les deux servent
+  `med-extraction` : la ligne Inference du tableau passe au vert avec l'une ou l'autre.
 - Poids dans `$FARCI_DATA_DIR/offline/models/` : `./bin/farci verify-models`.
-  Machine de moins de 16 Go de RAM : le modèle de secours Qwen3.5-2B suffit
-  (`./preload.sh --models-ci` avant l'atelier).
 - Images préchargées : `./bin/farci verify-images`.
 
 ## Configuration
@@ -74,8 +75,6 @@ Bonus :
 ./bin/farci up 02-inference/llamacpp
 ```
 
-oMLX (Mac uniquement) : suivre `02-inference/omlx/README.md`
-(`02-inference/omlx/install-mlx.sh`).
 
 ## Test local
 

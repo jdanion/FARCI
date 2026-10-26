@@ -40,11 +40,10 @@ if [[ ! -d "$MODELS_DIR" ]]; then
   exit 1
 fi
 
-# Fichiers attendus (GGUF)
+# Fichiers attendus (GGUF) : le 9B (Ollama, grosse configuration) et le 2B
+# (llama.cpp, secours, CI). Le 27B est hors atelier.
 EXPECTED_GGUF=(
   "Ornith-1.5-9B-Q5_K_M.gguf"
-  "Ornith-1.5-9B-Q4_K_M.gguf"
-  "Qwen3.8-27B-Q4_K_M.gguf"
   "Qwen3.5-2B-Q4_K_M.gguf"
 )
 
