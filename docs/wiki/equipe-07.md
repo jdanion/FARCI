@@ -26,6 +26,18 @@ camarades qui n'ont pas de machine utilisable à l'étape 2.
    `./bin/farci extract --subset quick --limit 1 --run equipe-7` : comparez
    avec la réponse d'Open WebUI.
 
+## Votre branche
+
+Le projet, adapté à **votre** machine et à votre rôle — le parcours de l'étape 2 (`FARCI_TRACK` : `python` ou `webui`) :
+
+```bash
+git switch -c poste/equipe-7-<surnom>   # le surnom de la machine, pas le vôtre
+./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
+./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+```
+
+Le guide pas à pas : `docs/GIT.md`.
+
 ## La sonde : comment savoir que c'est fini
 
 ```bash

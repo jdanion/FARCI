@@ -27,6 +27,18 @@ de chaque patient.
 7. **Observer le redéploiement** — `webhook-handler.sh`, puis `gitops.sh`,
    apparaissent dans les journaux.
 
+## Votre branche
+
+Le projet, adapté à **votre** machine et à votre rôle — les agents de supervision tournent sur cette machine :
+
+```bash
+git switch -c poste/equipe-8-<surnom>   # le surnom de la machine, pas le vôtre
+./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
+./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+```
+
+Le guide pas à pas : `docs/GIT.md`.
+
 ## La sonde : comment savoir que c'est fini
 
 ```bash

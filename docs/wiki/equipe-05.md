@@ -27,6 +27,18 @@ s'est passé, on le lit.
 7. **Lire une trace** — dans Phoenix, ouvrez un span `chat.completion` :
    modèle, latence, nombre de tokens.
 
+## Votre branche
+
+Le projet, adapté à **votre** machine et à votre rôle — Phoenix seul, ou Phoenix et Langfuse si la machine est une grosse configuration :
+
+```bash
+git switch -c poste/equipe-5-<surnom>   # le surnom de la machine, pas le vôtre
+./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
+./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+```
+
+Le guide pas à pas : `docs/GIT.md`.
+
 ## La sonde : comment savoir que c'est fini
 
 ```bash

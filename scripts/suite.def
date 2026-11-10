@@ -18,11 +18,13 @@
 # --- atelier : premiers pas --------------------------------------------------
 help	ok	./bin/farci doctor	vérifier la machine (Docker, RAM, adresse de la salle)
 help	ok	./bin/farci read {equipe}	la fiche de votre équipe
+doctor	ok	./bin/farci poste	votre branche et la commande git suivante
 doctor	ok	./bin/farci bootstrap	préparer le poste (.env, .venv) — hors ligne
 doctor	ok	./bin/farci read {equipe}	la marche à suivre de votre équipe
 doctor	echec	./bin/farci doctor	relancer après avoir corrigé les lignes en rouge ci-dessus
 doctor	echec	./bin/farci read {equipe}	en attendant : lire la fiche de votre équipe
 bootstrap	ok	./preload.sh --equipe {equipe}	AVEC Internet, avant l'atelier : votre brique, selon la machine
+bootstrap	ok	./bin/farci poste	votre branche : la fiche de ce poste, à commiter
 bootstrap	ok	./bin/farci doctor	tout doit être vert, dont « accueil de la salle »
 bootstrap	ok	./bin/farci read {equipe}	la fiche de votre équipe
 bootstrap	ok	./preload.sh --pi	sur le Pi seulement (formateur : ./preload.sh --core)
@@ -69,7 +71,8 @@ partage maj	ok	./bin/farci core-up	si l'accueil ne sert pas encore /farci.git
 partage wheels	ok	./bin/farci partage	état de ce qui est publié
 partage wheels	echec	./bin/farci partage wheels	relancer avec Internet ; versions dans versions.env
 partage offline-x86	ok	./bin/farci partage	état de ce qui est publié
-partage	echec	./bin/farci partage --help	sous-commandes : maj, wheels, offline-x86
+partage publier	ok	./bin/farci partage	état de ce qui est publié
+partage	echec	./bin/farci partage --help	sous-commandes : maj, wheels, offline-x86, publier
 core-up	ok	./bin/farci dashboard-up	l'accueil et le tableau, avec les adresses utiles
 core-up	ok	./bin/farci health	attendu : « service rendu : READY »
 core-up	echec	./bin/farci logs reference	ce que disent les conteneurs
@@ -164,6 +167,11 @@ verify-models	ok	./bin/farci up 02-inference/llamacpp	ou 02-inference/ollama sur
 verify-models	echec	./preload.sh --equipe 2 --skip-existing	AVEC Internet : télécharger le modèle de votre machine
 verify-wheels	ok	./bin/farci bootstrap	installer .venv/ hors ligne
 verify-wheels	echec	./preload.sh --only wheels	AVEC Internet, sur CETTE machine
+poste	ok	./bin/farci docs git	le guide Git de l'atelier : cloner, brancher, commiter, pousser, Pull Request
+poste nouveau	ok	git add postes/	puis git commit : votre premier commit
+poste nouveau	ok	./bin/farci poste	où j'en suis, et la commande git suivante
+poste verifier	ok	./bin/farci poste	où j'en suis, et la commande git suivante
+poste	echec	./bin/farci docs git	le guide Git de l'atelier
 forge-sync	ok	./bin/farci forge-sync push	Gitea main ← GitHub main (avance rapide)
 forge-sync status	ok	./bin/farci forge-sync push	si Gitea est en retard
 forge-sync push	ok	00-gitops/runner/register-runner.sh	brancher la CI (une fois)
@@ -259,7 +267,7 @@ clean --yes	ok	./bin/farci status	rien d'important n'a été touché
 # --- scripts lancés directement ----------------------------------------------
 00-gitops/gitea/bootstrap.sh	ok	./bin/farci forge-sync push	main de GitHub → Gitea (from-bundle sans Internet)
 00-gitops/gitea/bootstrap.sh	ok	00-gitops/runner/register-runner.sh	brancher la CI
-00-gitops/runner/register-runner.sh	ok	00-gitops/post-provision.sh	protéger main (PR obligatoire)
+00-gitops/runner/register-runner.sh	ok	00-gitops/post-provision.sh	protéger main et seance (PR obligatoire)
 00-gitops/post-provision.sh	ok	./bin/farci room set gitea <votre IP>	au formateur, sur le Pi : la forge rejoint la salle
 00-gitops/post-provision.sh	ok	./bin/farci test	gitops doit être PASS
 02-inference/ollama/create-model.sh	ok	./bin/farci test	inference-contract doit être PASS

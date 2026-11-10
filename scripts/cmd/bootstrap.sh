@@ -197,6 +197,10 @@ REQ="$FARCI_ROOT/requirements.txt"
 [[ -r "$REQ" ]] || REQ="$FARCI_ROOT/requirements.in"
 WHEELS="$FARCI_ROOT/offline/wheels"
 PIP_SOURCE=(--find-links "$WHEELS")
+# Sans wheels locales ni Pi désigné : le serveur de fichiers (.env).
+if [[ -z "${FARCI_WHEELS_URL:-}" && -n "${FARCI_FICHIERS_URL:-}" ]]; then
+  FARCI_WHEELS_URL="${FARCI_FICHIERS_URL%/}/wheels/"
+fi
 if ! compgen -G "$WHEELS/*.whl" >/dev/null && [[ -n "${FARCI_WHEELS_URL:-}" ]]; then
   # Les wheels du Pi de la salle (./bin/farci partage wheels), en HTTP simple.
   WHEELS="$FARCI_WHEELS_URL"

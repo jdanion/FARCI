@@ -5,6 +5,16 @@
 # Une brique non intégrée n'existe pas pour le reste de l'atelier.
 # ---------------------------------------------------------------------------
 
+## Votre poste
+
+<!-- Pull Request d'une branche poste/equipe-N-surnom vers seance : c'est
+     souvent tout ce qu'il y a à remplir. Relue par une AUTRE équipe. -->
+
+- Branche : <!-- poste/equipe-2-atlas -->
+- Ce que la machine est : <!-- 16 Go, pas de GPU -->
+- Ce que j'ai adapté, et pourquoi : <!-- llama.cpp + modèle 2B : le 9B ne tient pas en mémoire -->
+- [ ] `./bin/farci poste verifier` est vert (ni secret, ni nom de personne)
+
 ## Quelle brique cette Pull Request apporte-t-elle ?
 
 <!-- Équipe 0 à 7, et la brique concernée. -->

@@ -5,6 +5,10 @@
 > Un atelier où l'on **construit** une plateforme d'IA pour la recherche
 > clinique, où l'on **s'en sert** pour extraire des variables d'un dossier
 > médical, puis où l'on **casse** la plateforme pour vérifier qu'elle résiste.
+>
+> Et l'on repart en sachant se servir de **git** : le projet se clone depuis
+> GitHub ou depuis la forge Gitea de la salle, et chaque étudiant y crée **sa
+> branche**, adaptée à sa machine et à son rôle (`docs/GIT.md`).
 
 ---
 
@@ -62,14 +66,36 @@ gouvernance des données et une évaluation.
 
 ---
 
+## Git : le fil de tout l'atelier
+
+| Lieu | Ce qu'on y trouve | Ce que vous y faites |
+|---|---|---|
+| **GitHub** — `github.com/jdanion/FARCI` | la source de vérité du projet, joignable depuis la faculté | cloner ; après l'atelier, forker pour continuer |
+| **Gitea** — la forge de la salle | la même chose, **hébergée sur place** : ce qu'on installe quand le code ne doit pas sortir des murs | cloner, pousser votre branche, ouvrir et relire des Pull Requests |
+| **Votre machine** | votre clone, sur votre branche `poste/equipe-<N>-<surnom>` | adapter le projet à votre matériel et à votre rôle, commiter |
+| **Le serveur de fichiers** — `FARCI_FICHIERS_URL` | modèles, images Docker, wheels : trop lourds pour Git | rien : `./preload.sh` télécharge pour vous |
+
+```bash
+git clone https://github.com/jdanion/FARCI farci    # ou l'adresse de la forge de la salle
+cd farci
+git switch -c poste/equipe-2-atlas                  # votre équipe, le surnom de la machine
+./bin/farci poste nouveau                           # la fiche de votre poste, à relire et à commiter
+./bin/farci poste                                   # ensuite : la commande git suivante, à chaque fois
+```
+
+Le guide complet, pour qui n'a jamais utilisé git : **`docs/GIT.md`**
+(`./bin/farci docs git`).
+
+---
+
 ## Démarrage rapide
 
 ### 1. Ce qu'il faut savoir avant de commencer
 
 | Question | Réponse |
 |---|---|
-| `git clone` suffit-il ? | **Non.** Les images Docker, les poids de modèles et les wheels Python sont volontairement **hors du dépôt** (un modèle pèse 6 à 18 Go). Il faut en plus le répertoire `FARCI_DATA_DIR` (clé USB ou disque du formateur). |
-| Faut-il Internet ? | **Non, pas pendant l'atelier.** Tout est préchargé avant. `verify-airgap.sh` le vérifie. |
+| `git clone` suffit-il ? | **Pour le code, oui.** Les images Docker, les poids de modèles et les wheels Python sont volontairement **hors du dépôt** (un modèle pèse 1 à 18 Go, et Git garde tout pour toujours) : `./preload.sh --equipe <N>` les télécharge depuis le serveur de fichiers. |
+| Faut-il Internet ? | **Pour le code et les fichiers, il aide** : GitHub et le serveur de fichiers sont joignables depuis la faculté. **Pour le traitement, jamais** : les modèles tournent dans la salle, aucun dossier ne sort (`docs/AIRGAP.md`). Sans Internet du tout, la forge Gitea et le Pi suffisent. |
 | Docker est-il nécessaire ? | **Oui**, c'est lui qui fait tourner les briques. |
 | `make` est-il nécessaire ? | **Non.** `make <cible>` et `./bin/farci <cible>` exécutent le même code. |
 
@@ -134,6 +160,7 @@ demande **aucune** modification du code métier : c'est l'objet même de l'ateli
 | Chemin | Contenu |
 |---|---|
 | `00-gitops/` … `08-arcane-agents/` | une équipe par dossier, avec son `TUTORIAL.md` (`./bin/farci read <équipe>`) |
+| `postes/` | une **fiche par machine** de la salle, apportée par la branche de chaque étudiant |
 | `config/services.yaml` | **source de vérité** : quels services existent, où, comment les sonder |
 | `config/network.env.example` | les adresses IP, seul endroit où elles apparaissent |
 | `versions.env` | toutes les versions figées, jamais `latest` |
@@ -166,10 +193,10 @@ demande **aucune** modification du code métier : c'est l'objet même de l'ateli
 | Vous êtes… | Lisez |
 |---|---|
 | formateur | `docs/INSTRUCTOR_GUIDE.md`, et la feuille de séance `docs/PILOTAGE.md` |
-| étudiant débutant | sa fiche : `docs/wiki/equipe-XX.md` |
+| étudiant débutant | sa fiche : `docs/wiki/equipe-XX.md`, et `docs/GIT.md` pour git |
 | responsable d'une équipe | `./bin/farci read <équipe>` |
 | curieux de l'architecture | `docs/ARCHITECTURE.md` |
 | intéressé par les contrats | `docs/CONTRACTS.md` |
-| inquiet du fonctionnement hors ligne | `docs/AIRGAP.md` |
+| soucieux de ce qui passe par Internet | `docs/AIRGAP.md` |
 
 Contribuer : `CONTRIBUTING.md`.

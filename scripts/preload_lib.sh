@@ -121,20 +121,43 @@ preload_download() {
   ok "téléchargé : $dest"
 }
 
-# Charge une image Docker depuis un registre.
+# Dossier des images de CETTE architecture sur le serveur de fichiers
+# (FARCI_FICHIERS_URL, .env) : offline-x86 ou offline-arm64.
+preload_mirror_arch() {
+  case "$(uname -m)" in
+    x86_64|amd64)  printf 'offline-x86\n' ;;
+    aarch64|arm64) printf 'offline-arm64\n' ;;
+  esac
+}
+
+# Charge une image Docker depuis son registre ; si le registre ne répond pas
+# (filtrage, quota), depuis l'archive du serveur de fichiers.
 #   preload_docker_pull <image:tag>
 preload_docker_pull() {
-  local image="$1"
+  local image="$1" arch tar url
   info "image docker : $image"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
     printf '  [dry-run] docker pull %s\n' "$image"
     return 0
   fi
-  docker pull "$image" || {
-    err "échec du pull : $image"
-    return 1
-  }
-  ok "image présente : $image"
+  if docker pull "$image"; then
+    ok "image présente : $image"
+    return 0
+  fi
+  arch="$(preload_mirror_arch)"
+  if [[ -n "${FARCI_FICHIERS_URL:-}" && -n "$arch" ]]; then
+    tar="$(printf '%s' "$image" | tr '/:' '__').tar"
+    url="${FARCI_FICHIERS_URL%/}/$arch/images/$tar"
+    warn "registre injoignable : essai sur le serveur de fichiers ($url)"
+    mkdir -p "$FARCI_IMAGES_DIR"
+    if curl -fSL --retry 3 -o "$FARCI_IMAGES_DIR/$tar" "$url" && docker load -q -i "$FARCI_IMAGES_DIR/$tar"; then
+      ok "image chargée depuis le serveur de fichiers : $image"
+      return 0
+    fi
+    rm -f "$FARCI_IMAGES_DIR/$tar"
+  fi
+  err "échec du pull : $image"
+  return 1
 }
 
 # Télécharge une image de scripts/lib/images.sh PUIS la sauvegarde en .tar
@@ -175,6 +198,12 @@ preload_model() {
     return 0
   fi
   [[ -n "$sha" ]] || warn "$sha_var vide : empreinte non vérifiée (elle sera inscrite au manifeste)"
+  # Le serveur de fichiers du formateur d'abord (même fichier, plus près) ;
+  # le site d'origine sinon.
+  if [[ -n "${FARCI_FICHIERS_URL:-}" ]] \
+     && preload_download "${FARCI_FICHIERS_URL%/}/models/$(basename "$url")" "$dest" "$sha"; then
+    return 0
+  fi
   preload_download "$url" "$dest" "$sha"
 }
 

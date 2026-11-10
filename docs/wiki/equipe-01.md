@@ -27,6 +27,18 @@ Raspberry Pi du formateur : vous construisez la porte d'entrée de l'hôpital.
    `./bin/farci room set 1 <votre-ip>`.
 7. **Regarder l'écran projeté** — la ligne `Network` passe à `✅ UP`.
 
+## Votre branche
+
+Le projet, adapté à **votre** machine et à votre rôle — l'accueil et le tableau tournent sur cette machine :
+
+```bash
+git switch -c poste/equipe-1-<surnom>   # le surnom de la machine, pas le vôtre
+./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
+./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+```
+
+Le guide pas à pas : `docs/GIT.md`.
+
 ## La sonde : comment savoir que c'est fini
 
 ```bash

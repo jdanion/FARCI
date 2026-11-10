@@ -54,6 +54,22 @@ python3 -c "import sys; sys.exit(0 if sys.version_info>=(3,11) else 1)" 2>/dev/n
   && line "python3 >= 3.11" "${C_GREEN}ok${C_RESET}" \
   || { line "python3 >= 3.11" "${C_RED}trop ancien (trouvé $(python3 -V 2>&1))${C_RESET}"; FATAL=1; }
 
+section "Git (docs/GIT.md)"
+if ! have git; then
+  line "git" "${C_YELLOW}absent — à installer : sans lui, ni clone ni branche${C_RESET}"
+elif ! git -C "$FARCI_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  line "git" "${C_YELLOW}ce dossier n'est pas un clone (archive) — ./bin/farci poste${C_RESET}"
+else
+  git_branch="$(git -C "$FARCI_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null || echo 'HEAD détachée')"
+  if [[ "$git_branch" == poste/* ]]; then
+    line "branche" "${C_GREEN}${git_branch}${C_RESET}"
+  else
+    line "branche" "${git_branch} ${C_DIM}— pas encore de branche de poste : ./bin/farci poste${C_RESET}"
+  fi
+  [[ -n "$(git -C "$FARCI_ROOT" config user.name || true)" ]] \
+    || line "identité git" "${C_YELLOW}non réglée — ./bin/farci poste dit quoi taper${C_RESET}"
+fi
+
 section "Outils pratiques (absents = warnings)"
 have make && line "make" "présent" || line "make" "${C_YELLOW}absent — ./bin/farci fait le même travail${C_RESET}"
 python3 -c "import pydantic" 2>/dev/null \
@@ -124,9 +140,9 @@ else
   line "accueil de la salle" "${C_YELLOW}REFERENCE_IP absente de config/network.env${C_RESET}"
 fi
 if curl -s --max-time 3 -o /dev/null https://example.com 2>/dev/null; then
-  line "accès internet" "${C_GREEN}disponible${C_RESET} (préchargement possible)"
+  line "accès internet" "${C_GREEN}disponible${C_RESET} (GitHub, serveur de fichiers)"
 else
-  line "accès internet" "${C_DIM}coupé${C_RESET} ${C_YELLOW}(mode atelier attendu)${C_RESET}"
+  line "accès internet" "${C_DIM}coupé${C_RESET} — la salle suffit : forge Gitea et fichiers du Pi"
 fi
 
 printf '\n'

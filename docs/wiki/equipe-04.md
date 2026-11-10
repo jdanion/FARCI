@@ -43,6 +43,18 @@ pas l'identité du patient.
    `./bin/farci eds entites datasets/raw/patient_1234567890123_crap.txt` :
    lisez « texte envoyé au modèle » : aucun nom n'y figure.
 
+## Votre branche
+
+Le projet, adapté à **votre** machine et à votre rôle — Docling et EDS-NLP tournent sur cette machine :
+
+```bash
+git switch -c poste/equipe-4-<surnom>   # le surnom de la machine, pas le vôtre
+./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
+./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+```
+
+Le guide pas à pas : `docs/GIT.md`.
+
 ## La sonde : comment savoir que c'est fini
 
 ```bash
@@ -64,7 +76,7 @@ il ne dépend pas de Docling, rien n'attend votre équipe.
 | `ModuleNotFoundError: deidentification` | relancer la commande depuis la racine du dépôt, avec `PYTHONPATH=04-clinical-documents` |
 | `ModuleNotFoundError: pydantic` | `./bin/farci bootstrap` (environnement Python hors ligne) |
 | un nom reste en clair | c'est une vraie trouvaille : ajoutez la règle dans `rules.py` et un test |
-| EDS-NLP : « image absente » | l'image n'est pas sur ce poste : demandez la clé USB (`docker load`) |
+| EDS-NLP : « image absente » | l'image n'est pas sur ce poste : `./preload.sh --equipe 4 --skip-existing`, ou la page `/rejoindre` de la salle (`docker load`) |
 | `eds entites` : erreur 502 | le LLM de la salle ne répond pas ; `eds pseudo` marche toujours |
 
 ## Bonus

@@ -21,7 +21,7 @@ bootstrap	atelier	Préparer la machine (hors ligne, .env, outils)	bootstrap.sh
 status	atelier	Tableau de progression du workshop (§49)	status.sh
 tableau	atelier	Tableau de la salle (page web, iPad) : adresses, reset	tableau.sh
 seance	atelier	Nouvelle séance : seance nouvelle [--garder-equipes] [--tout] (sur le Pi)	seance.sh
-partage	atelier	Ce que le Pi distribue (git clone, archives, offline x86) : maj	partage.sh
+partage	atelier	Fichiers hors de Git (Pi, serveur de fichiers) : maj, wheels, publier	partage.sh
 up	atelier	Démarrer une brique : up <dossier> (ex. 02-inference/ollama)	compose.sh
 down	atelier	Arrêter une brique : down <dossier>	compose.sh
 logs	atelier	Journaux d'une brique : logs <dossier>	compose.sh
@@ -46,7 +46,9 @@ verify-manifest	airgap	Vérifier les empreintes contre le manifeste	verify-manif
 verify-images	airgap	Vérifier les images Docker locales	verify-images.sh
 verify-models	airgap	Vérifier les poids de modèles	verify-models.sh
 verify-wheels	airgap	Vérifier les wheels Python	verify-wheels.sh
-forge-sync	airgap	GitHub → Gitea : main en avance rapide seulement (status, push, bundle)	forge-sync.sh
+
+poste	git	Votre poste dans Git : branche, fiche, commande suivante (nouveau, verifier)	poste.sh
+forge-sync	git	GitHub → Gitea : main en avance rapide seulement (status, push, bundle)	forge-sync.sh
 
 generate-dataset	dataset	Générer le dataset synthétique (.txt, --pdf pour Docling)	generate-dataset.sh
 build-gold	dataset	Générer le gold standard depuis le registre	build-gold.sh

@@ -7,9 +7,11 @@
 #
 # ORDRE DE PRIORITÉ (du plus fort au plus faible) :
 #   1. l'environnement déjà exporté      (on peut toujours surcharger à la main)
-#   2. config/workshop.env               (réglages de ce poste)
-#   3. config/network.env                (adresses)
-#   4. .env                              (global)
+#   2. config/workshop.env               (réglages de ce poste, jamais commités)
+#   3. postes/<nom>.env                  (fiche de poste VERSIONNÉE : celle de
+#                                         la branche poste/<nom>, ou FARCI_POSTE)
+#   4. config/network.env                (adresses)
+#   5. .env                              (global)
 #
 # Usage :
 #   source scripts/dev-env.sh           # exporte dans le shell courant
@@ -24,10 +26,33 @@ if [[ -z "${FARCI_LIB_DIR:-}" ]]; then
   source "$_dev_env_dir/lib/common.sh"
 fi
 
+# La fiche de poste (docs/GIT.md) : ce que CETTE machine est et fait dans le
+# projet, écrit dans un fichier versionné sur SA branche. Changer de branche
+# change donc la configuration : c'est la leçon. Le nom vient de la branche
+# courante (poste/<nom>), ou de FARCI_POSTE (archive sans .git, essai).
+farci_poste_name() {
+  local branch
+  if [[ -n "${FARCI_POSTE:-}" ]]; then
+    printf '%s\n' "$FARCI_POSTE"
+    return 0
+  fi
+  branch="$(git -C "$FARCI_ROOT" symbolic-ref --quiet --short HEAD 2>/dev/null)" || return 0
+  [[ "$branch" == poste/* ]] && printf '%s\n' "${branch#poste/}"
+  return 0
+}
+
+farci_poste_file() {
+  local name
+  name="$(farci_poste_name)"
+  [[ "$name" =~ ^[a-z0-9][a-z0-9-]*$ ]] && printf '%s\n' "$FARCI_ROOT/postes/$name.env"
+  return 0
+}
+
 # Liste des fichiers de config, du plus prioritaire au moins prioritaire.
 farci_env_files() {
+  printf '%s\n' "$FARCI_ROOT/config/workshop.env"
+  farci_poste_file
   printf '%s\n' \
-    "$FARCI_ROOT/config/workshop.env" \
     "$FARCI_ROOT/config/network.env" \
     "$FARCI_ROOT/.env"
 }

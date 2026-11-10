@@ -3,7 +3,7 @@
 #
 #   ./bin/farci lint                  tous les contrôles
 #   ./bin/farci lint --only ips docs  une sélection
-#     contrôles : versions ips todo docs commands offline shell python size
+#     contrôles : versions ips todo docs commands offline shell python postes size
 #   ./bin/farci lint --quiet          seulement les erreurs
 #
 # Code de sortie : 0 si aucun contrôle n'a échoué (les avertissements
@@ -219,14 +219,14 @@ if wanted docs; then
   missing=()
   for f in README.md CONTRIBUTING.md CHANGELOG.md docs/ARCHITECTURE.md \
            docs/WORKSHOP_FLOW.md docs/AIRGAP.md docs/CONTRACTS.md \
-           docs/CHAOS.md docs/INSTRUCTOR_GUIDE.md \
+           docs/CHAOS.md docs/INSTRUCTOR_GUIDE.md docs/GIT.md \
            docs/_templates/TUTORIAL.template.md; do
     [[ -r "$FARCI_ROOT/$f" ]] || missing+=("$f")
   done
   if (( ${#missing[@]} )); then
     record FAIL docs "fichiers de documentation manquants : ${missing[*]}"
   else
-    record PASS docs "les 9 fichiers de documentation requis existent"
+    record PASS docs "les 10 fichiers de documentation requis existent"
   fi
 
   # Les 14 sections imposées par FARCI §45.
@@ -392,7 +392,21 @@ if wanted python; then
 fi
 
 # ---------------------------------------------------------------------------
-# 8. taille — le dépôt reste léger (contrainte du plan §0.1)
+# 8. postes — les fiches de poste versionnées (docs/GIT.md)
+# ---------------------------------------------------------------------------
+# Une fiche arrive par la Pull Request d'un étudiant : ni secret, ni clé
+# inconnue, et un nom qui dit son équipe.
+if wanted postes; then
+  if postes_out="$("$FARCI_ROOT/scripts/cmd/poste.sh" verifier 2>&1)"; then
+    record PASS postes "$(printf '%s' "$postes_out" | sed 's/^.*OK[^ ]* //')"
+  else
+    record FAIL postes "fiche(s) de poste invalide(s) :"
+    printf '%s\n' "$postes_out" | sed 's/^/        /' >&2
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# 9. taille — le dépôt reste léger (contrainte du plan §0.1)
 # ---------------------------------------------------------------------------
 if wanted size; then
   big="$(find "$FARCI_ROOT" -type f -not -path '*/.git/*' -not -path '*/.venv/*' -not -path '*/eds-nlp/vendor/*' -size +1M \

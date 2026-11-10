@@ -1,7 +1,9 @@
 # Déroulé du workshop — 4 heures
 
 Trois étapes, une séance de **240 minutes**, un seul formateur. On construit,
-on utilise, on casse. Ce document dit **quoi** se passe et **pourquoi** ;
+on utilise, on casse — et, d'un bout à l'autre, **on se sert de git** : chaque
+étudiant clone le projet, crée la branche de son poste, la pousse sur la forge
+de la salle et la fait relire (`docs/GIT.md`). Ce document dit **quoi** se passe et **pourquoi** ;
 `docs/INSTRUCTOR_GUIDE.md` dit **comment** le piloter.
 
 ---
@@ -10,24 +12,24 @@ on utilise, on casse. Ce document dit **quoi** se passe et **pourquoi** ;
 
 | Horaire | Durée | Moment | Ce qui doit être vrai à la fin |
 |---|---|---|---|
-| 0:00 – 0:20 | 20 min | **Accueil** : les 3 étapes, le vocabulaire, le tableau tout en 🛟 | chaque étudiant sait dans quelle équipe il est et a lancé `./bin/farci doctor` |
+| 0:00 – 0:20 | 20 min | **Accueil** : les 3 étapes, le vocabulaire, le tableau tout en 🛟 ; git en trois lieux (GitHub, la forge de la salle, votre machine) | chaque étudiant sait dans quelle équipe il est, a **cloné** le projet, créé **sa branche** (`./bin/farci poste`) et lancé `./bin/farci doctor` |
 | 0:20 – 1:50 | 90 min | **Étape 1 — Construire** : équipes cœur seulement | `CLINICAL PIPELINE READY` sur le tableau |
 | 1:50 – 2:00 | 10 min | **Pause** | — |
 | 2:00 – 2:50 | 50 min | **Étape 2 — Utiliser** : parcours Python (principal) et Open WebUI ; EDS-NLP (10 min) ; Flowise en démo | chaque équipe a une run dans `datasets/extracted/` |
 | 2:50 – 3:10 | 20 min | **Évaluation** et lecture d'une trace | le classement des runs est projeté, une trace est lue ensemble |
 | 3:10 – 3:45 | 35 min | **Étape 3 — Casser** : 4 scénarios pilotés par le formateur | chaque panne a été prédite, observée, réparée |
-| 3:45 – 4:00 | 15 min | **Clôture** : chacun explique une notion avec ses mots | — |
+| 3:45 – 4:00 | 15 min | **Clôture** : chacun explique une notion avec ses mots ; ce que vous emportez | la branche de chaque poste est sur la forge ; chacun sait la pousser sur son fork GitHub |
 | | **240 min** | | |
 
 ### Dans l'étape 1 (90 min)
 
 | Horaire | Quoi |
 |---|---|
-| 0:20 – 0:30 | chaque équipe lit sa fiche débutant (`docs/wiki/equipe-XX.md`), le formateur rappelle l'objectif minimal |
+| 0:20 – 0:30 | chaque équipe lit sa fiche débutant (`docs/wiki/equipe-XX.md`) et écrit la fiche de son poste (`./bin/farci poste nouveau`) : **premier commit** ; le formateur rappelle l'objectif minimal |
 | 0:30 – 1:15 | **objectif minimal** : sa ligne passe au vert sur le tableau (45 min max) |
-| 1:15 – 1:35 | objectif bonus, test contractuel, PR ; le formateur fait vivre le tableau |
+| 1:15 – 1:35 | test contractuel, puis **push et Pull Request** vers `seance`, relue par une autre équipe ; objectif bonus ; le formateur fait vivre le tableau |
 | ~1:30 | **moment clé** : `CLINICAL PIPELINE READY` |
-| 1:35 – 1:50 | marge : rattrapage des équipes en retard, ou démos bonus (GitOps, Langfuse, MLflow) |
+| 1:35 – 1:50 | marge : rattrapage des équipes en retard ; le formateur fusionne une Pull Request devant la salle, chacun la reçoit (`git fetch`, `git merge`) ; démos bonus (Langfuse, MLflow) |
 
 ### Dans l'étape 3 (35 min)
 
@@ -41,6 +43,28 @@ réparation, leçon en une phrase. Détail : `docs/CHAOS.md`.
 | 2 | **04** — JSON invalide | une sortie de LLM n'est pas une donnée : rien n'est écrit |
 | 3 | **06** — passerelle de l'équipe coupée, **ou 05** — Docling coupé | point d'entrée stable / dépendance partielle |
 | 4 | **07** — observabilité coupée | l'observabilité n'est pas sur le chemin de production |
+
+---
+
+## Le fil git de la séance
+
+Git n'est pas une brique parmi d'autres : c'est ce que **chaque** étudiant
+fait, quelle que soit son équipe.
+
+| Moment | Geste | Ce qu'il apprend |
+|---|---|---|
+| avant, ou à l'accueil | `git clone` (GitHub, ou la forge Gitea de la salle) | un dépôt, c'est le projet **et** son historique ; deux forges, le même projet |
+| accueil | `git switch -c poste/equipe-<N>-<surnom>` | une branche : sa version, sans toucher celle des autres |
+| 0:20 | `./bin/farci poste nouveau`, relecture, `git add`, `git commit` | adapter le projet à **son** matériel et à **son** rôle ; un commit s'explique |
+| 1:15 | `git push`, Pull Request vers `seance` | publier, demander une relecture |
+| 1:15 – 1:50 | relire la PR d'une **autre** équipe | personne ne valide son propre travail |
+| 1:35, puis à volonté | `git fetch`, `git merge` | recevoir le travail commun |
+| clôture | *Fork* sur GitHub, `git remote add`, `git push` | le projet continue après la salle ; on peut aussi héberger sa forge |
+
+La forge Gitea est ouverte **avant** la séance par le formateur (sur le Pi) ;
+l'équipe 0, si elle existe, la reprend sur sa machine. Les fichiers
+volumineux ne passent pas par git : `./preload.sh` les prend sur le serveur de
+fichiers (`docs/AIRGAP.md`).
 
 ---
 
@@ -60,13 +84,14 @@ arrêt ne doit pas arrêter l'extraction (scénario 07).
 | 4 | `04-clinical-documents/` | Docling + pseudonymisation + EDS-NLP (hors READY) | PDF convertis par Docling |
 | 5 | `05-observability/` | Phoenix | Langfuse, collecteur OTel |
 | 7 | `07-applications/` | Open WebUI prêt pour l'étape 2 | Flowise (démo) |
-| 0 | `00-gitops/` | — | Gitea + runner + CI (démo) |
+| 0 | `00-gitops/` | — (hors READY, mais **servie à toute la salle** : forge Gitea ouverte par le formateur) | reprise de la forge par l'équipe, runner + CI |
 | 6 | `06-evaluation/` | — (l'évaluation est en ligne de commande pour tous) | MLflow |
 | 8 | `08-arcane-agents/` | — | agents de supervision, webhook GitOps |
 
 Les équipes 0, 6 et 8 ne sont constituées que s'il reste des étudiants une fois
-les briques cœur pourvues (`./bin/farci casting` le dit). Sinon, ce sont des
-démonstrations du formateur pendant la marge de 1:35 – 1:50.
+les briques cœur pourvues (`./bin/farci casting` le dit). Sinon, les équipes 6
+et 8 sont des démonstrations du formateur pendant la marge de 1:35 – 1:50, et
+la forge reste celle du formateur : elle sert de toute façon.
 
 L'étape 3 n'est pas une équipe : elle se joue ensemble.
 
@@ -106,10 +131,13 @@ lance `./bin/farci rescue <brique>`. La séance continue.
 Pour chaque équipe :
 
 1. lire sa fiche : `./bin/farci read <équipe>` ;
-2. démarrer sa brique : `./bin/farci up <dossier>` ;
-3. vérifier sa ligne : `./bin/farci status` ;
-4. lancer le test contractuel : `./bin/farci test` ;
-5. bonus, puis PR (relue par le formateur ou par une autre équipe).
+2. écrire la fiche de son poste sur sa branche et la commiter :
+   `./bin/farci poste nouveau`, puis `./bin/farci poste` ;
+3. démarrer sa brique : `./bin/farci up <dossier>` ;
+4. vérifier sa ligne : `./bin/farci status` ;
+5. lancer le test contractuel : `./bin/farci test` ;
+6. pousser sa branche et ouvrir sa Pull Request vers `seance`, relue par une
+   autre équipe ; puis bonus.
 
 En parallèle, l'écran projette `./bin/farci status --watch`. Chaque passage au
 vert est annoncé à voix haute. Le passage à `CLINICAL PIPELINE: READY` est **le**
@@ -191,12 +219,18 @@ Chaque étudiant explique **une** notion avec ses mots, à partir des dix messag
 du README : modèle ≠ runtime, passerelle, validation, référence,
 observabilité… C'est le critère de réussite de la séance.
 
+Dernier geste : `./bin/farci poste` sur chaque machine. La branche du poste
+est sur la forge ; le formateur montre le *fork* sur GitHub et le
+`git remote add` qui permet de l'y pousser. Le projet, et la façon de s'en
+servir, sortent de la salle avec chaque étudiant.
+
 ---
 
 ## Voir aussi
 
+- `docs/GIT.md` — le parcours git de chaque étudiant
 - `docs/INSTRUCTOR_GUIDE.md` — la logistique, les checklists, les plans B
 - `docs/ARCHITECTURE.md` — pourquoi cette architecture
 - `docs/CONTRACTS.md` — les trois contrats
 - `docs/CHAOS.md` — les scénarios détaillés
-- `docs/AIRGAP.md` — le fonctionnement sans Internet
+- `docs/AIRGAP.md` — ce qui passe par Internet, et ce qui n'y passe jamais

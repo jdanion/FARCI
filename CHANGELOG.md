@@ -6,6 +6,38 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Git au centre de l'atelier : GitHub, la forge Gitea, une branche par poste
+
+Nouvelle vision : chaque étudiant repart en sachant se servir de git. GitHub
+(joignable depuis la faculté) est la source de vérité, la forge Gitea de la
+salle montre qu'une forge s'héberge soi-même, et les fichiers volumineux
+viennent d'un serveur de fichiers.
+
+- `docs/GIT.md` (`./bin/farci docs git`) : le parcours pas à pas, pour qui
+  n'a jamais utilisé git — cloner, créer sa branche, commiter, pousser, Pull
+  Request, recevoir le travail des autres, forker après l'atelier.
+- `./bin/farci poste` : où j'en suis dans git, et **la commande git à taper
+  ensuite** (il n'en tape aucune). `poste nouveau` écrit la fiche de la
+  machine sur sa branche ; `poste verifier` contrôle les fiches (lint, CI).
+- Fiche de poste **versionnée** : `postes/equipe-<N>-<surnom>.env`, lue par
+  `./bin/farci` tant que l'on est sur la branche `poste/equipe-<N>-<surnom>`
+  (ou `FARCI_POSTE`). Ni secret, ni nom de personne.
+- Forge Gitea pour toute la salle : lecture sans compte, comptes `equipe-0` à
+  `equipe-8` (`GITEA_EQUIPE_PASSWORD`) avec droit d'écriture, `main` réservée
+  à `forge-sync`, `seance` ouverte par Pull Request relue. La CI Gitea tourne
+  aussi sur les PR vers `seance`. La protection de branche utilise l'API de
+  Gitea (`branch_protections`) : l'ancienne route n'existait pas.
+- Fichiers volumineux : `FARCI_FICHIERS_URL` (`.env`). `./preload.sh` y prend
+  les modèles d'abord, les images si leur registre ne répond pas ;
+  `bootstrap` y prend les wheels. `./bin/farci partage publier <destination>`
+  alimente le serveur par rsync.
+- Page `/rejoindre` : cloner (forge de la salle, sinon GitHub, sinon la copie
+  du Pi), créer sa branche, puis les fichiers.
+- Documentation : `docs/AIRGAP.md` devient « local d'abord » (Internet pour le
+  code et les fichiers, jamais pour les données) ; fiches d'équipe, déroulé,
+  feuille de séance et guide formateur intègrent le fil git ; l'équipe 0
+  tient « la forge de la salle ».
+
 ### llama.cpp : la compilation fonctionne
 
 - `LLAMACPP_BUILD=b10600` n'existait pas (la numérotation des tags llama.cpp

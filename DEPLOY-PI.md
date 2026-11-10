@@ -260,17 +260,19 @@ rsync -a machine-x86:/srv/farci/offline/ /tmp/offline-x86/   # ou une clé USB
 Le Wi-Fi de la salle est partagé : pour une image lourde, la clé USB reste
 plus rapide.
 
-#### Option : la forge Gitea sur le Pi
+#### La forge Gitea sur le Pi
 
-`./preload.sh --pi` précharge aussi les images de la forge (`00-gitops`). Si
-aucune équipe 0 ne monte la forge, le Pi peut la tenir (~1 Go de RAM) :
+Toute la salle clone, pousse sa branche et ouvre ses Pull Requests sur la
+forge (`docs/GIT.md`) : le Pi la tient dès avant la séance (~1 Go de RAM).
+`./preload.sh --pi` précharge ses images (`00-gitops`).
 
 ```bash
-# secrets GITEA_* dans .env (voir § 3), puis :
+# secrets GITEA_* dans .env (voir § 3), dont GITEA_EQUIPE_PASSWORD, puis :
 ./bin/farci room set gitea 192.168.0.222
 ./bin/farci up 00-gitops
-00-gitops/gitea/bootstrap.sh
-./bin/farci forge-sync push          # Gitea main ← GitHub main (avec Internet)
+00-gitops/gitea/bootstrap.sh         # dépôt, comptes equipe-0 à equipe-8
+./bin/farci forge-sync push          # Gitea main ← GitHub main, branche seance
+00-gitops/post-provision.sh          # main et seance protégées
 ```
 
 `forge-sync` publie **`main` de GitHub** : la branche de travail doit y être

@@ -30,6 +30,18 @@ le lit : comme un livre et la personne qui le lit à voix haute.
 7. **Regarder l'écran projeté** — la ligne `Inference` passe à `✅ UP` : la
    salle utilise maintenant **votre** modèle.
 
+## Votre branche
+
+Le projet, adapté à **votre** machine et à votre rôle — le runtime et le modèle que **cette** machine peut servir (`FARCI_MACHINE`, `FARCI_INFERENCE_PRIMARY`) :
+
+```bash
+git switch -c poste/equipe-2-<surnom>   # le surnom de la machine, pas le vôtre
+./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
+./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+```
+
+Le guide pas à pas : `docs/GIT.md`.
+
 ## La sonde : comment savoir que c'est fini
 
 ```bash
@@ -46,7 +58,7 @@ Levez la main. La salle ne vous attend pas : le runtime de la référence
 | Ce que vous voyez | À essayer |
 |---|---|
 | le conteneur s'arrête, `out of memory` | `02-inference/ollama/create-model.sh secours` (même nom, modèle plus petit) |
-| `create-model.sh` : GGUF manquant | `./bin/farci verify-models` ; demander la clé USB au formateur |
+| `create-model.sh` : GGUF manquant | `./bin/farci verify-models`, puis `./preload.sh --equipe 2 --skip-existing` (serveur de fichiers) |
 | une réponse prend plus d'une minute | normal sur un petit processeur : le formateur peut lancer `./bin/farci rescue inference`, vous continuez à comprendre |
 | Docker absent ou cassé | travaillez en binôme sur la machine d'une autre équipe |
 
