@@ -27,9 +27,10 @@ viennent d'un serveur de fichiers.
   à `forge-sync`, `seance` ouverte par Pull Request relue. La CI Gitea tourne
   aussi sur les PR vers `seance`. La protection de branche utilise l'API de
   Gitea (`branch_protections`) : l'ancienne route n'existait pas.
-- Fichiers volumineux : `FARCI_FICHIERS_URL` (`.env`). `./preload.sh` y prend
-  les modèles d'abord, les images si leur registre ne répond pas ;
-  `bootstrap` y prend les wheels. `./bin/farci partage publier <destination>`
+- Fichiers volumineux : sites d'origine d'abord (Hugging Face, registres,
+  PyPI) ; `FARCI_FICHIERS_URL` (`.env`) est un miroir de secours, où
+  `./preload.sh` prend un modèle ou une image que son origine refuse, et
+  `bootstrap` les wheels. `./bin/farci partage publier <destination>`
   alimente le serveur par rsync.
 - Page `/rejoindre` : cloner (forge de la salle, sinon GitHub, sinon la copie
   du Pi), créer sa branche, puis les fichiers.

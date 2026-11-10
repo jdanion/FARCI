@@ -49,7 +49,7 @@ l'état d'hier, et comparer deux versions ligne à ligne.
    └─────────────────────────────────────────────┘
           ▲
           │  ./preload.sh  (téléchargement simple, PAS git)
-   le serveur de fichiers : modèles, images Docker, wheels
+   Hugging Face, registres Docker, PyPI (miroir de secours du formateur)
 ```
 
 - **GitHub** est joignable depuis la faculté. C'est l'adresse à retenir : elle
@@ -60,8 +60,9 @@ l'état d'hier, et comparer deux versions ligne à ligne.
   Dans la salle, c'est **là que vous poussez** et que vous ouvrez vos Pull
   Requests. Les gestes sont les mêmes que sur GitHub.
 - **Les fichiers volumineux** (un modèle pèse de 1 à 18 Go) ne vont jamais dans
-  Git, qui garde tout pour toujours. Ils sont sur un serveur de fichiers
-  (`FARCI_FICHIERS_URL` dans `.env`) et sur le Pi de la salle.
+  Git, qui garde tout pour toujours. `./preload.sh` les prend sur leur site
+  d'origine (Hugging Face, registres Docker) ; si l'un est bloqué, sur le
+  miroir du formateur (`FARCI_FICHIERS_URL` dans `.env`) ou sur le Pi.
 
 ---
 

@@ -12,7 +12,7 @@ l'affiche.
 | Quand | Quoi | Fait |
 |---|---|---|
 | J-7 | Pi préparé (Internet) : `./preload.sh --reference`, `./bin/farci bootstrap`, point d'accès `farci-ap` | ☐ |
-| J-7 | fichiers volumineux sur le serveur de fichiers : `./bin/farci partage publier <destination rsync>` depuis une machine préchargée (`--core`) ; vérifier `FARCI_FICHIERS_URL` depuis un autre poste | ☐ |
+| J-7 | miroir de secours (si Hugging Face ou un registre est bloqué à la faculté) : `./bin/farci partage publier <destination rsync>` depuis une machine préchargée (`--core`) ; vérifier `FARCI_FICHIERS_URL` depuis un autre poste | ☐ |
 | J-7 | message aux étudiants : `git clone` depuis GitHub, puis `./preload.sh --equipe <N>` (sa brique, selon la machine) | ☐ |
 | J-1 | **forge Gitea sur le Pi** : `./bin/farci up 00-gitops`, `00-gitops/gitea/bootstrap.sh`, `./bin/farci forge-sync push`, `00-gitops/post-provision.sh`, `./bin/farci room set gitea <IP du Pi>` | ☐ |
 | J-1 | **sur le Pi** : `./bin/farci rehearse` → **PASS** (moins de 15 min) | ☐ |

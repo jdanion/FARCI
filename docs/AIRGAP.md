@@ -10,7 +10,7 @@ deux usages, pas un de plus :
 | Ce qui circule | Par où | Pourquoi c'est acceptable |
 |---|---|---|
 | **le code** | GitHub (`FARCI_GITHUB_URL`), ou la forge Gitea de la salle | public, sans donnée ; c'est l'objet de `docs/GIT.md` |
-| **les fichiers volumineux** : modèles, images Docker, wheels | le serveur de fichiers du formateur (`FARCI_FICHIERS_URL`), ou le Pi | publics, téléchargés une fois, figés par leurs empreintes |
+| **les fichiers volumineux** : modèles, images Docker, wheels | leur site d'origine (Hugging Face, registres, PyPI) ; en secours le miroir du formateur (`FARCI_FICHIERS_URL`), ou le Pi | publics, téléchargés une fois, figés par leurs empreintes |
 | **les dossiers, les prompts, les réponses, les traces** | **rien ne sort de la salle** | inférence, passerelle, observabilité : tout tourne sur place |
 
 Et si Internet tombe pendant la séance, rien ne s'arrête : la forge Gitea
@@ -30,14 +30,15 @@ prouve que la plateforme démarre et répond sans aucun réseau extérieur.
 
 `./preload.sh` essaie dans cet ordre, sans rien demander :
 
-1. **modèles** : le serveur de fichiers (`FARCI_FICHIERS_URL/models/`), puis
-   le site d'origine (`models/models.env`) ;
-2. **images Docker** : leur registre, puis l'archive du serveur de fichiers
+1. **modèles** : le site d'origine (Hugging Face, `models/models.env`), puis
+   le miroir (`FARCI_FICHIERS_URL/models/`) ;
+2. **images Docker** : leur registre, puis l'archive du miroir
    (`offline-x86/images/` ou `offline-arm64/images/` selon la machine) ;
-3. **wheels Python** : `offline/wheels/`, sinon le Pi (`FARCI_WHEELS_URL`),
-   sinon le serveur de fichiers (`wheels/`).
+3. **wheels Python** : `offline/wheels/` (rempli depuis PyPI par
+   `./preload.sh`), sinon le Pi (`FARCI_WHEELS_URL`), sinon le miroir (`wheels/`).
 
-Le formateur alimente ce serveur depuis une machine déjà préchargée :
+Le miroir n'est qu'un **secours** : il ne sert que si un site d'origine est
+bloqué ou saturé. Le formateur l'alimente depuis une machine déjà préchargée :
 `./bin/farci partage publier <destination rsync>`. Dans la salle, le Pi sert
 la même arborescence sur `http://<REFERENCE_IP>/partage/`.
 

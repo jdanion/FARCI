@@ -23,7 +23,8 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 - [ ] `scripts/lock-requirements.sh` pour verrouiller et télécharger les wheels
 - [ ] Vérifier les empreintes : `./bin/farci verify-manifest`
 - [ ] `./bin/farci verify-airgap`
-- [ ] Publier les fichiers volumineux sur le serveur de fichiers :
+- [ ] Miroir de secours, au cas où Hugging Face ou un registre Docker serait
+      bloqué ou saturé depuis la faculté :
       `./bin/farci partage publier <destination rsync>` (modèles, wheels, images
       de cette machine), puis contrôler `FARCI_FICHIERS_URL` (`.env`) depuis un
       autre poste. Les étudiants n'ont plus qu'à cloner et lancer `./preload.sh`
@@ -42,7 +43,7 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 1. **Oublier que `make` peut manquer.** Le dépôt fonctionne sans : `make X` et
    `./bin/farci X` sont équivalents. Le dire en début de séance.
 2. **Oublier que `git clone` ne donne que le code.** Les modèles et les images
-   viennent de `./preload.sh` (serveur de fichiers). Le dire **avant** que les
+   viennent de `./preload.sh` (sites d'origine, miroir en secours). Le dire **avant** que les
    étudiants ne perdent vingt minutes.
 
 ---

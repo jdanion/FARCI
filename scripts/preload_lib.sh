@@ -198,13 +198,12 @@ preload_model() {
     return 0
   fi
   [[ -n "$sha" ]] || warn "$sha_var vide : empreinte non vérifiée (elle sera inscrite au manifeste)"
-  # Le serveur de fichiers du formateur d'abord (même fichier, plus près) ;
-  # le site d'origine sinon.
-  if [[ -n "${FARCI_FICHIERS_URL:-}" ]] \
-     && preload_download "${FARCI_FICHIERS_URL%/}/models/$(basename "$url")" "$dest" "$sha"; then
-    return 0
-  fi
-  preload_download "$url" "$dest" "$sha"
+  # Le site d'origine d'abord ; s'il est bloqué ou injoignable, le miroir du
+  # formateur (même fichier, même empreinte).
+  preload_download "$url" "$dest" "$sha" && return 0
+  [[ -n "${FARCI_FICHIERS_URL:-}" && "${PRELOAD_DRY_RUN:-0}" != "1" ]] || return 1
+  warn "site d'origine injoignable : essai sur le miroir ($FARCI_FICHIERS_URL)"
+  preload_download "${FARCI_FICHIERS_URL%/}/models/$(basename "$url")" "$dest" "$sha"
 }
 
 # Sauvegarde une image Docker dans le répertoire offline.

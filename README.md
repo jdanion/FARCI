@@ -73,7 +73,7 @@ gouvernance des données et une évaluation.
 | **GitHub** — `github.com/jdanion/FARCI` | la source de vérité du projet, joignable depuis la faculté | cloner ; après l'atelier, forker pour continuer |
 | **Gitea** — la forge de la salle | la même chose, **hébergée sur place** : ce qu'on installe quand le code ne doit pas sortir des murs | cloner, pousser votre branche, ouvrir et relire des Pull Requests |
 | **Votre machine** | votre clone, sur votre branche `poste/equipe-<N>-<surnom>` | adapter le projet à votre matériel et à votre rôle, commiter |
-| **Le serveur de fichiers** — `FARCI_FICHIERS_URL` | modèles, images Docker, wheels : trop lourds pour Git | rien : `./preload.sh` télécharge pour vous |
+| **Hugging Face, les registres Docker, PyPI** — et un miroir de secours, `FARCI_FICHIERS_URL` | modèles, images Docker, wheels : trop lourds pour Git | rien : `./preload.sh` télécharge pour vous |
 
 ```bash
 git clone https://github.com/jdanion/FARCI farci    # ou l'adresse de la forge de la salle
@@ -94,7 +94,7 @@ Le guide complet, pour qui n'a jamais utilisé git : **`docs/GIT.md`**
 
 | Question | Réponse |
 |---|---|
-| `git clone` suffit-il ? | **Pour le code, oui.** Les images Docker, les poids de modèles et les wheels Python sont volontairement **hors du dépôt** (un modèle pèse 1 à 18 Go, et Git garde tout pour toujours) : `./preload.sh --equipe <N>` les télécharge depuis le serveur de fichiers. |
+| `git clone` suffit-il ? | **Pour le code, oui.** Les images Docker, les poids de modèles et les wheels Python sont volontairement **hors du dépôt** (un modèle pèse 1 à 18 Go, et Git garde tout pour toujours) : `./preload.sh --equipe <N>` les télécharge depuis leur site d'origine (miroir de secours si l'un est bloqué). |
 | Faut-il Internet ? | **Pour le code et les fichiers, il aide** : GitHub et le serveur de fichiers sont joignables depuis la faculté. **Pour le traitement, jamais** : les modèles tournent dans la salle, aucun dossier ne sort (`docs/AIRGAP.md`). Sans Internet du tout, la forge Gitea et le Pi suffisent. |
 | Docker est-il nécessaire ? | **Oui**, c'est lui qui fait tourner les briques. |
 | `make` est-il nécessaire ? | **Non.** `make <cible>` et `./bin/farci <cible>` exécutent le même code. |
