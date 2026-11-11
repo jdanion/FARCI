@@ -76,12 +76,19 @@ case "${FARCI_TARGET:-up}" in
     # Air-gap : une image absente est une erreur franche, jamais un
     # téléchargement silencieux (docs/AIRGAP.md). Préparation avec Internet :
     # FARCI_ALLOW_PULL=1 ./bin/farci up <dossier>
-    # llama.cpp sert le 9B s'il est là, sinon le 2B : un poste léger n'a
-    # préchargé que le 2B (./preload.sh --equipe 2). LLAMACPP_GGUF impose.
+    # llama.cpp sert le 9B s'il est là ; sinon Qwen3.5-4B (8 Go de RAM au
+    # moins) ; sinon le 2B. LLAMACPP_GGUF impose un fichier : c'est le réglage
+    # à écrire dans la fiche du poste (gemma-4-E4B-it-Q4_K_M.gguf, par exemple).
     if [[ "${dir#"$FARCI_ROOT"/}" == 02-inference/llamacpp && -z "${LLAMACPP_GGUF:-}" ]] \
        && [[ ! -f "${FARCI_MODELS_DIR:-}/Ornith-1.5-9B-Q5_K_M.gguf" ]]; then
-      export LLAMACPP_GGUF=Qwen3.5-2B-Q4_K_M.gguf
-      info "modèle 9B absent : llama.cpp sert Qwen3.5-2B (LLAMACPP_GGUF pour en imposer un autre)"
+      # shellcheck source=scripts/lib/machine.sh
+      source "$FARCI_ROOT/scripts/lib/machine.sh"
+      if [[ -f "${FARCI_MODELS_DIR:-}/Qwen3.5-4B-Q4_K_M.gguf" ]] && (( $(farci_ram_go) >= 8 )); then
+        export LLAMACPP_GGUF=Qwen3.5-4B-Q4_K_M.gguf
+      else
+        export LLAMACPP_GGUF=Qwen3.5-2B-Q4_K_M.gguf
+      fi
+      info "modèle 9B absent : llama.cpp sert $LLAMACPP_GGUF (LLAMACPP_GGUF pour en imposer un autre)"
     fi
     pull=never
     [[ "${FARCI_ALLOW_PULL:-0}" == "1" ]] && pull=missing

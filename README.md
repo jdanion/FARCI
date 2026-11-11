@@ -136,13 +136,20 @@ les masque.
 
 ## Les modèles
 
-Un modèle n'est pas un runtime. Le dépôt utilise deux modèles, interchangeables
-derrière la même passerelle :
+Un modèle n'est pas un runtime. Le dépôt propose cinq modèles, interchangeables
+derrière la même passerelle ; chaque poste prend celui que sa machine supporte :
 
-| Rôle | Modèle | Taille (Q4) | Licence | Où il tourne |
+| Machine | Modèle | Taille (Q4) | Licence | Où il tourne |
 |---|---|---|---|---|
-| Principal, grosse configuration (GPU ou 32 Go) | **Ornith-1.5-9B** | ~5,9 Go | MIT | Ollama |
-| Postes légers, secours, développement et CI | Qwen3.5-2B | ~1,2 Go | Apache-2.0 | llama.cpp (et Ollama) |
+| toute machine : secours, développement, CI | Qwen3.5-2B | ~1,2 Go | Apache-2.0 | llama.cpp, Ollama |
+| 8 Go de RAM | **Qwen3.5-4B** | ~3 Go | Apache-2.0 | llama.cpp, Ollama |
+| 12 Go de RAM | **Gemma 4 E4B** | ~5 Go | Apache-2.0 | llama.cpp, Ollama |
+| grosse configuration (GPU ou 32 Go) | **Ornith-1.5-9B** | ~5,9 Go | MIT | Ollama |
+| machine puissante (GPU de 24 Go, ou 48 Go de RAM) | Ornith-1.5-35B-A3B | ~22 Go | MIT | Ollama |
+
+Les deux « 4B » viennent de deux familles différentes (Ornith est issu de
+l'architecture de Qwen3.5) : l'étape 2 les compare sur **les mêmes dossiers**,
+avec le même prompt et la même référence.
 
 L'application ne voit que le nom logique `med-extraction`. Changer de modèle ne
 demande **aucune** modification du code métier : c'est l'objet même de l'atelier.

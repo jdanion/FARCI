@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 # FARCI — vérification des poids de modèles (FARCI §9)
 #
-# Vérifie que les fichiers GGUF sont présents et que leurs empreintes
-# SHA256 correspondent à celles enregistrées dans models/models.lock.env.
+#   ./bin/farci verify-models          les fichiers GGUF présents sur ce poste
+#   ./bin/farci verify-models --urls   AVEC Internet : chaque adresse de
+#                                      models/models.env répond-elle encore ?
+#
+# Le modèle de secours (Qwen3.5-2B) est le seul exigé : les autres dépendent
+# de la machine (02-inference/ollama/create-model.sh liste).
 
 set -euo pipefail
 
@@ -30,41 +34,59 @@ if [[ -r "$FARCI_ROOT/versions.env" ]]; then
   done < "$FARCI_ROOT/versions.env"
 fi
 
+# --urls : une requête d'en-tête par adresse, aucun téléchargement.
+if [[ "${1:-}" == "--urls" ]]; then
+  section "FARCI — adresses des modèles (models/models.env)"
+  failed=0
+  while IFS='=' read -r key url; do
+    [[ "$key" == *_URL ]] || continue
+    code="$(curl -sIL -o /dev/null -w '%{http_code}' --max-time 20 "$url" 2>/dev/null)" || true
+    if [[ "$code" == 200 ]]; then
+      ok "$(basename "$url")"
+    else
+      err "$(basename "$url") : HTTP ${code:-000} — $url"
+      failed=$(( failed + 1 ))
+    fi
+  done < <(emit_env_file "$FARCI_ROOT/models/models.env")
+  (( failed == 0 )) || die "$failed adresse(s) à corriger dans models/models.env (dépôt renommé ? fichier absent ?)"
+  ok "toutes les adresses répondent"
+  exit 0
+fi
+
 section "FARCI — vérification des poids de modèles"
 
 MODELS_DIR="$FARCI_MODELS_DIR"
 
 if [[ ! -d "$MODELS_DIR" ]]; then
   err "répertoire des modèles absent : $MODELS_DIR"
-  printf 'Exécutez ./preload.sh --core pour télécharger les poids.\n'
+  printf 'Exécutez ./preload.sh --equipe 2 (ou --models-ci) pour télécharger les poids.\n'
   exit 1
 fi
 
-# Fichiers attendus (GGUF) : le 9B (Ollama, grosse configuration) et le 2B
-# (llama.cpp, secours, CI). Le 27B est hors atelier.
-EXPECTED_GGUF=(
-  "Ornith-1.5-9B-Q5_K_M.gguf"
-  "Qwen3.5-2B-Q4_K_M.gguf"
+# Le catalogue (models/models.env) : fichier, puis à quoi il sert.
+CATALOG=(
+  "Qwen3.5-2B-Q4_K_M.gguf|secours, toute machine"
+  "Qwen3.5-4B-Q4_K_M.gguf|4B, à comparer avec Gemma (8 Go de RAM)"
+  "gemma-4-E4B-it-Q4_K_M.gguf|4B, à comparer avec Qwen (12 Go de RAM)"
+  "Ornith-1.5-9B-Q5_K_M.gguf|principal, grosse configuration"
+  "Ornith-1.5-35B-A3B-Q4_K_M.gguf|mélange d'experts, machine puissante"
 )
 
-missing=0
 present=0
-
-for f in "${EXPECTED_GGUF[@]}"; do
+for entry in "${CATALOG[@]}"; do
+  f="${entry%%|*}"
   if [[ -f "$MODELS_DIR/$f" ]]; then
-    ok "$f ($(du -h "$MODELS_DIR/$f" | cut -f1))"
+    ok "$f ($(du -h "$MODELS_DIR/$f" | cut -f1)) — ${entry#*|}"
     present=$((present + 1))
   else
-    warn "MANQUANT : $f"
-    missing=$((missing + 1))
+    info "absent : $f — ${entry#*|}"
   fi
 done
 
-printf '\n'
-printf '%d présent(s), %d manquant(s)\n' "$present" "$missing"
+printf '\n%d modèle(s) présent(s) sur %d\n' "$present" "${#CATALOG[@]}"
 
-if (( missing > 0 )); then
-  printf 'Exécutez ./preload.sh --models-ci (ou --core) pour télécharger les poids manquants.\n'
+if [[ ! -f "$MODELS_DIR/Qwen3.5-2B-Q4_K_M.gguf" ]]; then
+  warn "le modèle de secours manque : ./preload.sh --models-ci"
   exit 1
 fi
 

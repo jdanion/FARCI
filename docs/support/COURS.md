@@ -131,7 +131,7 @@ relit avant de s'en servir.
 
 | | Ce que c'est | Dans l'atelier |
 |---|---|---|
-| **Modèle** | un fichier de chiffres : les connaissances | Ornith-1.5-9B (environ 6 Go), Qwen3.5-2B (environ 1 Go) |
+| **Modèle** | un fichier de chiffres : les connaissances | de Qwen3.5-2B (1 Go) à Ornith-1.5-9B (6 Go), en passant par deux « 4B » à comparer : Qwen3.5-4B et Gemma 4 E4B |
 | **Runtime** | le logiciel qui charge ce fichier et répond | Ollama, llama.cpp |
 
 Un livre et la personne qui le lit à voix haute. Le même modèle tourne dans

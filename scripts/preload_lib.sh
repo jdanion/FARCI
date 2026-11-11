@@ -46,6 +46,8 @@ declare -a PRELOAD_GROUPS=(
   build_llamacpp
   models_ornith
   models_ci
+  models_qwen4b
+  models_gemma4b
   inference_ollama
   inference_llamacpp
   gateway_litellm
@@ -312,6 +314,24 @@ group_models_qwen38() {
   preload_model QWEN3_8_27B_Q4KM
 }
 
+# Les deux « 4B », pour comparer deux familles sur les mêmes dossiers.
+group_models_qwen4b() {
+  info "groupe : models_qwen4b (Qwen3.5-4B, ~3 Go)"
+  preload_model QWEN3_5_4B_Q4KM
+}
+
+group_models_gemma4b() {
+  info "groupe : models_gemma4b (Gemma 4 E4B, ~5 Go)"
+  preload_model GEMMA_4_E4B_Q4KM
+}
+
+# Machines puissantes seulement (GPU de 24 Go ou 48 Go de RAM) : jamais dans
+# un mode, seulement ./preload.sh --only models_ornith_moe.
+group_models_ornith_moe() {
+  info "groupe : models_ornith_moe (Ornith-1.5-35B-A3B, ~21,7 Go)"
+  preload_model ORNITH_1_5_35B_A3B_Q4KM
+}
+
 group_models_ci() {
   info "groupe : models_ci (modèle de secours et de CI, ~1,2 Go)"
   preload_model QWEN3_5_2B_Q4KM
@@ -413,7 +433,9 @@ poste_groups() {
     0) printf '%s\n' gitops ;;
     1) printf '%s\n' dashboard ;;
     2) if [[ "$profil" == grosse ]]; then printf '%s\n' inference_ollama models_ornith models_ci
-       else printf '%s\n' build_llamacpp models_ci; fi ;;
+       else printf '%s\n' build_llamacpp models_ci; fi
+       # Les deux 4B, pour toute l'équipe : la comparaison de l'étape 2.
+       printf '%s\n' models_qwen4b models_gemma4b ;;
     3) printf '%s\n' gateway_litellm gateway_bifrost ;;
     4) printf '%s\n' documents build_eds_nlp ;;
     5) if [[ "$profil" == grosse ]]; then printf '%s\n' observability_phoenix observability_langfuse

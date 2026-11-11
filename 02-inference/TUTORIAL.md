@@ -52,6 +52,11 @@ rejoué de la référence répond à votre place.
   **grosse configuration** (GPU NVIDIA ou 32 Go de RAM) → Ollama + Ornith-1.5-9B ;
   **sinon** → llama.cpp (compilé pour la machine) + Qwen3.5-2B. Les deux servent
   `med-extraction` : la ligne Inference du tableau passe au vert avec l'une ou l'autre.
+- Le modèle, selon la machine (`02-inference/ollama/create-model.sh liste`) :
+  Qwen3.5-2B partout ; **Qwen3.5-4B** dès 8 Go de RAM ; **Gemma 4 E4B** dès
+  12 Go ; Ornith-1.5-9B sur une grosse configuration ; Ornith-1.5-35B-A3B
+  (mélange d'experts, ~22 Go) sur une machine puissante, après
+  `./preload.sh --only models_ornith_moe`.
 - Poids dans `$FARCI_DATA_DIR/offline/models/` : `./bin/farci verify-models`.
 - Images préchargées : `./bin/farci verify-images`.
 
@@ -65,9 +70,16 @@ rejoué de la référence répond à votre place.
 
 ```bash
 ./bin/farci up 02-inference/ollama
-02-inference/ollama/create-model.sh       # auto : principal (9B) si ≥ 16 Go de RAM, sinon secours (2B)
+02-inference/ollama/create-model.sh       # auto : 9B si ≥ 16 Go de RAM, Qwen3.5-4B si ≥ 8 Go, sinon 2B
 02-inference/ollama/create-model.sh secours   # forcer le modèle de secours (machine faible, réponses lentes)
+02-inference/ollama/create-model.sh gemma4b   # ou qwen4b, principal, moe : le nom servi reste med-extraction
 ```
+
+Comparer deux modèles (bonus, et le cœur de l'étape 2 pour votre équipe) :
+importer `qwen4b`, lancer `./bin/farci extract --subset quick --run qwen4b` ;
+importer `gemma4b`, lancer `./bin/farci extract --subset quick --run gemma4b` ;
+puis `./bin/farci evaluate --subset quick` classe les deux. Avec llama.cpp,
+le fichier se choisit par `LLAMACPP_GGUF` dans la fiche de votre poste.
 
 Poste sans grosse configuration (pas de GPU NVIDIA, moins de 32 Go de RAM) :
 
