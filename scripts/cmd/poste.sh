@@ -75,7 +75,7 @@ poste_plan() {
     2) if [[ "$machine" == grosse ]]; then
          printf 'inference\tollama\tinférence : Ollama + Ornith-1.5-9B\n'
        else
-         printf 'inference\tllamacpp\tinférence : llama.cpp + Qwen3.5-2B\n'
+         printf 'inference\tllamacpp\tinférence : llama.cpp + un modèle 2B ou 4B\n'
        fi ;;
     3) printf 'gateway\t\tpasserelle LLM : LiteLLM\n' ;;
     4) printf 'client\t\tdocuments cliniques : Docling, EDS-NLP\n' ;;
@@ -132,6 +132,9 @@ FARCI_ROLE=$role
 # Profil : grosse (GPU NVIDIA ou 32 Go : Ollama + modèle 9B) | legere (llama.cpp + 2B)
 FARCI_MACHINE=$machine
 FARCI_INFERENCE_PRIMARY=${runtime:-ollama}
+# Fichier servi par llama.cpp (vide = automatique). Pour comparer :
+# Qwen3.5-4B-Q4_K_M.gguf, puis gemma-4-E4B-it-Q4_K_M.gguf
+LLAMACPP_GGUF=
 # Parcours de l'étape 2 : python | webui
 FARCI_TRACK=python
 EOF

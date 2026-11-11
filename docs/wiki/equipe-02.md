@@ -30,6 +30,20 @@ le lit : comme un livre et la personne qui le lit à voix haute.
 7. **Regarder l'écran projeté** — la ligne `Inference` passe à `✅ UP` : la
    salle utilise maintenant **votre** modèle.
 
+## Quel modèle pour votre machine ?
+
+| Votre machine | Modèle | Commande |
+|---|---|---|
+| moins de 8 Go de RAM | Qwen3.5-2B | `02-inference/ollama/create-model.sh secours` |
+| 8 Go | Qwen3.5-4B | `02-inference/ollama/create-model.sh qwen4b` |
+| 8 Go | MedGemma 4B (spécialisé médecine) | `02-inference/ollama/create-model.sh medgemma4b` |
+| 12 Go | Gemma 4 E4B | `02-inference/ollama/create-model.sh gemma4b` |
+| 16 Go et plus | Ornith-1.5-9B | `02-inference/ollama/create-model.sh principal` |
+| GPU de 24 Go, ou 48 Go de RAM | Ornith-1.5-35B-A3B | `02-inference/ollama/create-model.sh moe` |
+
+Le nom servi reste `med-extraction` : la salle ne voit pas la différence, sauf
+dans les scores. C'est ce choix que vous écrivez dans la fiche de votre poste.
+
 ## Votre branche
 
 Le projet, adapté à **votre** machine et à votre rôle — le runtime et le modèle que **cette** machine peut servir (`FARCI_MACHINE`, `FARCI_INFERENCE_PRIMARY`) :

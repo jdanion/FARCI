@@ -61,7 +61,12 @@ cmd_maj() {
   [[ -d "$bare" ]] || git init -q --bare "$bare"
   rev="$(git -C "$FARCI_ROOT" rev-parse --short HEAD)"
   # Une copie dérivée : on la remplace toujours par la version de ce dépôt.
-  git -C "$bare" fetch -q --force "$FARCI_ROOT" HEAD:refs/heads/main
+  # --update-shallow : un clone superficiel (CI, git clone --depth) se publie
+  # aussi, avec son historique tronqué ; sans l'option, git refuse sans erreur.
+  if [[ "$(git -C "$FARCI_ROOT" rev-parse --is-shallow-repository)" == true ]]; then
+    warn "ce dépôt est un clone superficiel : l'historique publié sera tronqué (git fetch --unshallow)"
+  fi
+  git -C "$bare" fetch -q --force --update-shallow "$FARCI_ROOT" HEAD:refs/heads/main
   git -C "$bare" symbolic-ref HEAD refs/heads/main
   git -C "$bare" gc -q --prune=now
   git -C "$bare" update-server-info

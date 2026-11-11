@@ -49,7 +49,8 @@ class Brique(unittest.TestCase):
         self.assertIn("inference_ollama", groupes("2", "grosse"))
         self.assertIn("models_ornith", groupes("2", "grosse"))
         legere = groupes("2", "legere")
-        self.assertEqual(legere, ["build_llamacpp", "models_ci"])
+        self.assertEqual(legere, ["build_llamacpp", "models_ci", "models_qwen4b", "models_gemma4b", "models_medgemma4b"])
+        self.assertNotIn("models_ornith_moe", groupes("2", "grosse"))
         self.assertTrue(any("llamacpp" in i for i in images("2", "legere")))
         self.assertFalse(any("ollama" in i for i in images("2", "legere")))
 

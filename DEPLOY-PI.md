@@ -299,9 +299,12 @@ ollama`, `make core-up`.
 | Modèle (GGUF, `models/models.env`) | Fichier | Taille annoncée | Sur ce Pi |
 |---|---|---|---|
 | Qwen3.5-2B Q4_K_M | `Qwen3.5-2B-Q4_K_M.gguf` | ~1,2 Go | **oui** : le modèle du profil « pi » |
+| Qwen3.5-4B Q4_K_M | `Qwen3.5-4B-Q4_K_M.gguf` | ~3 Go | **oui**, préchargé par `--pi` : plus juste que le 2B, plus lent ; arrêter Docling pendant l'essai |
+| MedGemma 4B Q4_K_XL | `medgemma-4b-it-UD-Q4_K_XL.gguf` | ~3 Go | oui, comme Qwen3.5-4B (`./preload.sh --only models_medgemma4b`) : même gabarit, spécialisé médecine |
+| Gemma 4 E4B Q4_K_M | `gemma-4-E4B-it-Q4_K_M.gguf` | ~5 Go | se charge seul (`./preload.sh --only models_gemma4b`), pas avec la pile |
 | Ornith-1.5-9B Q4_K_M | `Ornith-1.5-9B-Q4_K_M.gguf` | ~5,5 Go | se charge seul, mais pas avec la pile ; quelques tokens/s : non |
 | Ornith-1.5-9B Q5_K_M | `Ornith-1.5-9B-Q5_K_M.gguf` | ~6,5 Go | non |
-| Qwen3.8-27B Q4_K_M | `Qwen3.8-27B-Q4_K_M.gguf` | ~16,5 Go | non |
+| Qwen3.8-27B Q4_K_M | `Qwen3.8-27B-UD-Q4_K_M.gguf` | ~16,5 Go | non |
 
 Les fichiers GGUF sont servis par Ollama sous le nom logique
 `med-extraction` (`02-inference/ollama/create-model.sh`).

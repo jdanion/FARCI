@@ -136,13 +136,25 @@ les masque.
 
 ## Les modèles
 
-Un modèle n'est pas un runtime. Le dépôt utilise deux modèles, interchangeables
-derrière la même passerelle :
+Un modèle n'est pas un runtime. Le dépôt propose six modèles, interchangeables
+derrière la même passerelle ; chaque poste prend celui que sa machine supporte :
 
-| Rôle | Modèle | Taille (Q4) | Licence | Où il tourne |
+| Machine | Modèle | Taille (Q4) | Licence | Où il tourne |
 |---|---|---|---|---|
-| Principal, grosse configuration (GPU ou 32 Go) | **Ornith-1.5-9B** | ~5,9 Go | MIT | Ollama |
-| Postes légers, secours, développement et CI | Qwen3.5-2B | ~1,2 Go | Apache-2.0 | llama.cpp (et Ollama) |
+| toute machine : secours, développement, CI | Qwen3.5-2B | ~1,2 Go | Apache-2.0 | llama.cpp, Ollama |
+| 8 Go de RAM | **Qwen3.5-4B** | ~3 Go | Apache-2.0 | llama.cpp, Ollama |
+| 12 Go de RAM | **Gemma 4 E4B** | ~5 Go | Apache-2.0 | llama.cpp, Ollama |
+| 8 Go de RAM | **MedGemma 4B**, spécialisé médecine | ~3 Go | Health AI Developer Foundations | llama.cpp, Ollama |
+| grosse configuration (GPU ou 32 Go) | **Ornith-1.5-9B** | ~5,9 Go | MIT | Ollama |
+| machine puissante (GPU de 24 Go, ou 48 Go de RAM) | Ornith-1.5-35B-A3B | ~22 Go | MIT | Ollama |
+
+Les trois « 4B » se comparent sur **les mêmes dossiers**, avec le même prompt
+et la même référence : deux généralistes de familles différentes (Qwen3.5,
+dont Ornith est issu, et Gemma 4) et un modèle **spécialisé médecine**
+(MedGemma). Un modèle entraîné sur des textes médicaux extrait-il mieux ?
+C'est le score qui répond, pas l'intuition. Les conditions d'usage de MedGemma
+sont plus restrictives qu'une licence libre : les lire avant tout usage hors
+de l'atelier.
 
 L'application ne voit que le nom logique `med-extraction`. Changer de modèle ne
 demande **aucune** modification du code métier : c'est l'objet même de l'atelier.
