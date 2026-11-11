@@ -2,7 +2,8 @@
 # FARCI — bootstrap Gitea : création org, utilisateur admin, dépôt
 #
 # Ce script est exécuté une fois après le démarrage de Gitea.
-# Il crée l'organisation FARCI, l'utilisateur admin, et le dépôt farci.
+# Il crée l'organisation FARCI, l'utilisateur admin, le dépôt farci et un
+# compte par équipe (equipe-0 à equipe-8) qui peut y pousser ses branches.
 
 set -euo pipefail
 
@@ -59,5 +60,28 @@ curl -sf -o /dev/null -X POST "$GITEA_URL/api/v1/orgs/FARCI/repos" \
     \"private\": false,
     \"default_branch\": \"main\"
   }" || warn "dépôt farci peut-être déjà existant"
+
+# Un compte par équipe : toute la salle pousse sa branche et ouvre sa Pull
+# Request. Lecture sans compte ; écriture avec equipe-<N> et le mot de passe
+# de la salle (GITEA_EQUIPE_PASSWORD, écrit au tableau : ce n'est pas un secret
+# au-delà de la séance).
+GITEA_EQUIPE_PASSWORD="${GITEA_EQUIPE_PASSWORD:?GITEA_EQUIPE_PASSWORD requis (.env)}"
+info "création des comptes d'équipe (equipe-0 à equipe-8)..."
+for n in 0 1 2 3 4 5 6 7 8; do
+  curl -sf -o /dev/null -X POST "$GITEA_URL/api/v1/admin/users" \
+    -H "Content-Type: application/json" \
+    -u "$GITEA_ADMIN_USER:$GITEA_ADMIN_PASSWORD" \
+    -d "{
+      \"username\": \"equipe-$n\",
+      \"password\": \"$GITEA_EQUIPE_PASSWORD\",
+      \"email\": \"equipe-$n@farci.local\",
+      \"must_change_password\": false
+    }" || debug "compte equipe-$n déjà existant"
+  curl -sf -o /dev/null -X PUT "$GITEA_URL/api/v1/repos/FARCI/farci/collaborators/equipe-$n" \
+    -H "Content-Type: application/json" \
+    -u "$GITEA_ADMIN_USER:$GITEA_ADMIN_PASSWORD" \
+    -d '{"permission": "write"}' || warn "equipe-$n : droit d'écriture non accordé"
+done
+ok "comptes equipe-0 à equipe-8 : écriture sur FARCI/farci"
 
 ok "Gitea bootstrap terminé"

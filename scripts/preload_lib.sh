@@ -121,20 +121,43 @@ preload_download() {
   ok "téléchargé : $dest"
 }
 
-# Charge une image Docker depuis un registre.
+# Dossier des images de CETTE architecture sur le serveur de fichiers
+# (FARCI_FICHIERS_URL, .env) : offline-x86 ou offline-arm64.
+preload_mirror_arch() {
+  case "$(uname -m)" in
+    x86_64|amd64)  printf 'offline-x86\n' ;;
+    aarch64|arm64) printf 'offline-arm64\n' ;;
+  esac
+}
+
+# Charge une image Docker depuis son registre ; si le registre ne répond pas
+# (filtrage, quota), depuis l'archive du serveur de fichiers.
 #   preload_docker_pull <image:tag>
 preload_docker_pull() {
-  local image="$1"
+  local image="$1" arch tar url
   info "image docker : $image"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
     printf '  [dry-run] docker pull %s\n' "$image"
     return 0
   fi
-  docker pull "$image" || {
-    err "échec du pull : $image"
-    return 1
-  }
-  ok "image présente : $image"
+  if docker pull "$image"; then
+    ok "image présente : $image"
+    return 0
+  fi
+  arch="$(preload_mirror_arch)"
+  if [[ -n "${FARCI_FICHIERS_URL:-}" && -n "$arch" ]]; then
+    tar="$(printf '%s' "$image" | tr '/:' '__').tar"
+    url="${FARCI_FICHIERS_URL%/}/$arch/images/$tar"
+    warn "registre injoignable : essai sur le serveur de fichiers ($url)"
+    mkdir -p "$FARCI_IMAGES_DIR"
+    if curl -fSL --retry 3 -o "$FARCI_IMAGES_DIR/$tar" "$url" && docker load -q -i "$FARCI_IMAGES_DIR/$tar"; then
+      ok "image chargée depuis le serveur de fichiers : $image"
+      return 0
+    fi
+    rm -f "$FARCI_IMAGES_DIR/$tar"
+  fi
+  err "échec du pull : $image"
+  return 1
 }
 
 # Télécharge une image de scripts/lib/images.sh PUIS la sauvegarde en .tar
@@ -175,7 +198,12 @@ preload_model() {
     return 0
   fi
   [[ -n "$sha" ]] || warn "$sha_var vide : empreinte non vérifiée (elle sera inscrite au manifeste)"
-  preload_download "$url" "$dest" "$sha"
+  # Le site d'origine d'abord ; s'il est bloqué ou injoignable, le miroir du
+  # formateur (même fichier, même empreinte).
+  preload_download "$url" "$dest" "$sha" && return 0
+  [[ -n "${FARCI_FICHIERS_URL:-}" && "${PRELOAD_DRY_RUN:-0}" != "1" ]] || return 1
+  warn "site d'origine injoignable : essai sur le miroir ($FARCI_FICHIERS_URL)"
+  preload_download "${FARCI_FICHIERS_URL%/}/models/$(basename "$url")" "$dest" "$sha"
 }
 
 # Sauvegarde une image Docker dans le répertoire offline.
@@ -217,18 +245,29 @@ group_dashboard() {
 }
 
 # llama.cpp, compilé pour CETTE machine (GGML_NATIVE : les instructions de
-# son processeur). Le Dockerfile clone lui-même la version LLAMACPP_BUILD.
+# son processeur). Les sources sont clonées ici, à la version LLAMACPP_BUILD,
+# dans 02-inference/llamacpp/vendor/llama.cpp (hors Git) : le docker build
+# n'a pas besoin de GitHub. FARCI_DOCKER_BUILD_ARGS : arguments
+# supplémentaires de docker build (proxy d'établissement, par exemple).
 group_build_llamacpp() {
-  local image="farci/llamacpp:server-${LLAMACPP_BUILD}" dir="$FARCI_ROOT/02-inference/llamacpp"
+  local dir="$FARCI_ROOT/02-inference/llamacpp" image src
+  image="$(farci_image llamacpp)" || return 1
+  src="$dir/vendor/llama.cpp"
   info "groupe : build_llamacpp ($image, architecture $(uname -m))"
   if [[ "${PRELOAD_DRY_RUN:-0}" == "1" ]]; then
-    printf '  [dry-run] docker build -t %s %s\n' "$image" "$dir"
+    printf '  [dry-run] git clone ggml-org/llama.cpp @ %s ; docker build -t %s\n' "$LLAMACPP_BUILD" "$image"
     return 0
+  fi
+  if [[ "$(git -C "$src" describe --tags --exact-match 2>/dev/null)" != "$LLAMACPP_BUILD" ]]; then
+    rm -rf "$src"
+    git clone -q --depth 1 --branch "$LLAMACPP_BUILD" https://github.com/ggml-org/llama.cpp "$src" \
+      || { err "llama.cpp $LLAMACPP_BUILD introuvable (versions.env : LLAMACPP_BUILD)"; return 1; }
   fi
   local -a extra=()
   read -r -a extra <<< "${FARCI_DOCKER_BUILD_ARGS:-}"
-  docker build -t "$image" --build-arg "LLAMACPP_BUILD=$LLAMACPP_BUILD" \
-    "${extra[@]}" -f "$dir/Dockerfile" "$dir" || { err "échec de la compilation llama.cpp"; return 1; }
+  info "compilation de llama-server (5 à 20 min selon la machine)…"
+  docker build -t "$image" --build-arg "PYTHON_IMAGE_TAG=$PYTHON_IMAGE_TAG" \
+    "${extra[@]}" "$dir" || { err "échec de la compilation llama.cpp"; return 1; }
   preload_docker_save "$image" "llamacpp-server-${LLAMACPP_BUILD}.tar"
 }
 

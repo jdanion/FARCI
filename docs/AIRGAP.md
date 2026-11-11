@@ -1,12 +1,21 @@
-# Mode air-gap
+# Local d'abord : ce qui passe par Internet, et ce qui n'y passe jamais
 
-**Objectif** : une fois l'atelier commencé, plus aucune connexion Internet ne doit
-être nécessaire. Ni pour démarrer, ni pour répondre, ni pour installer quoi que
-ce soit.
+**Objectif** : la plateforme fonctionne **sans dépendre d'aucun service
+distant**. Ni pour démarrer, ni pour répondre, ni pour traiter un dossier.
 
 Ce n'est pas une contrainte de confort : c'est ce qui garantit qu'une extraction
-de dossier patient ne peut pas fuiter, et que l'atelier fonctionne dans une salle
-sans réseau.
+de dossier patient ne peut pas fuiter. Internet existe dans la salle, et il a
+deux usages, pas un de plus :
+
+| Ce qui circule | Par où | Pourquoi c'est acceptable |
+|---|---|---|
+| **le code** | GitHub (`FARCI_GITHUB_URL`), ou la forge Gitea de la salle | public, sans donnée ; c'est l'objet de `docs/GIT.md` |
+| **les fichiers volumineux** : modèles, images Docker, wheels | leur site d'origine (Hugging Face, registres, PyPI) ; en secours le miroir du formateur (`FARCI_FICHIERS_URL`), ou le Pi | publics, téléchargés une fois, figés par leurs empreintes |
+| **les dossiers, les prompts, les réponses, les traces** | **rien ne sort de la salle** | inférence, passerelle, observabilité : tout tourne sur place |
+
+Et si Internet tombe pendant la séance, rien ne s'arrête : la forge Gitea
+remplace GitHub, le Pi remplace le serveur de fichiers. `./verify-airgap.sh`
+prouve que la plateforme démarre et répond sans aucun réseau extérieur.
 
 ---
 
@@ -14,8 +23,24 @@ sans réseau.
 
 | Phase | Quand | Internet | Commande |
 |---|---|---|---|
-| **Préchargement** | J-7 à J-1 | oui | poste étudiant : `./preload.sh --equipe <N>` ; formateur : `./preload.sh --core` |
-| **Atelier** | J0 | **non** | `./bin/farci up <brique>`, `./bin/farci status`, … |
+| **Préchargement** | J-7 à J0, y compris dans la salle | oui : GitHub et le serveur de fichiers | `git clone`, puis poste étudiant : `./preload.sh --equipe <N>` ; formateur : `./preload.sh --core` |
+| **Atelier** | J0 | **pas pour traiter** ; seulement `git` et un fichier manquant | `./bin/farci up <brique>`, `./bin/farci status`, … |
+
+### D'où viennent les fichiers volumineux
+
+`./preload.sh` essaie dans cet ordre, sans rien demander :
+
+1. **modèles** : le site d'origine (Hugging Face, `models/models.env`), puis
+   le miroir (`FARCI_FICHIERS_URL/models/`) ;
+2. **images Docker** : leur registre, puis l'archive du miroir
+   (`offline-x86/images/` ou `offline-arm64/images/` selon la machine) ;
+3. **wheels Python** : `offline/wheels/` (rempli depuis PyPI par
+   `./preload.sh`), sinon le Pi (`FARCI_WHEELS_URL`), sinon le miroir (`wheels/`).
+
+Le miroir n'est qu'un **secours** : il ne sert que si un site d'origine est
+bloqué ou saturé. Le formateur l'alimente depuis une machine déjà préchargée :
+`./bin/farci partage publier <destination rsync>`. Dans la salle, le Pi sert
+la même arborescence sur `http://<REFERENCE_IP>/partage/`.
 
 Ce qui est téléchargé pendant la phase 1 est **figé** : ni le jour J, ni le mois
 suivant. Les empreintes SHA256 sont conservées pour le prouver.
@@ -72,7 +97,7 @@ Total selon le périmètre :
 
 Chaque image est téléchargée **puis** sauvegardée en `.tar` dans
 `offline/images/` (liste unique : `scripts/lib/images.sh`). Sur un poste sans
-Internet, depuis la clé USB :
+Internet, depuis une copie de `offline/` :
 
 ```bash
 for f in offline/images/*.tar; do docker load -i "$f"; done
@@ -90,7 +115,7 @@ for f in offline/images/*.tar; do docker load -i "$f"; done
 
 ---
 
-## Vérifier avant de couper Internet
+## Vérifier que rien ne dépend d'Internet
 
 ```bash
 ./verify-airgap.sh            # contrôles de complétude
@@ -124,8 +149,9 @@ Concrètement, cela interdit :
 - un CDN, une police distante ou un script distant dans une application ;
 - un point d'entrée cloud obligatoire dans une chaîne locale.
 
-C'est le rôle de `./bin/farci lint-offline`, exécuté à chaque Pull
-Request, et de `verify-airgap.sh` avant la coupure.
+Télécharger est un geste **explicite** (`git clone`, `./preload.sh`), jamais un
+effet de bord d'un démarrage. C'est le rôle de `./bin/farci lint-offline`,
+exécuté à chaque Pull Request, et de `verify-airgap.sh` avant la séance.
 
 ---
 
@@ -168,6 +194,7 @@ la détecte.
 
 ## Voir aussi
 
+- `docs/GIT.md` — le code : GitHub, la forge Gitea, votre branche
 - `docs/INSTRUCTOR_GUIDE.md` — les checklists J-7, J-1, J0
 - `preload.sh` — le préchargement (phase 1)
 - `verify-airgap.sh` — la vérification

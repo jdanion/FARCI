@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# FARCI — ./bin/farci partage : ce que le Pi distribue aux étudiants arrivés sans rien
+# FARCI — ./bin/farci partage : ce que le formateur distribue hors de Git
+#
+# Le CODE se clone (GitHub, ou la forge Gitea de la salle : docs/GIT.md). Les
+# FICHIERS VOLUMINEUX (modèles, images, wheels) ne sont jamais dans Git : ils
+# sont servis par le Pi dans la salle, et par le serveur de fichiers du
+# formateur (FARCI_FICHIERS_URL, .env) partout ailleurs.
 #
 #   ./bin/farci partage                       état du partage et adresses
 #   ./bin/farci partage maj                   publie CE dépôt : farci.git (clonable),
@@ -9,6 +14,12 @@
 #                                             (Linux/WSL, Mac ; versions.env)
 #   ./bin/farci partage offline-x86 <dossier> copie un offline/ préparé sur une
 #                                             machine x86 (images des briques)
+#   ./bin/farci partage publier <destination> [--simuler]
+#                                             envoie les fichiers volumineux sur le
+#                                             serveur de fichiers, par rsync (ex.
+#                                             moi@serveur:/var/www/farci/) : models/,
+#                                             wheels/, offline-x86/, offline-<cette
+#                                             machine>/images/
 #
 # Servi par l'accueil de la salle (Caddy, aucun service en plus) :
 #   git clone http://<Pi>/farci.git farci     le dépôt (protocole HTTP « simple »)
@@ -57,6 +68,9 @@ cmd_maj() {
   git -C "$FARCI_ROOT" archive --format=tar.gz --prefix=farci/ -o "$SHARE/farci.tar.gz" HEAD
   git -C "$FARCI_ROOT" archive --format=zip --prefix=farci/ -o "$SHARE/farci.zip" HEAD
   student_network_env > "$SHARE/network.env"
+  # D'où vient le projet : lu par la page /rejoindre (aucune adresse en dur).
+  printf '{"github": "%s", "fichiers": "%s", "forge": "%s"}\n' \
+    "${FARCI_GITHUB_URL:-}" "${FARCI_FICHIERS_URL:-}" "${GITEA_URL:+$GITEA_URL/FARCI/farci}" > "$SHARE/sources.json"
   printf 'FARCI — partage de la salle\nversion : %s (%s)\npublié : %s\n' \
     "$rev" "$(git -C "$FARCI_ROOT" log -1 --format=%s)" "$(date '+%Y-%m-%d %H:%M')" > "$SHARE/VERSION.txt"
   ok "publié : version $rev"
@@ -104,6 +118,34 @@ cmd_offline_x86() {
   ok "offline x86 partagé : $(du -sh "$SHARE/offline-x86" | cut -f1)"
 }
 
+# Ce que le serveur de fichiers doit servir, à l'adresse FARCI_FICHIERS_URL :
+# la même arborescence que le Pi, plus les poids des modèles.
+cmd_publier() {
+  local dest="${1:?usage : ./bin/farci partage publier <destination rsync> [--simuler]}" dry=()
+  [[ "${2:-}" == "--simuler" ]] && dry=(--dry-run)
+  need rsync
+  dest="${dest%/}"
+  local arch sent=0
+  case "$(uname -m)" in x86_64|amd64) arch=offline-x86 ;; *) arch=offline-arm64 ;; esac
+  # send <dossier source> <sous-dossier de destination> [filtres rsync…]
+  # Un seul niveau créé par envoi : rsync le fait partout, sans option récente.
+  send() {
+    local src="$1" sub="$2"; shift 2
+    [[ -d "$src" ]] && compgen -G "$src/*" >/dev/null || { info "rien à envoyer : $src"; return 0; }
+    info "$src → $dest/$sub/"
+    rsync -a --partial "${dry[@]}" "$@" "$src"/ "$dest/$sub"/ \
+      || die "envoi interrompu : $sub (relancer : rsync reprend où il s'est arrêté)"
+    sent=$(( sent + 1 ))
+  }
+  send "$FARCI_MODELS_DIR" models
+  send "$SHARE/wheels" wheels
+  # Les images de CETTE machine, sans ses modèles ni ses wheels (déjà envoyés).
+  send "$FARCI_OFFLINE_DIR" "$arch" --include='images/***' --exclude='*'
+  [[ "$arch" == offline-x86 ]] || send "$SHARE/offline-x86" offline-x86
+  ok "${dry[*]:+[simulation] }$sent dossier(s) envoyé(s) vers $dest"
+  info "à vérifier depuis un poste : ${FARCI_FICHIERS_URL:-<FARCI_FICHIERS_URL dans .env>}/models/"
+}
+
 cmd_etat() {
   section "Partage de la salle"
   if [[ -f "$SHARE/VERSION.txt" ]]; then
@@ -120,8 +162,11 @@ cmd_etat() {
   printf '  offline x86 (PC Intel/AMD) : %s\n' "$x86"
   printf '  offline arm64 (Pi, Mac Apple Silicon) : %s\n\n' "$arm"
   printf '  Pour l'"'"'étudiant :  http://%s/rejoindre\n' "$HOST"
-  printf '  Cloner :           git clone http://%s/farci.git farci\n' "$HOST"
+  printf '  Cloner :           %s\n' "${FARCI_GITHUB_URL:-(FARCI_GITHUB_URL absent de .env)}"
+  [[ -z "${GITEA_URL:-}" ]] || printf '    forge de la salle : %s/FARCI/farci.git\n' "$GITEA_URL"
+  printf '    sans forge :     git clone http://%s/farci.git farci  (lecture seule)\n' "$HOST"
   printf '  Fichiers :         http://%s/partage/\n' "$HOST"
+  printf '    hors de la salle : %s\n' "${FARCI_FICHIERS_URL:-(FARCI_FICHIERS_URL absent de .env)}"
 }
 
 case "${1:-}" in
@@ -129,6 +174,7 @@ case "${1:-}" in
   maj)          cmd_maj ;;
   wheels)       cmd_wheels ;;
   offline-x86)  shift; cmd_offline_x86 "$@" ;;
+  publier)      shift; cmd_publier "$@" ;;
   -h|--help)    usage ;;
   *)            err "commande inconnue : $1"; usage >&2; exit 64 ;;
 esac

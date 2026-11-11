@@ -7,19 +7,33 @@
 3. **PR** : créer une Pull Request vers `main`
 4. **Revue** : au moins 1 review avant merge
 
+### Pendant la séance : une branche par poste
+
+Chaque étudiant clone le projet (GitHub ou forge Gitea de la salle), crée
+**sa** branche `poste/equipe-<N>-<surnom de la machine>`, y commite la fiche
+de son poste (`postes/`, écrite par `./bin/farci poste nouveau`) et ce que son
+matériel impose, la pousse sur la forge et ouvre une Pull Request vers
+`seance`, relue par une **autre équipe**. Le pas-à-pas : `docs/GIT.md`.
+
+| Branche | Qui y écrit |
+|---|---|
+| `main` | `./bin/farci forge-sync` seulement (copie de GitHub) |
+| `seance` | une Pull Request approuvée par une autre équipe |
+| `poste/equipe-<N>-<surnom>` | l'étudiant de ce poste (compte `equipe-<N>` sur la forge) |
+
 ## Deux forges, une seule source de vérité
 
 | Forge | Rôle | Qui écrit sur `main` |
 |---|---|---|
 | **GitHub** (`origin`) | **source de vérité** du dépôt | une PR relue et fusionnée par un humain |
-| **Gitea** (salle, équipe 0) | copie de travail pendant la séance | **personne** à la main : `./bin/farci forge-sync` seulement |
+| **Gitea** (forge de la salle, auto-hébergée) | là où toute la salle pousse ses branches et relit ses PR | **personne** à la main : `./bin/farci forge-sync` seulement |
 
 - Gitea `main` ne reçoit que GitHub `main`, **en avance rapide** :
 
   ```bash
   ./bin/farci forge-sync status               # identiques, en retard, divergents ?
   ./bin/farci forge-sync push                 # Gitea main ← GitHub main
-  ./bin/farci forge-sync bundle farci.bundle  # salle sans Internet : sur clé USB
+  ./bin/farci forge-sync bundle farci.bundle  # salle sans Internet : dans un fichier
   ./bin/farci forge-sync from-bundle farci.bundle
   ```
 
@@ -162,6 +176,7 @@ farci/
 ├── 07-applications/    # Python, Open WebUI, Flowise
 ├── 08-arcane-agents/   # agents de supervision, webhook GitOps
 ├── chaos/              # Chaos engineering
+├── postes/             # Une fiche par machine (branches poste/*)
 ├── datasets/           # Dataset synthétique
 ├── docs/               # Documentation
 ├── scripts/            # Scripts bash

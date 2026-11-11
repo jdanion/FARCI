@@ -76,3 +76,4 @@ Thumbs.db
 
 # Sources d'EDS-Pseudo clonées au préchargement (image farci/eds-nlp)
 04-clinical-documents/eds-nlp/vendor/
+02-inference/llamacpp/vendor/

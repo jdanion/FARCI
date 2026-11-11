@@ -6,9 +6,11 @@
 <meta name="theme-color" content="#0b1020">
 <title>FARCI — rejoindre la salle</title>
 <!--
-  FARCI — rejoindre la salle quand on arrive sans rien (pas de git clone,
-  pas d'images, pas de modèle). Servie par l'agrégateur : http://<Pi>/rejoindre
-  Tout vient du Pi (./bin/farci partage maj) ; aucune ressource externe.
+  FARCI — rejoindre la salle : cloner le projet (forge Gitea de la salle,
+  GitHub, ou la copie du Pi), créer sa branche, récupérer les fichiers
+  volumineux. Servie par l'agrégateur : http://<Pi>/rejoindre
+  Aucune ressource externe ; les adresses de GitHub et du serveur de fichiers
+  viennent de /partage/sources.json (./bin/farci partage maj).
 -->
 <style>
   :root { --fond: #0b1020; --carte: #141b33; --carte-2: #1b2445; --trait: #2a355f; --texte: #eef2ff;
@@ -43,18 +45,19 @@
 <body>
 <main>
   <h1>Rejoindre la salle FARCI</h1>
-  <p class="sous">Vous arrivez sans avoir cloné le projet ? Tout est ici, servi par la machine du formateur,
-    sans Internet. Comptez 5 minutes pour les étapes 1 à 4.</p>
+  <p class="sous">Le code se clone avec git ; les fichiers volumineux (modèles, images) se téléchargent à part.
+    Comptez 10 minutes pour les étapes 1 à 5.</p>
 
   <section>
-    <h2><span class="num">1</span>Récupérer le projet</h2>
-    <p>Avec git (Mac, Linux, Windows avec WSL) :</p>
-    <div class="cmd"><code data-cmd>git clone http://HOTE/farci.git farci</code></div>
-    <p>Sans git : <a id="lien-tgz" href="/partage/farci.tar.gz">farci.tar.gz</a> ou
-      <a id="lien-zip" href="/partage/farci.zip">farci.zip</a>, à décompresser.
+    <h2><span class="num">1</span>Cloner le projet</h2>
+    <p>Cloner, c'est recevoir le projet <b>et tout son historique</b> (Mac, Linux, Windows avec WSL) :</p>
+    <div class="cmd"><code data-cmd id="cmd-clone">git clone http://HOTE/farci.git farci</code></div>
+    <p class="note" id="origine">Copie servie par la machine du formateur, en lecture seule.</p>
+    <p class="note" id="github" hidden></p>
+    <p class="note">Sans git : <a id="lien-tgz" href="/partage/farci.tar.gz">farci.tar.gz</a> ou
+      <a id="lien-zip" href="/partage/farci.zip">farci.zip</a>, à décompresser — mais sans historique ni branche.
       <span class="etat" id="etat-depot">…</span></p>
     <p class="note" id="version"></p>
-    <p class="note" id="gitea" hidden></p>
   </section>
 
   <section>
@@ -78,7 +81,18 @@
   </section>
 
   <section>
-    <h2><span class="num">5</span>Votre brique : les images Docker</h2>
+    <h2><span class="num">5</span>Votre branche</h2>
+    <p>Une branche est <b>votre</b> version du projet, adaptée à <b>cette</b> machine et à votre rôle. Remplacez
+      <code>N</code> par votre équipe et <code>SURNOM</code> par le surnom de la machine (pas le vôtre) :</p>
+    <div class="cmd"><code data-cmd>git switch -c poste/equipe-N-SURNOM</code></div>
+    <div class="cmd"><code data-cmd>./bin/farci poste nouveau</code></div>
+    <p class="note">La commande écrit la fiche de votre poste (mémoire, carte graphique, fonction dans le projet).
+      Ensuite, <code>./bin/farci poste</code> vous donne à chaque fois la commande git suivante : commit, push,
+      Pull Request. Le guide : <code>./bin/farci docs git</code>.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">6</span>Votre brique : les images Docker</h2>
     <p>Seulement si votre équipe héberge une brique (étape 1). Téléchargez <b>l'image de votre brique</b>
       (votre fiche d'équipe dit laquelle), puis chargez-la :</p>
     <div class="choix">
@@ -88,8 +102,8 @@
         <a href="/partage/offline-arm64/images/">images arm64</a></div>
     </div>
     <div class="cmd"><code data-cmd>curl -O http://HOTE/partage/offline-x86/images/NOM.tar && docker load -i NOM.tar</code></div>
-    <p class="note">Le Wi-Fi de la salle est partagé : une image lourde prend plusieurs minutes. Si une clé USB
-      circule, elle est plus rapide.</p>
+    <p class="note">Le Wi-Fi de la salle est partagé : une image lourde prend plusieurs minutes.</p>
+    <p class="note" id="fichiers" hidden></p>
   </section>
 
   <section>
@@ -111,6 +125,10 @@ document.querySelectorAll("[data-cmd]").forEach((code) => {
 });
 document.getElementById("webui").href = "http://" + location.hostname + ":3080";
 
+function forge(url) {
+  cloner(url + ".git", "Forge Gitea de la salle : on clone sans compte, on pousse avec le compte de son équipe (equipe-N).");
+}
+
 function copier(texte, bouton) {
   const fini = () => { bouton.textContent = "Copié ✓"; bouton.classList.add("copie");
     setTimeout(() => { bouton.textContent = "Copier"; bouton.classList.remove("copie"); }, 1500); };
@@ -130,11 +148,32 @@ function etat(id, ok, oui, non) {
   e.textContent = ok ? oui : non;
   e.className = "etat " + (ok ? "ok" : "non");
 }
+function lien(id, avant, url, apres) {
+  const p = document.getElementById(id);
+  p.hidden = false; p.textContent = avant;
+  const a = document.createElement("a"); a.href = url; a.textContent = url;
+  p.appendChild(a); p.appendChild(document.createTextNode(apres || ""));
+}
+function cloner(url, origine) {
+  document.getElementById("cmd-clone").textContent = "git clone " + url + " farci";
+  document.getElementById("origine").textContent = origine;
+}
 (async () => {
+  // D'où vient le projet : la forge de la salle si elle est ouverte, GitHub sinon.
+  let sources = {};
+  try { const r = await fetch("/partage/sources.json", { cache: "no-store" }); if (r.ok) sources = await r.json(); }
+  catch (e) { /* partage pas encore publié */ }
+  if (sources.github) {
+    cloner(sources.github, "GitHub : la source de vérité du projet. Dans la salle, vous ajouterez la forge pour pousser votre branche.");
+    lien("github", "Le projet sur GitHub (à forker pour continuer chez vous) : ", sources.github);
+  }
+  if (sources.forge) forge(sources.forge);
+  if (sources.fichiers) lien("fichiers", "Hors de la salle, les mêmes fichiers (et les modèles) : ", sources.fichiers,
+    " — ./preload.sh --equipe N les télécharge pour vous.");
   etat("etat-depot", await present("/partage/farci.tar.gz"), "disponible", "pas encore publié");
-  etat("etat-wheels", await present("/partage/wheels/"), "disponible", "absent : clé USB");
-  etat("etat-x86", await present("/partage/offline-x86/images/"), "disponible", "absent : clé USB");
-  etat("etat-arm", await present("/partage/offline-arm64/images/"), "disponible", "absent : clé USB");
+  etat("etat-wheels", await present("/partage/wheels/"), "disponible", "absent ici : serveur de fichiers");
+  etat("etat-x86", await present("/partage/offline-x86/images/"), "disponible", "absent ici : serveur de fichiers");
+  etat("etat-arm", await present("/partage/offline-arm64/images/"), "disponible", "absent ici : serveur de fichiers");
   try {
     const v = await fetch("/partage/VERSION.txt", { cache: "no-store" });
     if (v.ok) document.getElementById("version").textContent = (await v.text()).split("\n").slice(1, 3).join(" · ");
@@ -143,13 +182,7 @@ function etat(id, ok, oui, non) {
     const t = await (await fetch("/tableau/etat", { cache: "no-store" })).json();
     const forge = (t.lignes || []).find((l) => l.label === "GitOps");
     const s = forge && (forge.services || [])[0];
-    if (s && s.servi_par === "equipe" && s.url_equipe) {
-      const g = document.getElementById("gitea");
-      g.hidden = false;
-      g.textContent = "La forge Gitea de la salle est ouverte : ";
-      const a = document.createElement("a"); a.href = s.url_equipe; a.textContent = s.url_equipe;
-      g.appendChild(a);
-    }
+    if (s && s.servi_par === "equipe" && s.url_equipe) forge(s.url_equipe.replace(/\/$/, "") + "/FARCI/farci");
   } catch (e) { /* pas de forge */ }
 })();
 </script>

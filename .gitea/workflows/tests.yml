@@ -11,8 +11,9 @@
 name: tests
 
 on:
+  # seance : la branche commune de la salle, cible des Pull Requests des postes.
   pull_request:
-    branches: [main]
+    branches: [main, seance]
   push:
     branches: [main]
   # Relance à la main (formateur, recette J-1).

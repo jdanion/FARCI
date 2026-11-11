@@ -20,7 +20,9 @@ services:
       GITEA__server__ROOT_URL: http://${GITEA_IP:?GITEA_IP manquant (config/network.env)}:${GITEA_PORT:?GITEA_PORT manquant}/
       GITEA__server__SSH_DOMAIN: ${GITEA_IP:?GITEA_IP manquant (config/network.env)}
       GITEA__service__DISABLE_REGISTRATION: "true"
-      GITEA__service__REQUIRE_SIGNIN_VIEW: "true"
+      # La forge sert à toute la salle : on clone sans compte (réseau local),
+      # on pousse avec le compte de son équipe (gitea/bootstrap.sh).
+      GITEA__service__REQUIRE_SIGNIN_VIEW: "false"
       GITEA__security__INSTALL_LOCK: "true"
       GITEA__security__SECRET_KEY: ${GITEA_SECRET_KEY:?GITEA_SECRET_KEY requis}
       GITEA__security__INTERNAL_TOKEN: ${GITEA_INTERNAL_TOKEN:?GITEA_INTERNAL_TOKEN requis}

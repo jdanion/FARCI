@@ -30,6 +30,18 @@ bascule sur un autre poste si le premier ne décroche pas.
 7. **Tester par l'accueil** — `./bin/farci test` : `gateway-contract PASS`.
    L'écran affiche `LLM Gateway ✅ UP`.
 
+## Votre branche
+
+Le projet, adapté à **votre** machine et à votre rôle — la passerelle tourne sur cette machine :
+
+```bash
+git switch -c poste/equipe-3-<surnom>   # le surnom de la machine, pas le vôtre
+./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
+./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+```
+
+Le guide pas à pas : `docs/GIT.md`.
+
 ## La sonde : comment savoir que c'est fini
 
 ```bash

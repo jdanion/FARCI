@@ -11,12 +11,7 @@ Code) sans rien deviner.
 | Disque | 108 Go libres ; il en faut **~30 Go** (voir § 8) |
 | Réseau | LAN domestique, adresse fixe **192.168.0.222**, nom **farci.local** |
 | Rôle | machine seule : la **pile de référence** (`reference/`) sert toutes les briques (🛟) |
-| Source | dépôt public `jdanion/FARCI`, branche `claude/youthful-curie-5ofyyy` (le SHA attendu est donné avec ce guide) |
-
-> ⚠️ **Ne pas utiliser `main`** sur GitHub pour l'instant : le 23 octobre,
-> `main` a été ramené à un état du 27 septembre (une synchronisation depuis
-> Gitea l'a écrasé). La branche ci-dessus contient tout le travail à jour
-> (lots 1 à 4, EDS-NLP, ce guide).
+| Source | dépôt public `jdanion/FARCI`, branche `main` (le SHA attendu est donné avec ce guide) |
 
 ---
 
@@ -43,7 +38,7 @@ Le dépôt est **public** : aucune clé ni jeton n'est nécessaire.
 
 ```bash
 cd ~
-git clone --branch claude/youthful-curie-5ofyyy https://github.com/jdanion/FARCI.git farci
+git clone https://github.com/jdanion/FARCI.git farci
 cd farci
 git log -1 --format='%H %s'                # comparer au SHA donné avec ce guide
 # pour figer exactement cette version : git checkout <SHA>
@@ -260,17 +255,19 @@ rsync -a machine-x86:/srv/farci/offline/ /tmp/offline-x86/   # ou une clé USB
 Le Wi-Fi de la salle est partagé : pour une image lourde, la clé USB reste
 plus rapide.
 
-#### Option : la forge Gitea sur le Pi
+#### La forge Gitea sur le Pi
 
-`./preload.sh --pi` précharge aussi les images de la forge (`00-gitops`). Si
-aucune équipe 0 ne monte la forge, le Pi peut la tenir (~1 Go de RAM) :
+Toute la salle clone, pousse sa branche et ouvre ses Pull Requests sur la
+forge (`docs/GIT.md`) : le Pi la tient dès avant la séance (~1 Go de RAM).
+`./preload.sh --pi` précharge ses images (`00-gitops`).
 
 ```bash
-# secrets GITEA_* dans .env (voir § 3), puis :
+# secrets GITEA_* dans .env (voir § 3), dont GITEA_EQUIPE_PASSWORD, puis :
 ./bin/farci room set gitea 192.168.0.222
 ./bin/farci up 00-gitops
-00-gitops/gitea/bootstrap.sh
-./bin/farci forge-sync push          # Gitea main ← GitHub main (avec Internet)
+00-gitops/gitea/bootstrap.sh         # dépôt, comptes equipe-0 à equipe-8
+./bin/farci forge-sync push          # Gitea main ← GitHub main, branche seance
+00-gitops/post-provision.sh          # main et seance protégées
 ```
 
 `forge-sync` publie **`main` de GitHub** : la branche de travail doit y être
@@ -360,7 +357,7 @@ les images ont une variante `linux/arm64`.
 | `ollama/ollama:0.34.4` | oui | option § 7 |
 | `farci/eds-nlp:0.23.0` | construite sur le Pi | oui |
 | `gitea/gitea:1.27.3`, `gitea/act_runner:0.6.1`, `node:20.19.5-bookworm`, `postgres:18.6-alpine`, `redis:8.8.3-alpine`, `louislam/uptime-kuma:2.5.5`, `maximhq/bifrost:v1.6.0`, `langfuse/langfuse:4.46.0`, `otel/opentelemetry-collector-contrib:0.120.0`, `ghcr.io/mlflow/mlflow:v3.16.1`, `flowiseai/flowise:3.1.4` | oui | non (briques bonus) |
-| `farci/llamacpp:server-b10600` | construite localement | non (bonus, groupe `build_llamacpp`, absent du profil « pi ») |
+| `farci/llamacpp:server-b11500` | construite localement | non (bonus, groupe `build_llamacpp`, absent du profil « pi ») |
 
 ## 11. Dépannage
 

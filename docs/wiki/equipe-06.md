@@ -30,6 +30,18 @@ compare à une référence connue.
 7. **Préparer le classement** — après l'étape 2 :
    `./bin/farci evaluate --subset quick --report-dir datasets/reports`.
 
+## Votre branche
+
+Le projet, adapté à **votre** machine et à votre rôle — l'évaluation se lance depuis cette machine :
+
+```bash
+git switch -c poste/equipe-6-<surnom>   # le surnom de la machine, pas le vôtre
+./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
+./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+```
+
+Le guide pas à pas : `docs/GIT.md`.
+
 ## La sonde : comment savoir que c'est fini
 
 ```bash

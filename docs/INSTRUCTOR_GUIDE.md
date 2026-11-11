@@ -23,7 +23,13 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 - [ ] `scripts/lock-requirements.sh` pour verrouiller et télécharger les wheels
 - [ ] Vérifier les empreintes : `./bin/farci verify-manifest`
 - [ ] `./bin/farci verify-airgap`
-- [ ] Répartir `$FARCI_DATA_DIR` (clé USB, disque, ou copie locale par poste)
+- [ ] Miroir de secours, au cas où Hugging Face ou un registre Docker serait
+      bloqué ou saturé depuis la faculté :
+      `./bin/farci partage publier <destination rsync>` (modèles, wheels, images
+      de cette machine), puis contrôler `FARCI_FICHIERS_URL` (`.env`) depuis un
+      autre poste. Les étudiants n'ont plus qu'à cloner et lancer `./preload.sh`
+- [ ] Écrire aux étudiants : l'adresse GitHub du projet, `git` à installer,
+      `git clone` puis `./preload.sh --equipe <N>` ; joindre `docs/GIT.md`
 - [ ] Tester le démarrage **de toute la chaîne cœur** sur une machine, une fois
 - [ ] Le jeu de données est versionné (`datasets/raw/*.txt`, `datasets/gold/`) ;
       pour la démonstration Docling : `./bin/farci generate-dataset --pdf`
@@ -36,8 +42,9 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
 
 1. **Oublier que `make` peut manquer.** Le dépôt fonctionne sans : `make X` et
    `./bin/farci X` sont équivalents. Le dire en début de séance.
-2. **Oublier que `git clone` ne suffit pas.** Il faut aussi `$FARCI_DATA_DIR`.
-   Le dire **avant** que les étudiants ne perdent vingt minutes.
+2. **Oublier que `git clone` ne donne que le code.** Les modèles et les images
+   viennent de `./preload.sh` (sites d'origine, miroir en secours). Le dire **avant** que les
+   étudiants ne perdent vingt minutes.
 
 ---
 
@@ -64,7 +71,11 @@ Reste à faire à la main :
 
 - [ ] `./verify-airgap.sh --strict` sur un poste étudiant type
 - [ ] la RAM et le disque de chaque poste connu : `./bin/farci doctor`
-- [ ] si la forge est jouée : `./bin/farci forge-sync bundle farci.bundle` sur la clé USB
+- [ ] ouvrir la forge Gitea sur le Pi (toute la salle s'en sert) :
+      `./bin/farci up 00-gitops`, `00-gitops/gitea/bootstrap.sh`,
+      `./bin/farci forge-sync push`, `00-gitops/post-provision.sh`, puis
+      `./bin/farci room set gitea <IP du Pi>` ; depuis un portable : cloner,
+      créer une branche, pousser avec le compte `equipe-1`
 - [ ] imprimer `docs/PILOTAGE.md`
 
 ## J0 — Dans la salle (avant l'arrivée des étudiants)
@@ -80,6 +91,9 @@ Reste à faire à la main :
       sauvegardée dans `$FARCI_DATA_DIR/seances/`)
 - [ ] L'adresse d'Open WebUI de la référence (`REFERENCE_IP:OPEN_WEBUI_PORT`)
       est notée au tableau, pour qui n'a pas de machine utilisable
+- [ ] La forge est à jour (`./bin/farci forge-sync push`), le partage publié
+      (`./bin/farci partage maj`) ; au tableau : `http://<REFERENCE_IP>/rejoindre`,
+      l'adresse de la forge, les comptes `equipe-<N>` et le mot de passe de la salle
 - [ ] Les fiches d'équipe sont prêtes (`docs/wiki/equipe-XX.md`, `./bin/farci read <équipe>`)
 - [ ] La liste des équipes (sortie de `./bin/farci casting`) est affichée
 
@@ -89,11 +103,12 @@ Reste à faire à la main :
 
 | Horaire | Moment | À dire / à faire | Si on a du retard |
 |---|---|---|---|
-| 0:00 – 0:20 | Accueil | les 3 étapes, `make` ≠ obligatoire, `git clone` ne suffit pas ; chacun lance `./bin/farci doctor` | passer le vocabulaire en 5 min, il revient à la clôture |
-| 0:20 – 0:30 | Étape 1 : lancement | chaque équipe lit sa fiche, objectif minimal annoncé | — |
+| 0:00 – 0:20 | Accueil | les 3 étapes, `make` ≠ obligatoire ; git en trois lieux (GitHub, la forge, votre machine) ; chacun clone, crée sa branche (`./bin/farci poste`) et lance `./bin/farci doctor` | passer le vocabulaire en 5 min, il revient à la clôture ; **ne pas** couper le clone et la branche |
+| 0:20 – 0:30 | Étape 1 : lancement | chaque équipe lit sa fiche et commite la fiche de son poste, objectif minimal annoncé | — |
 | 0:30 – 1:15 | Étape 1 : objectif minimal | déclarer chaque machine (onglet Formateur du tableau, ou `room set`) ; faire applaudir chaque passage de 🛟 à ✅ | à **1:00**, une équipe encore 🛟 continue à diagnostiquer, la référence sert à sa place : personne n'attend |
 | ~1:30 | **CLINICAL PIPELINE READY** | moment clé : on le montre à tous | ne pas attendre au-delà de **1:40** : la suite se joue avec ce que sert la salle (✅ ou 🛟) |
-| 1:35 – 1:50 | Bonus et démos | GitOps, Langfuse, MLflow, llama.cpp | **première marge** : supprimer les démos bonus |
+| 1:15 – 1:35 | Push et Pull Requests | chaque équipe pousse sa branche et relit la PR d'une autre | une équipe en retard pousse à la pause |
+| 1:35 – 1:50 | Bonus et démos | une PR fusionnée devant la salle, puis Langfuse, MLflow, llama.cpp | **première marge** : supprimer les démos bonus, garder la fusion |
 | 1:50 – 2:00 | Pause | — | **ne jamais la supprimer** : c'est là que le formateur répare |
 | 2:00 – 2:50 | Étape 2 | parcours Python sur le jeu rapide ; Open WebUI ; Flowise en démo 10 min | jeu rapide seulement (`--subset quick`), Flowise supprimée |
 | 2:50 – 3:10 | Évaluation | classement projeté, une trace lue ensemble | une seule trace |
@@ -132,7 +147,10 @@ le détail).
 | « Pourquoi ne pas appeler l'API directement ? » | Parce qu'alors ton application dépend d'un fournisseur, et qu'un jour tu voudras le remplacer. |
 | « Le modèle a-t-il inventé des données ? » | Peut-être : c'est un composant probabiliste. C'est pour cela qu'on valide avant d'écrire. |
 | « F1 de 0,84, c'est bon ? » | Sans gold standard, ce chiffre ne veut rien dire. Avec, il veut dire qu'il reste 16 % d'écart à expliquer. |
-| « Pourquoi ça marche sans Internet ? » | Parce que tout a été préchargé, et que rien dans la chaîne ne dépend d'un service distant. |
+| « Pourquoi ça marche sans Internet ? » | Parce que tout a été préchargé, et que rien dans la chaîne ne dépend d'un service distant. Internet ne sert qu'à récupérer le code et les fichiers. |
+| « Pourquoi Gitea si on a GitHub ? » | Pour montrer qu'une forge s'héberge : mêmes commandes, mais le code reste dans les murs. Un hôpital fait ce choix. |
+| « Pourquoi une branche par machine ? » | Parce que chaque machine a son matériel et son rôle : la branche porte ces différences sans toucher au projet commun. |
+| « Pourquoi le modèle n'est pas dans git ? » | Git garde tout pour toujours : 6 Go à chaque version. Les gros fichiers vont sur un serveur de fichiers, git garde leur adresse et leur empreinte. |
 | « Pourquoi Phoenix n'est pas dans READY ? » | Parce que l'observabilité n'est pas sur le chemin de production : si elle tombe, le soin continue. |
 | « C'est de l'IA de Supersante ? » | Non. C'est de l'ingénierie : contrats, versions, tests, mesure. L'IA n'en est qu'une brique. |
 
@@ -156,7 +174,9 @@ pendant que l'équipe diagnostique. Toutes les commandes `room`, `rescue`,
 | Plus de réseau du tout | idem, sans solution | chaque équipe continue sur sa machine (`./bin/farci test` vise la brique locale) ; étape 2 : `./bin/farci extract --replay` | 2 min |
 | Accueil de la salle (Pi) muet | `./bin/farci status` : tout DOWN | sur le Pi : `./bin/farci up reference` | 2 min |
 | Chaos qui ne revient pas au vert | `PANNE EN COURS` sous le tableau | `./bin/farci reset-all` | 30 s |
-| Image absente sur un poste | `démarrage impossible — image absente ?` | `./bin/farci verify-images`, puis `docker load -i offline/images/<image>.tar` (clé USB) | 3 min |
+| Image absente sur un poste | `démarrage impossible — image absente ?` | `./bin/farci verify-images`, puis `./preload.sh --equipe <N> --skip-existing` (registre, sinon serveur de fichiers) ; sans Internet : `http://<REFERENCE_IP>/partage/` puis `docker load -i <image>.tar` | 3 min |
+| Push refusé sur la forge | `Authentication failed`, `protected branch` | `./bin/farci poste` sur le poste : compte `equipe-<N>`, branche `poste/…` et non `main` ou `seance` | 1 min |
+| GitHub injoignable | `git clone` échoue | cloner depuis la forge de la salle (`/rejoindre`) : c'est le même projet | 1 min |
 | Étudiant sans machine utilisable | — | binôme, ou Open WebUI de la référence : `http://REFERENCE_IP:OPEN_WEBUI_PORT` | 0 |
 | **20 minutes de retard** | horloge | voir « Le minutage » : démos bonus et un scénario supprimés, les briques en 🛟 y restent | — |
 
@@ -175,6 +195,8 @@ Les causes « de dépôt », plus rares :
 ## Après l'atelier
 
 - [ ] `./bin/farci reset-all` et vérifier le retour au vert
+- [ ] Garder le travail de la séance : `./bin/farci forge-sync rapatrier seance`,
+      puis une Pull Request sur GitHub (`CONTRIBUTING.md`, « Deux forges »)
 - [ ] Récupérer les extractions : `datasets/extracted/`
 - [ ] Archiver le classement : `./bin/farci evaluate --report-dir datasets/reports`
 - [ ] Noter ce qui a fonctionné et ce qui a bloqué, moment par moment
@@ -187,7 +209,8 @@ Les causes « de dépôt », plus rares :
 
 - `docs/PILOTAGE.md` — la feuille imprimable de la séance
 - `docs/WORKSHOP_FLOW.md` — le déroulé des étapes et les objectifs par équipe
-- `docs/AIRGAP.md` — le préchargement en détail
+- `docs/GIT.md` — le parcours git des étudiants
+- `docs/AIRGAP.md` — le préchargement, GitHub et le serveur de fichiers
 - `docs/CHAOS.md` — les scénarios et leur résultat attendu
 - `reference/README.md` — le Pi : pile de référence, Wi-Fi de la salle, secours
 - `CONTRIBUTING.md` — le flux Git du dépôt

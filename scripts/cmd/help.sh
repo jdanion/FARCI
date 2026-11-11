@@ -17,14 +17,15 @@ CMD_DIR="$FARCI_ROOT/scripts/cmd"
 # scripts/check_targets.py (selftest) lit cette liste pour l'interdire.
 declare -A GROUP_TITLES=(
   [atelier]="Atelier"
-  [airgap]="Préchargement et air-gap"
+  [git]="Git : GitHub, la forge Gitea, votre branche"
+  [airgap]="Préchargement et fonctionnement local"
   [dataset]="Données, extraction, évaluation"
   [chaos]="Pannes (étape 3)"
   [secours]="Plans B (formateur)"
   [qualité]="Qualité"
   [nettoyage]="Nettoyage"
 )
-GROUP_ORDER=(atelier airgap dataset chaos secours qualité nettoyage)
+GROUP_ORDER=(atelier git airgap dataset chaos secours qualité nettoyage)
 
 group_title() {
   local key="$1"

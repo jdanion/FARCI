@@ -8,11 +8,20 @@ connaître Docker ni le réseau. Le `TUTORIAL.md` de chaque dossier
 
 1. **Votre objectif** — en une phrase, et la ligne du tableau qui le prouve
 2. **Les étapes** — 5 à 8, une commande chacune
-3. **La sonde** — la commande qui dit « c'est fini »
-4. **Bloqué depuis 10 minutes ?** — les causes fréquentes, et la règle :
+3. **Votre branche** — le projet adapté à votre machine, commité et poussé
+4. **La sonde** — la commande qui dit « c'est fini »
+5. **Bloqué depuis 10 minutes ?** — les causes fréquentes, et la règle :
    on lève la main, la référence du formateur (🛟) sert à votre place, la
    salle n'attend jamais
-5. **Bonus** — pour ceux qui ont fini
+6. **Bonus** — pour ceux qui ont fini
+
+## Git, pour toutes les équipes
+
+Avant la première étape de votre fiche, chacun a **cloné** le projet (GitHub,
+ou la forge Gitea de la salle) et créé **sa branche**. Pendant l'étape 1,
+chacun commite la fiche de son poste, la pousse sur la forge et ouvre une
+Pull Request. `./bin/farci poste` donne la commande suivante ; le guide pas
+à pas est [`docs/GIT.md`](../GIT.md).
 
 ## Le tableau projeté, en trois symboles
 
@@ -29,7 +38,7 @@ a déclaré l'IP de votre machine (`./bin/farci doctor` vous la donne).
 
 | Équipe | Sujet | Ligne du tableau | Fiche |
 |---|---|---|---|
-| 0 | GitOps : Gitea et CI (bonus) | GitOps (`--all`) | [equipe-00](equipe-00.md) |
+| 0 | La forge de la salle : Gitea et CI | GitOps (`--all`) | [equipe-00](equipe-00.md) |
 | 1 | Réseau et tableau de bord | Network | [equipe-01](equipe-01.md) |
 | 2 | Inférence | Inference | [equipe-02](equipe-02.md) |
 | 3 | Passerelle LLM | LLM Gateway | [equipe-03](equipe-03.md) |

@@ -12,7 +12,7 @@ WHAT="${1:-}"
 case "${WHAT}" in
   -h|--help)
     cat <<'USAGE'
-  usage : ./bin/farci <docs|checklist> [contracts|flow|airgap|chaos|pilotage|list]
+  usage : ./bin/farci <docs|checklist> [git|contracts|flow|airgap|chaos|pilotage|list]
 USAGE
     exit 0 ;;
 esac
@@ -35,6 +35,7 @@ show_doc() {
 
 case "$WHAT" in
   docs|architecture)   show_doc ARCHITECTURE.md ;;
+  git)                 show_doc GIT.md ;;
   contracts)           show_doc CONTRACTS.md ;;
   flow|workshop-flow)  show_doc WORKSHOP_FLOW.md ;;
   airgap)              show_doc AIRGAP.md ;;
@@ -43,7 +44,7 @@ case "$WHAT" in
   checklist|formateur|instructor) show_doc INSTRUCTOR_GUIDE.md ;;
   -h|--help)
     cat <<'USAGE'
-  usage : ./bin/farci <docs|checklist> [contracts|flow|airgap|chaos|pilotage|list]
+  usage : ./bin/farci <docs|checklist> [git|contracts|flow|airgap|chaos|pilotage|list]
 USAGE
     exit 0 ;;
   list)
@@ -56,6 +57,6 @@ USAGE
     exit 0 ;;
   *)
     err "document inconnu : $WHAT"
-    printf '  disponibles : docs contracts flow airgap chaos checklist list\n' >&2
+    printf '  disponibles : docs git contracts flow airgap chaos checklist list\n' >&2
     exit 64 ;;
 esac
