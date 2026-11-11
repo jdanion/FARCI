@@ -68,6 +68,7 @@ CATALOG=(
   "Qwen3.5-2B-Q4_K_M.gguf|secours, toute machine"
   "Qwen3.5-4B-Q4_K_M.gguf|4B, à comparer avec Gemma (8 Go de RAM)"
   "gemma-4-E4B-it-Q4_K_M.gguf|4B, à comparer avec Qwen (12 Go de RAM)"
+  "medgemma-4b-it-UD-Q4_K_XL.gguf|4B spécialisé médecine (8 Go de RAM)"
   "Ornith-1.5-9B-Q5_K_M.gguf|principal, grosse configuration"
   "Ornith-1.5-35B-Q4_K_M.gguf|mélange d'experts, machine puissante"
 )

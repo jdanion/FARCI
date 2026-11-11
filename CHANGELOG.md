@@ -6,15 +6,16 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
-### Cinq modèles, selon la machine
+### Six modèles, selon la machine
 
-- Qwen3.5-4B et Gemma 4 E4B (deux familles, même gabarit) s'ajoutent au 2B et
+- Qwen3.5-4B, Gemma 4 E4B et MedGemma 4B (deux généralistes et un modèle
+  spécialisé médecine, même gabarit) s'ajoutent au 2B et
   à Ornith-1.5-9B ; Ornith-1.5-35B-A3B pour les machines puissantes
   (`./preload.sh --only models_ornith_moe`).
-- `02-inference/ollama/create-model.sh` : `qwen4b`, `gemma4b`, `moe`, `liste` ;
+- `02-inference/ollama/create-model.sh` : `qwen4b`, `gemma4b`, `medgemma4b`, `moe`, `liste` ;
   le choix automatique prend Qwen3.5-4B dès 8 Go de RAM. llama.cpp fait de
   même (`LLAMACPP_GGUF` dans la fiche du poste pour en imposer un autre).
-- L'équipe 2 précharge les deux 4B ; le Pi (`--pi`) précharge Qwen3.5-4B.
+- L'équipe 2 précharge les trois 4B ; le Pi (`--pi`) précharge Qwen3.5-4B.
 - `./bin/farci verify-models --urls` contrôle que chaque adresse de
   `models/models.env` répond encore.
 

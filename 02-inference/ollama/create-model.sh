@@ -5,6 +5,7 @@
 #   02-inference/ollama/create-model.sh secours     Qwen3.5-2B          (~1,2 Go ; toute machine)
 #   02-inference/ollama/create-model.sh qwen4b      Qwen3.5-4B          (~3 Go ; 8 Go de RAM)
 #   02-inference/ollama/create-model.sh gemma4b     Gemma 4 E4B         (~5 Go ; 12 Go de RAM)
+#   02-inference/ollama/create-model.sh medgemma4b  MedGemma 4B         (~3 Go ; 8 Go de RAM ; médical)
 #   02-inference/ollama/create-model.sh principal   Ornith-1.5-9B       (~6,5 Go ; 16 Go de RAM)
 #   02-inference/ollama/create-model.sh moe         Ornith-1.5-35B-A3B  (~22 Go ; GPU 24 Go ou 48 Go de RAM)
 #   02-inference/ollama/create-model.sh liste       ce qui est présent sur ce poste
@@ -33,7 +34,7 @@ source "$FARCI_ROOT/scripts/dev-env.sh"
 farci_load_env
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  sed -n '2,19p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'
+  sed -n '2,20p' "$0" | sed 's/^#\{0,1\} \{0,1\}//'
   exit 0
 fi
 
@@ -43,10 +44,11 @@ declare -A GGUF=(
   [secours]="Qwen3.5-2B-Q4_K_M.gguf"
   [qwen4b]="Qwen3.5-4B-Q4_K_M.gguf"
   [gemma4b]="gemma-4-E4B-it-Q4_K_M.gguf"
+  [medgemma4b]="medgemma-4b-it-UD-Q4_K_XL.gguf"
   [principal]="Ornith-1.5-9B-Q5_K_M.gguf"
   [moe]="Ornith-1.5-35B-Q4_K_M.gguf"
 )
-ORDER=(secours qwen4b gemma4b principal moe)
+ORDER=(secours qwen4b gemma4b medgemma4b principal moe)
 SECOURS="${GGUF[secours]}"
 has() { docker exec "$CONTAINER" test -f "/gguf/$1"; }
 
@@ -71,7 +73,7 @@ if [[ "$choice" == "auto" ]]; then
   info "RAM détectée : ${ram_gb} Go → modèle $choice"
 fi
 gguf="${GGUF[$choice]:-}"
-[[ -n "$gguf" ]] || die "choix inconnu : $choice (secours | qwen4b | gemma4b | principal | moe | liste)"
+[[ -n "$gguf" ]] || die "choix inconnu : $choice (secours | qwen4b | gemma4b | medgemma4b | principal | moe | liste)"
 
 section "FARCI — import de $gguf sous le nom med-extraction"
 docker exec "$CONTAINER" test -f "/gguf/$gguf" \
