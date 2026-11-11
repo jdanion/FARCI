@@ -192,7 +192,8 @@ demande **aucune** modification du code métier : c'est l'objet même de l'ateli
 
 | Vous êtes… | Lisez |
 |---|---|
-| formateur | `docs/INSTRUCTOR_GUIDE.md`, et la feuille de séance `docs/PILOTAGE.md` |
+| formateur | `docs/INSTRUCTOR_GUIDE.md`, la feuille de séance `docs/PILOTAGE.md`, le diaporama et les tests Wooclap dans `docs/support/` |
+| étudiant, avant de venir | le support de cours : `docs/support/COURS.md` (attendus, notions, déroulé) |
 | étudiant débutant | sa fiche : `docs/wiki/equipe-XX.md`, et `docs/GIT.md` pour git |
 | responsable d'une équipe | `./bin/farci read <équipe>` |
 | curieux de l'architecture | `docs/ARCHITECTURE.md` |

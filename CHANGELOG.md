@@ -6,6 +6,14 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Support de cours et évaluation
+
+- `docs/support/COURS.md` : les attendus, les notions et le déroulé, pour les
+  étudiants ; `FARCI-support-de-cours.pptx` : le diaporama de la séance
+  (26 diapositives, notes du formateur).
+- `docs/support/EVALUATION.md` : pré-test et post-test Wooclap (mêmes
+  questions, pour mesurer le gain) et questionnaire de satisfaction.
+
 ### Git au centre de l'atelier : GitHub, la forge Gitea, une branche par poste
 
 Nouvelle vision : chaque étudiant repart en sachant se servir de git. GitHub
