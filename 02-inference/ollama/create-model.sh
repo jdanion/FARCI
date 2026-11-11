@@ -44,7 +44,7 @@ declare -A GGUF=(
   [qwen4b]="Qwen3.5-4B-Q4_K_M.gguf"
   [gemma4b]="gemma-4-E4B-it-Q4_K_M.gguf"
   [principal]="Ornith-1.5-9B-Q5_K_M.gguf"
-  [moe]="Ornith-1.5-35B-A3B-Q4_K_M.gguf"
+  [moe]="Ornith-1.5-35B-Q4_K_M.gguf"
 )
 ORDER=(secours qwen4b gemma4b principal moe)
 SECOURS="${GGUF[secours]}"
