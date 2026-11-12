@@ -12,7 +12,7 @@ de la salle et la fait relire (`docs/GIT.md`). Ce document dit **quoi** se passe
 
 | Horaire | Durée | Moment | Ce qui doit être vrai à la fin |
 |---|---|---|---|
-| 0:00 – 0:20 | 20 min | **Accueil** : les 3 étapes, le vocabulaire, le tableau tout en 🛟 ; git en trois lieux (GitHub, la forge de la salle, votre machine) | chaque étudiant sait dans quelle équipe il est, a **cloné** le projet, créé **sa branche** (`./bin/farci poste`) et lancé `./bin/farci doctor` |
+| 0:00 – 0:20 | 20 min | **Accueil, en ligne** : les 3 étapes, le vocabulaire ; chacun finit de cloner et de télécharger sa brique. Puis **le basculement** : tout le monde rejoint `FARCI-SALLE` | chaque étudiant sait dans quelle équipe il est, a son clone, **sa branche**, sa brique, et a lancé `./bin/farci poste salle` puis `./bin/farci doctor` |
 | 0:20 – 1:50 | 90 min | **Étape 1 — Construire** : équipes cœur seulement | `CLINICAL PIPELINE READY` sur le tableau |
 | 1:50 – 2:00 | 10 min | **Pause** | — |
 | 2:00 – 2:50 | 50 min | **Étape 2 — Utiliser** : parcours Python (principal) et Open WebUI ; EDS-NLP (10 min) ; Flowise en démo | chaque équipe a une run dans `datasets/extracted/` |
@@ -46,6 +46,34 @@ réparation, leçon en une phrase. Détail : `docs/CHAOS.md`.
 
 ---
 
+## Deux temps : en ligne, puis en local
+
+Un portable ne peut être que sur un Wi-Fi à la fois, et le Pi n'a qu'une
+radio : la séance sépare donc ce qui demande Internet de ce qui se fait dans
+la salle.
+
+| Temps | Réseau | Ce qui s'y fait |
+|---|---|---|
+| **1. En ligne** — avant la séance, sinon de 0:00 à 0:20 | celui de la faculté, ou le sien | cloner depuis GitHub (**sans compte**), `./preload.sh --equipe <N>`, créer sa branche, premier commit |
+| **Le basculement** — vers 0:20 | — | le formateur vérifie que chacun a son clone et sa brique, puis : « on passe en local » ; tout le monde rejoint `FARCI-SALLE` |
+| **2. En local** — le reste de la séance | `FARCI-SALLE`, le Wi-Fi du Pi | `./bin/farci poste salle`, les trois étapes, push, Pull Requests ; **plus rien ne sort de la salle** |
+
+Le basculement est un moment de la séance, pas un détail technique : c'est là
+que l'on dit que les dossiers, les questions et les réponses resteront sur
+place. Qui arrive sans clone le prend sur la forge du Pi (page `/rejoindre`).
+
+## Qui héberge quoi
+
+| Sur le Pi du formateur | Sur les machines des équipes |
+|---|---|
+| l'accueil : Caddy et le tableau de la salle | les runtimes et leurs modèles (équipe 2) |
+| la forge Gitea, ses comptes `equipe-<N>` | la passerelle (équipe 3) |
+| la doublure de chaque service (🛟) | les documents, l'observabilité, l'évaluation, les applications |
+
+Ce dont toute la salle dépend est tenu par le Pi ; ce que l'on compare et que
+l'on casse est tenu par les équipes. Les équipes 0 (forge) et 1 (accueil) ne
+se constituent que si des étudiants veulent reprendre ces services.
+
 ## Le fil git de la séance
 
 Git n'est pas une brique parmi d'autres : c'est ce que **chaque** étudiant
@@ -53,18 +81,17 @@ fait, quelle que soit son équipe.
 
 | Moment | Geste | Ce qu'il apprend |
 |---|---|---|
-| avant, ou à l'accueil | `git clone` (GitHub, ou la forge Gitea de la salle) | un dépôt, c'est le projet **et** son historique ; deux forges, le même projet |
-| accueil | `git switch -c poste/equipe-<N>-<surnom>` | une branche : sa version, sans toucher celle des autres |
-| 0:20 | `./bin/farci poste nouveau`, relecture, `git add`, `git commit` | adapter le projet à **son** matériel et à **son** rôle ; un commit s'explique |
-| 1:15 | `git push`, Pull Request vers `seance` | publier, demander une relecture |
+| en ligne | `git clone` depuis GitHub | un dépôt, c'est le projet **et** son historique |
+| en ligne | `git switch -c poste/equipe-<N>-<surnom>` | une branche : sa version, sans toucher celle des autres |
+| en ligne | `./bin/farci poste nouveau`, relecture, `git add`, `git commit` | adapter le projet à **son** matériel et à **son** rôle ; un commit s'explique |
+| basculement | `./bin/farci poste salle`, puis `git remote -v` | un même projet, deux dépôts distants : `origin` (GitHub) et `salle` (la forge) |
+| 1:15 | `git push -u salle …`, Pull Request vers `seance` | publier, demander une relecture |
 | 1:15 – 1:50 | relire la PR d'une **autre** équipe | personne ne valide son propre travail |
-| 1:35, puis à volonté | `git fetch`, `git merge` | recevoir le travail commun |
+| 1:35, puis à volonté | `git fetch salle`, `git merge salle/seance` | recevoir le travail commun |
 | clôture | *Fork* sur GitHub, `git remote add`, `git push` | le projet continue après la salle ; on peut aussi héberger sa forge |
 
-La forge Gitea est ouverte **avant** la séance par le formateur (sur le Pi) ;
-l'équipe 0, si elle existe, la reprend sur sa machine. Les fichiers
-volumineux ne passent pas par git : `./preload.sh` les prend sur le serveur de
-fichiers (`docs/AIRGAP.md`).
+Les fichiers volumineux ne passent pas par git : `./preload.sh` les prend sur
+leur site d'origine pendant le temps en ligne (`docs/AIRGAP.md`).
 
 ---
 
@@ -78,13 +105,13 @@ arrêt ne doit pas arrêter l'extraction (scénario 07).
 
 | Équipe | Dossier | Cœur (étape 1) | Bonus ou démo du formateur |
 |---|---|---|---|
-| 1 | `01-network-dashboard/` | Caddy + health-aggregator | Uptime Kuma |
+| 1 | `01-network-dashboard/` | Caddy + health-aggregator, **tenus par le Pi** ; une équipe volontaire peut les reprendre | Uptime Kuma |
 | 2 | `02-inference/` | Ollama + 9B (GPU ou 32 Go) **ou** llama.cpp + 2B (tout poste) | — |
 | 3 | `03-llm-gateway/` | LiteLLM | clés et quotas, Bifrost |
 | 4 | `04-clinical-documents/` | Docling + pseudonymisation + EDS-NLP (hors READY) | PDF convertis par Docling |
 | 5 | `05-observability/` | Phoenix | Langfuse, collecteur OTel |
 | 7 | `07-applications/` | Open WebUI prêt pour l'étape 2 | Flowise (démo) |
-| 0 | `00-gitops/` | — (hors READY, mais **servie à toute la salle** : forge Gitea ouverte par le formateur) | reprise de la forge par l'équipe, runner + CI |
+| 0 | `00-gitops/` | — (hors READY : la forge Gitea est **tenue par le Pi**) | reprise de la forge par une équipe volontaire, runner + CI |
 | 6 | `06-evaluation/` | — (l'évaluation est en ligne de commande pour tous) | MLflow |
 | 8 | `08-arcane-agents/` | — | agents de supervision, webhook GitOps |
 

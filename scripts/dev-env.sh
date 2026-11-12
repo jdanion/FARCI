@@ -143,6 +143,12 @@ farci_derive_urls() {
     [[ -n "${!ip_var:-}" && -n "${!port_var:-}" ]] || continue
     export "$name=http://${!ip_var}:${!port_var}"
   done
+  # La forge de la salle : le Pi l'héberge en premier. Sans adresse déclarée
+  # pour Gitea (une équipe 0 qui la reprend), c'est donc celle du Pi : un
+  # poste étudiant la trouve en ne connaissant que REFERENCE_IP.
+  if [[ -z "${GITEA_URL:-}" && -n "${REFERENCE_IP:-}" && -n "${GITEA_PORT:-}" ]]; then
+    export GITEA_URL="http://${REFERENCE_IP}:${GITEA_PORT}"
+  fi
   # L'accueil de la salle (Caddy du Pi, FARCI §12) : c'est tout ce que voient
   # les applications. Sans Pi (travail seul), l'accueil de l'équipe 1 le
   # remplace. Une application ne connaît jamais l'adresse d'un runtime.

@@ -75,12 +75,22 @@ gouvernance des données et une évaluation.
 | **Votre machine** | votre clone, sur votre branche `poste/equipe-<N>-<surnom>` | adapter le projet à votre matériel et à votre rôle, commiter |
 | **Hugging Face, les registres Docker, PyPI** — et un miroir de secours, `FARCI_FICHIERS_URL` | modèles, images Docker, wheels : trop lourds pour Git | rien : `./preload.sh` télécharge pour vous |
 
+La séance se déroule en deux temps : **en ligne** (cloner, télécharger), puis
+**en local** sur le Wi-Fi de la salle, où plus rien ne sort. Aucun compte
+GitHub n'est nécessaire.
+
 ```bash
-git clone https://github.com/jdanion/FARCI farci    # ou l'adresse de la forge de la salle
+# 1. En ligne — chez vous, ou en début de séance
+git clone https://github.com/jdanion/FARCI farci    # public : pas de compte à créer
 cd farci
+./preload.sh --equipe 2                             # la brique de votre équipe
 git switch -c poste/equipe-2-atlas                  # votre équipe, le surnom de la machine
 ./bin/farci poste nouveau                           # la fiche de votre poste, à relire et à commiter
-./bin/farci poste                                   # ensuite : la commande git suivante, à chaque fois
+
+# 2. En local — sur le Wi-Fi FARCI-SALLE
+./bin/farci poste salle                             # branche votre clone sur la forge du Pi
+git push -u salle poste/equipe-2-atlas              # publier ; puis Pull Request
+./bin/farci poste                                   # à tout moment : la commande git suivante
 ```
 
 Le guide complet, pour qui n'a jamais utilisé git : **`docs/GIT.md`**

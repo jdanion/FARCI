@@ -37,8 +37,9 @@ ce qui est appliqué — et il reste dans les murs.
 ## Votre branche
 
 Comme tout le monde : `git switch -c poste/equipe-0-<surnom>`, puis
-`./bin/farci poste nouveau`. `./bin/farci poste` donne la commande git
-suivante ; le guide est `docs/GIT.md`.
+`./bin/farci poste nouveau`. En salle, `./bin/farci poste salle` branche
+votre clone sur la forge. `./bin/farci poste` donne la commande git suivante ;
+le guide est `docs/GIT.md`.
 
 ## La sonde : comment savoir que c'est fini
 

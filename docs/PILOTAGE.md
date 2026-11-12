@@ -14,13 +14,13 @@ l'affiche.
 | J-7 | Pi préparé (Internet) : `./preload.sh --reference`, `./bin/farci bootstrap`, point d'accès `farci-ap` | ☐ |
 | J-7 | miroir de secours (si Hugging Face ou un registre est bloqué à la faculté) : `./bin/farci partage publier <destination rsync>` depuis une machine préchargée (`--core`) ; vérifier `FARCI_FICHIERS_URL` depuis un autre poste | ☐ |
 | J-7 | message aux étudiants : `git clone` depuis GitHub, puis `./preload.sh --equipe <N>` (sa brique, selon la machine) | ☐ |
-| J-1 | **forge Gitea sur le Pi** : `./bin/farci up 00-gitops`, `00-gitops/gitea/bootstrap.sh`, `./bin/farci forge-sync push`, `00-gitops/post-provision.sh`, `./bin/farci room set gitea <IP du Pi>` | ☐ |
+| J-1 | **forge Gitea sur le Pi**, pendant qu'il a Internet (`./bin/farci wifi internet`) : `./bin/farci up 00-gitops`, `00-gitops/gitea/bootstrap.sh`, `./bin/farci forge-sync push`, `00-gitops/post-provision.sh` ; puis `./bin/farci wifi salle` et `./bin/farci partage maj` | ☐ |
 | J-1 | **sur le Pi** : `./bin/farci rehearse` → **PASS** (moins de 15 min) | ☐ |
 | J-1 | **sur un portable** branché au Wi-Fi du Pi : `./bin/farci rehearse` → **PASS** | ☐ |
 | J0 −30 min | `sudo nmcli con up farci-ap` puis `./bin/farci up reference` | ☐ |
 | J0 −20 min | écran projeté : l'iPad sur `http://<REFERENCE_IP>/` (tableau de la salle, tout en `🛟`), puis **`./bin/farci seance nouvelle`** sur le Pi : équipes, adresses, scores et chrono à zéro (la séance précédente est sauvegardée) | ☐ |
 | J0 −20 min | `./bin/farci forge-sync push` (la forge rattrape GitHub), puis `./bin/farci partage maj` sur le Pi ; au tableau : **`http://<REFERENCE_IP>/rejoindre`** (cloner, sa branche, les fichiers) | ☐ |
-| J0 −10 min | au tableau : SSID, `REFERENCE_IP`, adresse de la forge, comptes `equipe-<N>` et mot de passe de la salle, adresse Open WebUI `REFERENCE_IP:3080` | ☐ |
+| J0 −10 min | au tableau : le Wi-Fi `FARCI-SALLE` et son mot de passe, `REFERENCE_IP`, la commande `./bin/farci poste salle`, adresse Open WebUI `REFERENCE_IP:3080` | ☐ |
 
 Un **FAIL** de `rehearse` la veille se corrige la veille : la ligne en échec
 donne la piste. Le rapport est dans `datasets/reports/rehearse-*.txt`.
@@ -31,7 +31,8 @@ donne la piste. Le rapport est dans `datasets/reports/rehearse-*.txt`.
 
 | Heure | Moment | Point de décision |
 |---|---|---|
-| 0:00 | Accueil : git en trois lieux ; `git clone`, `git switch -c poste/equipe-<N>-<surnom>`, `./bin/farci doctor` pour tous | Docker absent ou cassé → binôme, tout de suite ; pas de git → binôme pour git aussi |
+| 0:00 | Accueil, **en ligne** : les retardataires clonent depuis GitHub et lancent `./preload.sh --equipe <N>` ; `git switch -c poste/equipe-<N>-<surnom>` | Docker absent ou cassé → binôme, tout de suite ; pas de git → binôme pour git aussi |
+| ~0:20 | **Le basculement** : « tout le monde a son clone et sa brique ? » → chacun rejoint `FARCI-SALLE`, lance `./bin/farci poste salle` puis `./bin/farci doctor` | un téléchargement traîne → ce poste reste en ligne et rejoint plus tard, ou prend la référence (🛟) ; pas de clone → `http://<REFERENCE_IP>/rejoindre` |
 | 0:20 | Étape 1 : chaque équipe lit sa fiche (`docs/wiki/equipe-XX.md`) ; `./bin/farci poste nouveau`, premier commit | — |
 | 1:15 | push et Pull Request vers `seance` ; chaque équipe en relit une autre | une équipe en retard pousse à la pause : rien ne dépend de sa PR |
 | 0:30 → 1:15 | Objectif minimal ; je déclare chaque machine dans l'onglet **Formateur** du tableau (`/tableau/formateur`), ou `./bin/farci room set <n> <ip>` | **1:00** : une équipe encore `🛟` continue sans bloquer personne |
@@ -75,7 +76,7 @@ Pause, évaluation et clôture restent.
 | ligne restée `🛟` alors que l'équipe est verte | `./bin/farci room` : IP déclarée ? |
 | GitHub injoignable | la forge de la salle a le même projet : `git clone` depuis elle (`/rejoindre`) |
 | forge tombée | cloner depuis GitHub ; les commits restent sur les postes, on pousse à son retour |
-| un push refusé | compte `equipe-<N>` ? branche `poste/…` et non `main` ou `seance` ? `./bin/farci poste` |
+| un push refusé | `./bin/farci poste salle` lancé ? on pousse vers `salle`, pas `origin` ; branche `poste/…` et non `main` ou `seance` |
 | un fichier lourd manque | `./preload.sh --equipe <N> --skip-existing` (serveur de fichiers), sinon `http://<REFERENCE_IP>/partage/` |
 | le Pi doit télécharger quelque chose, sans câble | `./bin/farci wifi internet`, puis `./bin/farci wifi salle` (il y revient seul après 5 min sans SSH) |
 | Wi-Fi tombé | `sudo nmcli con up farci-ap` ; sinon point d'accès de secours + `room set reference` |

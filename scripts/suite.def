@@ -176,6 +176,8 @@ verify-wheels	echec	./preload.sh --only wheels	AVEC Internet, sur CETTE machine
 poste	ok	./bin/farci docs git	le guide Git de l'atelier : cloner, brancher, commiter, pousser, Pull Request
 poste nouveau	ok	git add postes/	puis git commit : votre premier commit
 poste nouveau	ok	./bin/farci poste	où j'en suis, et la commande git suivante
+poste salle	ok	./bin/farci poste	où j'en suis, et la commande git suivante
+poste salle	echec	./bin/farci doctor	êtes-vous sur le Wi-Fi de la salle ? l'accueil répond-il ?
 poste verifier	ok	./bin/farci poste	où j'en suis, et la commande git suivante
 poste	echec	./bin/farci docs git	le guide Git de l'atelier
 forge-sync	ok	./bin/farci forge-sync push	Gitea main ← GitHub main (avance rapide)

@@ -46,7 +46,7 @@
 <main>
   <h1>Rejoindre la salle FARCI</h1>
   <p class="sous">Le code se clone avec git ; les fichiers volumineux (modèles, images) se téléchargent à part.
-    Comptez 10 minutes pour les étapes 1 à 5.</p>
+    Comptez 10 minutes pour les étapes 1 à 6.</p>
 
   <section>
     <h2><span class="num">1</span>Cloner le projet</h2>
@@ -87,12 +87,22 @@
     <div class="cmd"><code data-cmd>git switch -c poste/equipe-N-SURNOM</code></div>
     <div class="cmd"><code data-cmd>./bin/farci poste nouveau</code></div>
     <p class="note">La commande écrit la fiche de votre poste (mémoire, carte graphique, fonction dans le projet).
-      Ensuite, <code>./bin/farci poste</code> vous donne à chaque fois la commande git suivante : commit, push,
-      Pull Request. Le guide : <code>./bin/farci docs git</code>.</p>
+      Relisez-la, puis enregistrez-la : <code>git add postes/</code> et <code>git commit</code>.</p>
   </section>
 
   <section>
-    <h2><span class="num">6</span>Votre brique : les images Docker</h2>
+    <h2><span class="num">6</span>Rejoindre la forge de la salle</h2>
+    <p>Vous êtes sur le Wi-Fi de la salle : c'est ici que l'on publie. Le compte de votre équipe existe déjà,
+      <b>aucun compte GitHub n'est nécessaire</b>.</p>
+    <div class="cmd"><code data-cmd>./bin/farci poste salle</code></div>
+    <div class="cmd"><code data-cmd>git push -u salle poste/equipe-N-SURNOM</code></div>
+    <p class="note">La première commande ajoute à votre clone un second dépôt distant, <code>salle</code> : la forge
+      du formateur. Ensuite, <code>./bin/farci poste</code> vous donne à chaque fois la commande git suivante.
+      Le guide : <code>./bin/farci docs git</code>.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">7</span>Votre brique : les images Docker</h2>
     <p>Seulement si votre équipe héberge une brique (étape 1). Téléchargez <b>l'image de votre brique</b>
       (votre fiche d'équipe dit laquelle), puis chargez-la :</p>
     <div class="choix">

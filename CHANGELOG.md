@@ -6,6 +6,22 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Deux temps : en ligne, puis en local sur la forge du Pi
+
+- La séance sépare le temps en ligne (cloner depuis GitHub sans compte,
+  télécharger sa brique, créer sa branche) du temps en local sur
+  `FARCI-SALLE`, où l'on publie sur la forge Gitea du Pi. Le basculement est
+  un moment du déroulé.
+- `./bin/farci poste salle` : branche un clone sur la forge sans rien saisir
+  (dépôt distant `salle`, compte `equipe-<N>` rangé dans `.git/`, identité
+  git). Le mot de passe de la salle vient du partage du Pi
+  (`FARCI_FORGE_MOT_DE_PASSE_PUBLIC=0` pour ne pas le publier).
+- Le Pi héberge la forge et l'accueil en premier : sans adresse déclarée pour
+  Gitea, c'est celle du Pi (plus de `room set gitea`), et un poste étudiant la
+  trouve en ne connaissant que `REFERENCE_IP`.
+- Guide git, fiches d'équipe, déroulé, feuille de séance : le chemin principal
+  est `git push -u salle`. Diaporama : quatre diapositives sur le basculement.
+
 ### Questionnaires Wooclap à importer
 
 - `docs/support/wooclap/` : `pre-test.xlsx`, `post-test.xlsx` et

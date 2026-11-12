@@ -319,6 +319,29 @@ module.exports = (ctx) => {
       T(s, [{ text: "git status", options: { fontFace: MONO, bold: true } }, { text: "  dit à tout moment où en est chaque fichier. Tant que vous n'avez pas poussé, personne d'autre ne voit rien." }], { x: 1.0, y: 5.3, w: 11.0, h: 1.15, fontSize: 17, valign: "middle" });
     }
     {
+      const s = content("Un projet, deux dépôts distants", "La leçon du basculement. Votre clone connaît deux dépôts distants. origin, c'est GitHub : d'où vous avez cloné, en lecture. salle, c'est la forge du Pi : ajoutée par ./bin/farci poste salle, en écriture. C'est le même projet aux deux endroits. git remote -v les affiche. Un projet git n'appartient à aucun site : on peut le publier où l'on veut.");
+      box(s, 0.7, 1.9, 3.5, 1.5, C.text1);
+      T(s, "GitHub", { x: 0.9, y: 2.0, w: 3.1, h: 0.55, fontSize: 21, bold: true, align: "center", color: C.background1 });
+      T(s, "sur Internet · en lecture", { x: 0.9, y: 2.6, w: 3.1, h: 0.5, fontSize: 14, align: "center", color: C.background2 });
+      box(s, 9.1, 1.9, 3.5, 1.5, C.accent5);
+      T(s, "La forge du Pi", { x: 9.3, y: 2.0, w: 3.1, h: 0.55, fontSize: 21, bold: true, align: "center", color: C.background1 });
+      T(s, "dans la salle · en écriture", { x: 9.3, y: 2.6, w: 3.1, h: 0.5, fontSize: 14, align: "center", color: C.background1 });
+      box(s, 4.9, 1.9, 3.5, 1.5, C.accent1);
+      T(s, "Votre clone", { x: 5.1, y: 2.0, w: 3.1, h: 0.55, fontSize: 21, bold: true, align: "center", color: C.background1 });
+      T(s, "sur votre machine", { x: 5.1, y: 2.6, w: 3.1, h: 0.5, fontSize: 14, align: "center", color: C.background1 });
+      arrow(s, 4.25, 2.65, 0.6, 0);
+      arrow(s, 8.45, 2.65, 0.6, 0);
+      pill(s, 3.55, 3.6, 2.0, "origin", C.accent4);
+      pill(s, 7.75, 3.6, 2.0, "salle", C.accent5);
+      T(s, "git clone, en ligne", { x: 2.4, y: 4.1, w: 4.3, h: 0.4, fontSize: 14, align: "center", color: C.text2 });
+      T(s, "git push, en local", { x: 6.6, y: 4.1, w: 4.3, h: 0.4, fontSize: 14, align: "center", color: C.text2 });
+      code(s, 0.7, 4.75, 11.9, 1.75, [
+        ["$ git remote -v", VERT],
+        ["origin  https://github.com/jdanion/FARCI"],
+        ["salle   http://<forge>/FARCI/farci.git"],
+      ], 15);
+    }
+    {
       const s = content("Un diff : ce qui change, ligne à ligne", "git diff montre exactement ce qui va partir : en rouge les lignes retirées, en vert les lignes ajoutées. Ici l'étudiant corrige la fiche de son poste : sa machine n'est pas une grosse configuration, et il choisit le modèle 4B. C'est aussi ce que verra l'équipe qui relira sa Pull Request.");
       code(s, 0.7, 1.8, 7.4, 4.7, [
         ["postes/equipe-2-atlas.env", GRIS], [""],
@@ -338,7 +361,7 @@ module.exports = (ctx) => {
     }
     {
       const s = content("La Pull Request : faire relire avant d'intégrer", "Le circuit complet. Vous poussez votre branche. Vous ouvrez une Pull Request vers la branche commune, seance. Une autre équipe la relit : personne ne valide son propre travail. Une fois approuvée, elle est fusionnée. Tout le monde récupère alors le travail commun avec git fetch puis git merge.");
-      const st = [["FaUpload", "Pousser", "votre branche arrive sur la forge"], ["FaCodeBranch", "Demander", "Pull Request vers « seance »"], ["FaUserMd", "Relire", "une autre équipe lit votre diff"], ["FaCheck", "Fusionner", "votre travail entre dans « seance »"], ["FaDownload", "Recevoir", "git fetch, git merge : chacun le récupère"]];
+      const st = [["FaUpload", "Pousser", "votre branche arrive sur la forge"], ["FaCodeBranch", "Demander", "Pull Request vers « seance »"], ["FaUserMd", "Relire", "une autre équipe lit votre diff"], ["FaCheck", "Fusionner", "votre travail entre dans « seance »"], ["FaDownload", "Recevoir", "git fetch salle, git merge : chacun le récupère"]];
       for (let i = 0; i < 5; i++) {
         const x = 0.7 + i * 2.42;
         box(s, x, 2.0, 2.15, 3.5);
@@ -350,21 +373,24 @@ module.exports = (ctx) => {
       T(s, "Personne ne valide son propre travail.", { x: 0.7, y: 5.85, w: 11.9, h: 0.6, fontSize: 21, bold: true, color: C.accent5 });
     }
     {
-      const s = content("Une séance de git, en vrai", "Les sept commandes de la séance, dans l'ordre, telles qu'on les tape. Ne pas les faire apprendre : ./bin/farci poste donne la suivante à chaque étape. L'adresse de la forge est affichée au tableau et sur la page rejoindre.");
-      code(s, 0.7, 1.8, 11.9, 4.2, [
-        ["$ git clone http://<forge>/FARCI/farci.git farci"],
+      const s = content("Une séance de git, en vrai", "Toutes les commandes de la séance, dans l'ordre, telles qu'on les tape. Les six premières se font en ligne. Les deux dernières se font en local, après le basculement : poste salle ajoute le dépôt distant salle, et l'on pousse vers lui. Ne pas les faire apprendre : ./bin/farci poste donne la suivante à chaque étape.");
+      code(s, 0.7, 1.75, 11.9, 4.35, [
+        ["# en ligne", GRIS],
+        ["$ git clone https://github.com/jdanion/FARCI farci"],
         ["$ cd farci"],
         ["$ git switch -c poste/equipe-2-atlas", VERT],
-        ["$ ./bin/farci poste nouveau", GRIS],
+        ["$ ./bin/farci poste nouveau"],
         ["$ git add postes/equipe-2-atlas.env"],
         ['$ git commit -m "poste: atlas, 16 Go sans GPU, modèle 4B"', VERT],
-        ["$ git push -u origin poste/equipe-2-atlas"],
-      ], 16);
-      T(s, [{ text: "Perdu ?  " }, { text: "./bin/farci poste", options: { fontFace: MONO, bold: true } }, { text: "  vous donne la commande suivante." }], { x: 0.7, y: 6.15, w: 11.9, h: 0.5, fontSize: 18, color: C.text2 });
+        ["# en local, sur FARCI-SALLE", GRIS],
+        ["$ ./bin/farci poste salle"],
+        ["$ git push -u salle poste/equipe-2-atlas", VERT],
+      ], 15);
+      T(s, [{ text: "Perdu ?  " }, { text: "./bin/farci poste", options: { fontFace: MONO, bold: true } }, { text: "  vous donne la commande suivante." }], { x: 0.7, y: 6.3, w: 11.9, h: 0.45, fontSize: 17, color: C.text2 });
     }
     {
       const s = content("Quand ça coince", "Les quatre messages que la salle rencontrera. Aucun n'est grave. Rien n'est perdu tant que c'est commité. La seule règle : ne jamais forcer. En cas de doute, lever la main.");
-      const k = [["FaKey", "Authentication failed", "Mauvais compte : c'est equipe-N et le mot de passe de la salle."], ["FaLock", "protected branch", "Vous poussez sur main ou seance. Poussez votre branche, puis Pull Request."], ["FaSync", "rejected : fetch first", "La forge a des commits que vous n'avez pas : git fetch, puis git merge."], ["FaRandom", "CONFLICT", "Deux modifications de la même ligne : ouvrir le fichier, choisir, git add, git commit."]];
+      const k = [["FaKey", "Authentication failed", "Vous poussez vers origin (GitHub). Lancez ./bin/farci poste salle, puis poussez vers salle."], ["FaLock", "protected branch", "Vous poussez sur main ou seance. Poussez votre branche, puis Pull Request."], ["FaSync", "rejected : fetch first", "La forge a des commits que vous n'avez pas : git fetch salle, puis git merge."], ["FaRandom", "CONFLICT", "Deux modifications de la même ligne : ouvrir le fichier, choisir, git add, git commit."]];
       for (let i = 0; i < 4; i++) await card(s, 0.7 + (i % 2) * 6.05, 1.8 + Math.floor(i / 2) * 2.2, 5.85, 1.95, { ic: k[i][0], color: C.accent6, head: k[i][1], body: k[i][2], bodySize: 15 });
       T(s, "Rien n'est perdu tant que c'est commité. Ne forcez jamais : levez la main.", { x: 0.7, y: 6.2, w: 11.9, h: 0.5, fontSize: 17, italic: true, color: C.text2 });
     }

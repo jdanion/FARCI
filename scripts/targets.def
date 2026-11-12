@@ -47,7 +47,7 @@ verify-images	airgap	Vérifier les images Docker locales	verify-images.sh
 verify-models	airgap	Vérifier les poids de modèles	verify-models.sh
 verify-wheels	airgap	Vérifier les wheels Python	verify-wheels.sh
 
-poste	git	Votre poste dans Git : branche, fiche, commande suivante (nouveau, verifier)	poste.sh
+poste	git	Votre poste dans Git : branche, fiche, commande suivante (nouveau, salle, verifier)	poste.sh
 forge-sync	git	GitHub → Gitea : main en avance rapide seulement (status, push, bundle)	forge-sync.sh
 
 generate-dataset	dataset	Générer le dataset synthétique (.txt, --pdf pour Docling)	generate-dataset.sh
