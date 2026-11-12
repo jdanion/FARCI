@@ -6,6 +6,15 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Le tableau ouvre les pages des services
+
+- Une ligne « Ouvrir : » sous l'en-tête du tableau de la salle : Rejoindre,
+  puis la forge, la discussion (Open WebUI), les traces (Phoenix), Langfuse,
+  MLflow, les sondes, Docling, Flowise. Un lien n'apparaît que si le service
+  répond, et mène à la machine qui le rend (celle de l'équipe, sinon le Pi).
+- La forge a désormais le Pi pour doublure : sans équipe 0, le tableau la
+  montre rendue par la référence et son lien fonctionne.
+
 ### Deux temps : en ligne, puis en local sur la forge du Pi
 
 - La séance sépare le temps en ligne (cloner depuis GitHub sans compte,

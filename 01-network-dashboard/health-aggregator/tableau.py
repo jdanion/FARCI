@@ -106,6 +106,14 @@ PAGES = {
     "phoenix": "/", "langfuse": "/", "mlflow": "/", "uptime-kuma": "/", "open-webui": "/", "flowise": "/",
 }
 
+# Les services qui ont une page à ouvrir dans un navigateur : la barre de liens
+# du tableau. Un lien n'apparaît que si le service répond, et mène à la machine
+# qui le rend vraiment (celle de l'équipe, sinon le Pi).
+INTERFACES = (
+    ("gitea", "Forge"), ("open-webui", "Discussion"), ("phoenix", "Traces"), ("langfuse", "Langfuse"),
+    ("mlflow", "MLflow"), ("uptime-kuma", "Sondes"), ("docling", "Docling"), ("flowise", "Flowise"),
+)
+
 # Le déroulé de la séance (docs/WORKSHOP_FLOW.md), en minutes depuis le début.
 PHASES = (
     (0, "Accueil"), (20, "Étape 1 — Construire"), (110, "Pause"), (120, "Étape 2 — Utiliser"),
@@ -288,9 +296,18 @@ class Scoreboard:
                            "equipe": team, "nom_equipe": self.noms.get(team, ""), "ip": ip,
                            "fiche": FICHES.get(row["label"], {}),
                            "services": [self._service_links(by_id.get(m["id"], {}), m, env) for m in members]})
+        interfaces = []
+        for sid, nom in INTERFACES:
+            if sid not in by_id or sid not in states:
+                continue
+            lien = self._service_links(by_id[sid], states[sid], env)
+            url = lien["url_equipe"] if lien["servi_par"] == "equipe" else lien["url_reference"]
+            if lien["servi_par"] in ("equipe", "reference") and url:
+                interfaces.append({"id": sid, "nom": nom, "url": url, "servi_par": lien["servi_par"]})
         minutes = (now - self.debut) / 60
         return {
             "lignes": lignes,
+            "interfaces": interfaces,
             "pipeline": room["pipeline"],
             "service_rendu": room["service_rendu"],
             "chaos": self.chaos,

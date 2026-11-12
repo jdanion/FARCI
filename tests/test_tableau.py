@@ -126,6 +126,26 @@ class VueEtPersistance(unittest.TestCase):
         sans_ip = board.view(r, services, rows, {**env, "INFERENCE_A_IP": ""}, now=60)["lignes"][0]
         self.assertEqual(sans_ip["services"][0]["url_equipe"], "")
 
+    def test_liens_vers_les_pages_des_services_qui_repondent(self):
+        board = tableau.Scoreboard(now=0)
+        services = [
+            {"id": "gitea", "team": "0", "tier": "bonus", "ip_var": "GITEA_IP", "port_var": "GITEA_PORT",
+             "reference_port_var": "GITEA_PORT"},
+            {"id": "open-webui", "team": "7", "tier": "core", "ip_var": "OPEN_WEBUI_IP",
+             "port_var": "OPEN_WEBUI_PORT", "reference_port_var": "OPEN_WEBUI_PORT"},
+            {"id": "phoenix", "team": "5", "tier": "core", "ip_var": "OBSERVABILITY_A_IP", "port_var": "PHOENIX_PORT",
+             "reference_port_var": "PHOENIX_PORT"},
+        ]
+        env = {"REFERENCE_IP": "198.51.100.1", "GITEA_IP": "", "GITEA_PORT": "3000",
+               "OPEN_WEBUI_IP": "198.51.100.27", "OPEN_WEBUI_PORT": "3080", "PHOENIX_PORT": "6006"}
+        # La forge sur le Pi, la discussion chez une équipe, les traces nulle part.
+        r = room({"gitea": "reference", "open-webui": "equipe", "phoenix": None})
+        liens = {i["nom"]: i for i in board.view(r, services, [], env, now=60)["interfaces"]}
+        self.assertEqual(liens["Forge"]["url"], "http://198.51.100.1:3000/")
+        self.assertEqual(liens["Discussion"]["url"], "http://198.51.100.27:3080/")
+        self.assertEqual(liens["Discussion"]["servi_par"], "equipe")
+        self.assertNotIn("Traces", liens)
+
     def test_sauvegarde_et_reprise(self):
         path = Path(tempfile.mkdtemp()) / "tableau.json"
         board = tableau.Scoreboard(path, now=0)
