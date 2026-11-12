@@ -76,6 +76,12 @@ case "${FARCI_TARGET:-up}" in
     # Air-gap : une image absente est une erreur franche, jamais un
     # téléchargement silencieux (docs/AIRGAP.md). Préparation avec Internet :
     # FARCI_ALLOW_PULL=1 ./bin/farci up <dossier>
+    # La forge sur le Pi : sans adresse déclarée pour Gitea, c'est celle de la
+    # machine de référence (plus besoin de ./bin/farci room set gitea).
+    if [[ "${dir#"$FARCI_ROOT"/}" == 00-gitops && -z "${GITEA_IP:-}" && -n "${REFERENCE_IP:-}" ]]; then
+      export GITEA_IP="$REFERENCE_IP"
+      info "forge sur la machine de référence : GITEA_IP=$GITEA_IP"
+    fi
     # llama.cpp sert le 9B s'il est là ; sinon Qwen3.5-4B (8 Go de RAM au
     # moins) ; sinon le 2B. LLAMACPP_GGUF impose un fichier : c'est le réglage
     # à écrire dans la fiche du poste (gemma-4-E4B-it-Q4_K_M.gguf, par exemple).

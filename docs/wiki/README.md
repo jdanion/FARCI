@@ -17,11 +17,24 @@ connaître Docker ni le réseau. Le `TUTORIAL.md` de chaque dossier
 
 ## Git, pour toutes les équipes
 
-Avant la première étape de votre fiche, chacun a **cloné** le projet (GitHub,
-ou la forge Gitea de la salle) et créé **sa branche**. Pendant l'étape 1,
-chacun commite la fiche de son poste, la pousse sur la forge et ouvre une
-Pull Request. `./bin/farci poste` donne la commande suivante ; le guide pas
-à pas est [`docs/GIT.md`](../GIT.md).
+La séance se déroule en deux temps (`docs/GIT.md`) :
+
+1. **En ligne** — chez vous ou en début de séance, sans compte GitHub :
+   cloner le projet, télécharger votre brique, créer **votre branche**,
+   commiter la fiche de votre poste.
+2. **En local** — sur le Wi-Fi `FARCI-SALLE` : `./bin/farci poste salle`
+   branche votre clone sur la forge du Pi (le compte de votre équipe existe
+   déjà), vous poussez, vous ouvrez une Pull Request, une autre équipe relit.
+
+`./bin/farci poste` donne à tout moment la commande suivante.
+
+## Qui héberge quoi
+
+Le **Pi du formateur** tient ce dont toute la salle dépend : l'accueil (Caddy
+et le tableau) et la forge Gitea. **Vos machines** portent les services que
+l'on compare et que l'on casse : les runtimes et leurs modèles, la passerelle,
+les documents, l'observabilité, l'extraction. Les équipes 0 et 1 ne se
+constituent que si des étudiants veulent reprendre la forge ou l'accueil.
 
 ## Le tableau projeté, en trois symboles
 

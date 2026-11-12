@@ -66,22 +66,42 @@ l'état d'hier, et comparer deux versions ligne à ligne.
 
 ---
 
+## Deux temps : en ligne, puis en local
+
+Un ordinateur ne peut être que sur un Wi-Fi à la fois, et la salle travaille
+sur son propre réseau, sans Internet. La séance se déroule donc en deux temps.
+
+| Temps | Réseau | Ce que vous faites | Dépôt distant |
+|---|---|---|---|
+| **1. En ligne** — chez vous, ou en début de séance | celui de la faculté, ou le vôtre | cloner depuis GitHub, télécharger votre brique (`./preload.sh`), créer votre branche, premier commit | `origin` : GitHub, en lecture |
+| **2. En local** — le reste de la séance | `FARCI-SALLE`, le Wi-Fi du Pi | `./bin/farci poste salle`, pousser, Pull Request, relecture | `salle` : la forge Gitea, en écriture |
+
+**Aucun compte GitHub n'est nécessaire** : le projet est public, on le clone
+sans s'identifier. Et sur la forge de la salle, le compte de votre équipe
+existe déjà : `./bin/farci poste salle` le branche sur votre clone, sans rien
+à saisir.
+
+Le basculement est annoncé par le formateur : « tout le monde a ce qu'il lui
+faut ? On passe en local. » À partir de là, plus rien ne sort de la salle.
+
+---
+
 ## Le parcours, étape par étape
 
 ### 1. Cloner
 
-Dans la salle, depuis la forge Gitea (l'adresse est au tableau et sur la page
-`/rejoindre`) :
-
-```bash
-git clone http://<forge>/FARCI/farci.git farci
-cd farci
-```
-
-Depuis GitHub, partout où il y a Internet :
+Depuis GitHub, partout où il y a Internet, **sans compte** :
 
 ```bash
 git clone https://github.com/jdanion/FARCI farci
+cd farci
+```
+
+Arrivé dans la salle sans avoir cloné ? La forge du Pi a le même projet
+(l'adresse est sur la page `/rejoindre`) :
+
+```bash
+git clone http://<forge>/FARCI/farci.git farci
 cd farci
 ```
 
@@ -150,20 +170,24 @@ git commit -m "poste: atlas, 16 Go sans GPU, llama.cpp et modèle 2B"
 
 Un commit = **une** modification, avec un message qui dit pourquoi.
 
-### 6. Pousser sur la forge
+### 6. Rejoindre la forge de la salle, et pousser
+
+C'est le basculement : vous êtes maintenant sur le Wi-Fi `FARCI-SALLE`.
 
 ```bash
-git push -u origin poste/equipe-2-atlas
-```
-
-Identifiant : `equipe-2` ; mot de passe : celui de la salle, au tableau. Si
-vous avez cloné depuis GitHub, `origin` est GitHub et vous n'y avez pas le
-droit d'écrire : ajoutez la forge de la salle comme second dépôt distant.
-
-```bash
-git remote add salle http://<forge>/FARCI/farci.git
+./bin/farci poste salle
+git remote -v
 git push -u salle poste/equipe-2-atlas
 ```
+
+`./bin/farci poste salle` ajoute à votre clone un **second dépôt distant**,
+nommé `salle` : la forge Gitea du Pi. Elle y enregistre aussi le compte de
+votre équipe (`equipe-2`), qui existe déjà. `git remote -v` vous montre le
+résultat : `origin` pointe toujours vers GitHub, où vous ne pouvez que lire ;
+`salle` pointe vers la forge, où vous publiez. Un même projet peut avoir
+plusieurs dépôts distants : c'est ce qui rend git indépendant d'un site.
+
+À la main, cela s'écrirait `git remote add salle http://<forge>/FARCI/farci.git`.
 
 ### 7. Ouvrir une Pull Request
 
@@ -174,8 +198,8 @@ ne valide son propre travail. `./bin/farci poste` vous donne le lien direct.
 ### 8. Recevoir le travail des autres
 
 ```bash
-git fetch origin
-git merge origin/seance
+git fetch salle
+git merge salle/seance
 ```
 
 Chaque équipe ajoute **son** fichier dans `postes/` : les fusions se passent
@@ -199,7 +223,8 @@ Request (`CONTRIBUTING.md`, « Deux forges »).
 
 ## Après l'atelier
 
-**Continuer sur GitHub.** Sur la page du projet, *Fork* crée votre copie.
+**Continuer sur GitHub** (c'est là, et seulement là, qu'un compte GitHub
+sert). Sur la page du projet, *Fork* crée votre copie.
 Votre clone garde tout votre historique : il suffit de lui présenter ce
 nouveau dépôt.
 
@@ -227,9 +252,10 @@ chez soi.
 | Ce que vous voyez | Ce qui se passe | Quoi faire |
 |---|---|---|
 | `Please tell me who you are` | git ne sait pas qui signe | les deux `git config` de l'étape 2 |
-| `Authentication failed` au push | mauvais compte, ou vous poussez vers GitHub | compte `equipe-<N>` ; `git remote -v` pour voir où vous poussez |
+| `Authentication failed` au push | vous poussez vers GitHub (`origin`), ou le compte n'est pas branché | `./bin/farci poste salle`, puis `git push -u salle <votre branche>` |
 | `protected branch` | vous poussez sur `main` ou `seance` | c'est voulu : poussez **votre** branche, puis Pull Request |
-| `rejected … fetch first` | la forge a des commits que vous n'avez pas | `git fetch origin` puis `git merge origin/<votre branche>` |
+| `rejected … fetch first` | la forge a des commits que vous n'avez pas | `git fetch salle` puis `git merge salle/<votre branche>` |
+| `forge injoignable` | vous n'êtes pas sur le Wi-Fi de la salle | rejoindre `FARCI-SALLE`, puis `./bin/farci poste salle` |
 | `CONFLICT` pendant un merge | deux modifications de la même ligne | ouvrir le fichier, garder la bonne version, `git add`, `git commit` |
 | vous avez commité sur `main` | la branche n'a pas été créée avant | `git switch -c poste/equipe-<N>-<surnom>` : le commit vous suit |
 | `detached HEAD` | vous regardez un ancien commit | `git switch <votre branche>` |
@@ -248,9 +274,10 @@ git status                       # où j'en suis
 git switch -c <branche>          # créer ma branche
 git add <fichier>                # choisir ce qui part
 git commit -m "message"          # enregistrer, avec une explication
-git push -u origin <branche>     # publier
-git fetch origin                 # recevoir
-git merge origin/seance          # intégrer le travail commun
+./bin/farci poste salle          # en salle : brancher la forge (dépôt distant « salle »)
+git push -u salle <branche>      # publier
+git fetch salle                  # recevoir
+git merge salle/seance           # intégrer le travail commun
 git log --oneline --graph --all  # voir l'histoire, branches comprises
 ```
 

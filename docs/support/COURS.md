@@ -96,7 +96,7 @@ notion avec ses mots**, comme à un collègue non informaticien.
 |---|---|---|
 | Installer git | Mac : `xcode-select --install` ; Windows : WSL, puis `sudo apt install git` ; Linux : déjà là | 10 min |
 | Installer Docker | Docker Desktop (Mac, Windows) ou le paquet de votre distribution | 20 min |
-| Cloner le projet | `git clone https://github.com/jdanion/FARCI farci` | 1 min |
+| Cloner le projet | `git clone https://github.com/jdanion/FARCI farci` — le projet est public, **aucun compte GitHub n'est nécessaire** | 1 min |
 | Vérifier la machine | `./bin/farci doctor` | 1 min |
 | Télécharger votre brique | `./preload.sh --equipe <N>`, une fois votre équipe connue | 10 à 60 min selon le débit |
 
@@ -109,9 +109,10 @@ binôme, et l'étape 2 se fait aussi dans un navigateur.
 
 | Horaire | Moment | Ce que vous faites |
 |---|---|---|
-| 0:00 | **Accueil** | pré-test Wooclap ; les trois étapes ; vous clonez le projet et créez votre branche |
+| 0:00 | **Accueil, en ligne** | les trois étapes ; vous finissez de cloner et de télécharger, vous créez votre branche |
+| ~0:20 | **Le basculement** | vous rejoignez le Wi-Fi `FARCI-SALLE` et lancez `./bin/farci poste salle` : à partir de là, plus rien ne sort de la salle |
 | 0:20 | **Étape 1 — Construire** | vous écrivez la fiche de votre poste (premier commit), puis votre équipe monte sa brique |
-| 1:15 | | vous poussez votre branche, ouvrez une Pull Request, relisez celle d'une autre équipe |
+| 1:15 | | vous poussez votre branche sur la forge de la salle, ouvrez une Pull Request, relisez celle d'une autre équipe |
 | ~1:30 | | **`CLINICAL PIPELINE READY`** : la chaîne complète fonctionne |
 | 1:50 | Pause | |
 | 2:00 | **Étape 2 — Utiliser** | extraction des dossiers, par programme ou dans un navigateur |

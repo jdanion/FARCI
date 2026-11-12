@@ -6,10 +6,14 @@ réseau, aucun Docker."""
 
 from __future__ import annotations
 
+import base64
+import http.server
+import json
 import os
 import shutil
 import subprocess
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -96,6 +100,56 @@ class ParcoursEtudiant(unittest.TestCase):
         self.assertIn("FARCI_TRACK=webui", self.farci("env").stdout)
         self.git("switch", "-q", "main")
         self.assertNotIn("FARCI_TRACK=webui", self.farci("env").stdout)
+
+    def fausse_forge(self, mot_de_passe: str) -> str:
+        """Une forge de théâtre : /api/healthz, /api/v1/user (compte equipe-2) et le partage du Pi."""
+        attendu = "Basic " + base64.b64encode(f"equipe-2:{mot_de_passe}".encode()).decode()
+
+        class Forge(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == "/api/healthz":
+                    code, corps = 200, b"{}"
+                elif self.path == "/api/v1/user":
+                    code = 200 if self.headers.get("Authorization") == attendu else 401
+                    corps = b"{}"
+                elif self.path == "/partage/forge.json":
+                    code, corps = 200, json.dumps({"mot_de_passe": mot_de_passe}).encode()
+                else:
+                    code, corps = 404, b""
+                self.send_response(code)
+                self.end_headers()
+                self.wfile.write(corps)
+
+            def log_message(self, *args):
+                pass
+
+        serveur = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Forge)
+        threading.Thread(target=serveur.serve_forever, daemon=True).start()
+        self.addCleanup(serveur.server_close)
+        self.addCleanup(serveur.shutdown)
+        return f"http://127.0.0.1:{serveur.server_address[1]}"
+
+    def test_poste_salle_branche_le_clone_sur_la_forge_sans_rien_saisir(self):
+        forge = self.fausse_forge("mot de passe/de la salle")
+        self.git("switch", "-qc", "poste/equipe-2-atlas")
+        resultat = self.farci("poste", "salle", GITEA_URL=forge, FARCI_ENTRY_URL=forge)
+        self.assertEqual(resultat.returncode, 0, resultat.stderr)
+        self.assertEqual(self.git("remote", "get-url", "salle").strip(), f"{forge}/FARCI/farci.git")
+        self.assertEqual(self.git("config", "user.name").strip(), "equipe-2")
+        compte = (self.clone / ".git" / "farci-forge-credentials").read_text(encoding="utf-8")
+        self.assertIn("equipe-2:mot%20de%20passe%2Fde%20la%20salle@127.0.0.1", compte)
+        self.assertIn("git push -u salle poste/equipe-2-atlas", resultat.stdout)
+        self.assertNotIn("mot de passe/de la salle", resultat.stdout)  # jamais affiché
+
+    def test_poste_salle_refuse_un_mauvais_mot_de_passe_et_une_forge_absente(self):
+        forge = self.fausse_forge("le-bon")
+        self.git("switch", "-qc", "poste/equipe-2-atlas")
+        refus = self.farci("poste", "salle", GITEA_URL=forge, FARCI_SALLE_MOT_DE_PASSE="le-mauvais")
+        self.assertNotEqual(refus.returncode, 0)
+        self.assertIn("refuse le compte equipe-2", refus.stderr)
+        absente = self.farci("poste", "salle", GITEA_URL="http://127.0.0.1:9", FARCI_SALLE_MOT_DE_PASSE="x")
+        self.assertIn("Wi-Fi de la salle", absente.stderr)
+        self.assertNotIn("salle", self.git("remote"))
 
     def test_une_fiche_ne_contient_ni_secret_ni_cle_inconnue(self):
         postes = self.clone / "postes"

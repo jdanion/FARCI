@@ -6,6 +6,9 @@
 #   ./bin/farci poste nouveau     écrit la fiche de CE poste, sur SA branche :
 #                                 postes/<nom>.env (matériel constaté, équipe,
 #                                 fonction dans le projet)
+#   ./bin/farci poste salle       branche ce clone sur la forge de la salle :
+#                                 dépôt distant « salle », compte de votre
+#                                 équipe, identité git — rien à saisir
 #   ./bin/farci poste verifier    toutes les fiches sont-elles valides ?
 #
 # LA RÈGLE : une machine = une branche poste/equipe-<N>-<surnom> = une fiche
@@ -15,7 +18,9 @@
 # de branche, c'est changer de configuration.
 #
 # Cette commande ne tape AUCUNE commande git à votre place : elle regarde où
-# vous en êtes et vous donne la suivante. Le surnom est celui de la MACHINE
+# vous en êtes et vous donne la suivante. Une exception, « poste salle » : le
+# compte sur la forge est de la plomberie, pas du git ; elle dit ce qu'elle a
+# fait, avec les commandes git équivalentes. Le surnom est celui de la MACHINE
 # (atlas, pc-salle-3), jamais celui d'une personne ; aucun secret dans une fiche.
 
 set -euo pipefail
@@ -186,6 +191,79 @@ cmd_verifier() {
 }
 
 # printf compte des octets : les libellés accentués sont alignés à la main.
+# Le numéro d'équipe de ce poste : celui de sa branche, sinon FARCI_EQUIPE.
+poste_equipe() {
+  local branch
+  branch="$(current_branch)"
+  if [[ "${branch#poste/}" =~ $NAME_RE ]]; then printf '%s\n' "${BASH_REMATCH[1]}"
+  elif [[ "${FARCI_EQUIPE:-}" =~ ^[0-8]$ ]]; then printf '%s\n' "$FARCI_EQUIPE"
+  fi
+}
+
+# Le mot de passe du compte equipe-<N> : l'environnement, sinon ce que publie
+# le Pi (./bin/farci partage maj), sinon on le demande.
+forge_password() {
+  local pw="${FARCI_SALLE_MOT_DE_PASSE:-}"
+  if [[ -z "$pw" && -n "${FARCI_ENTRY_URL:-}" ]]; then
+    pw="$(curl -sf --max-time 5 "$FARCI_ENTRY_URL/partage/forge.json" 2>/dev/null \
+          | python3 -c 'import json, sys; print(json.load(sys.stdin).get("mot_de_passe", ""))' 2>/dev/null || true)"
+  fi
+  if [[ -z "$pw" && -t 0 ]]; then
+    read -r -s -p "  Mot de passe de la salle (au tableau) : " pw; printf '\n' >&2
+  fi
+  printf '%s' "$pw"
+}
+
+cmd_salle() {
+  local equipe compte url depot pw gitdir store branch
+  in_clone || die "ce dossier n'est pas un clone git : voir docs/GIT.md, « Cloner »"
+  need curl
+  equipe="$(poste_equipe)"
+  [[ -n "$equipe" ]] || die "équipe inconnue : créez d'abord votre branche (git switch -c $(suggested_branch))"
+  compte="equipe-$equipe"
+  url="${GITEA_URL:-}"
+  [[ -n "$url" ]] || die "adresse de la forge inconnue : REFERENCE_IP manque dans config/network.env (page /rejoindre, étape 2)"
+  [[ "$(http_code "$url/api/healthz" 5)" == "200" ]] \
+    || die "forge injoignable ($url) : êtes-vous sur le Wi-Fi de la salle ?"
+  pw="$(forge_password)"
+  [[ -n "$pw" ]] || die "mot de passe de la salle introuvable : FARCI_SALLE_MOT_DE_PASSE=… ./bin/farci poste salle"
+  curl -sf --max-time 10 -o /dev/null -u "$compte:$pw" "$url/api/v1/user" \
+    || die "la forge refuse le compte $compte : mot de passe de la salle ?"
+
+  depot="$url/FARCI/farci.git"
+  if "${GIT[@]}" remote get-url salle >/dev/null 2>&1; then
+    "${GIT[@]}" remote set-url salle "$depot"
+  else
+    "${GIT[@]}" remote add salle "$depot"
+  fi
+  # Le compte est rangé dans .git/ (jamais commité) et ne sert qu'à cette forge.
+  gitdir="$("${GIT[@]}" rev-parse --absolute-git-dir)"
+  store="$gitdir/farci-forge-credentials"
+  COMPTE="$compte" PW="$pw" URL="$url" python3 -c '
+import os
+from urllib.parse import quote, urlsplit
+u = urlsplit(os.environ["URL"])
+compte = quote(os.environ["COMPTE"], safe="")
+secret = quote(os.environ["PW"], safe="")
+print(u.scheme + "://" + compte + ":" + secret + "@" + u.netloc)
+' > "$store"
+  chmod 600 "$store"
+  "${GIT[@]}" config "credential.$url.helper" "store --file=$store"
+  "${GIT[@]}" config "credential.$url.username" "$compte"
+  if [[ -z "$("${GIT[@]}" config user.name || true)" ]]; then
+    "${GIT[@]}" config user.name "$compte"
+    "${GIT[@]}" config user.email "$compte@farci.local"
+  fi
+
+  ok "ce clone est branché sur la forge de la salle, avec le compte $compte"
+  printf '\n  Ce que la commande a fait pour vous :\n'
+  printf '    git remote add salle %s      # un second dépôt distant, à côté de « origin »\n' "$depot"
+  printf '    (compte %s enregistré dans .git/, pour cette forge seulement)\n' "$compte"
+  branch="$(current_branch)"
+  next "git remote -v" "git push -u salle ${branch:-<votre branche>}" \
+       "# « origin » reste d'où vous avez cloné ; « salle » est la forge où vous publiez"
+}
+
 row() { printf '  %s%*s %s\n' "$1" "$(( 12 - ${#1} ))" "" "$2"; }
 next() { printf '\n  %sÀ taper maintenant :%s\n' "$C_BOLD" "$C_RESET"; printf '    %s\n' "$@"; printf '\n'; }
 
@@ -244,8 +322,9 @@ cmd_etat() {
   if [[ -z "$push_to" ]]; then
     row "publiée" "non : ce clone ne connaît aucune forge où vous pouvez écrire"
     if [[ -n "${GITEA_URL:-}" ]]; then
-      next "git remote add salle $GITEA_URL/FARCI/farci.git" "git push -u salle $branch" \
-           "# un remote = un dépôt distant ; « salle » est la forge Gitea, « origin » reste d'où vous avez cloné"
+      next "./bin/farci poste salle" "git push -u salle $branch" \
+           "# sur le Wi-Fi de la salle : ajoute le dépôt distant « salle » (la forge Gitea) et le compte de votre équipe" \
+           "# « origin » reste d'où vous avez cloné : un même projet peut avoir plusieurs dépôts distants"
     else
       next "git remote add moi https://github.com/<votre-compte>/FARCI.git" "git push -u moi $branch" \
            "# hors de la salle : forkez ${FARCI_GITHUB_URL:-le dépôt} sur GitHub, poussez sur VOTRE fork"
@@ -261,7 +340,7 @@ cmd_etat() {
     else
       row "publiée" "non : la branche n'existe que sur cette machine"
     fi
-    next "git push -u $push_to $branch" "# identifiant : le compte de votre équipe (equipe-<N>), donné par le formateur"
+    next "git push -u $push_to $branch" "# le compte de votre équipe est déjà enregistré si vous avez lancé ./bin/farci poste salle"
     return 0
   fi
   row "publiée" "oui : $upstream"
@@ -275,6 +354,7 @@ farci_load_env
 case "${1:-}" in
   "")           cmd_etat ;;
   nouveau)      shift; cmd_nouveau "$@" ;;
+  salle)        cmd_salle ;;
   verifier)     cmd_verifier ;;
   -h|--help)    usage ;;
   *)            err "commande inconnue : $1"; usage >&2; exit 64 ;;

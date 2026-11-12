@@ -154,6 +154,54 @@ async function icon(name, color = "FFFFFF") {
     });
   }
   {
+    const s = content("Deux temps : en ligne, puis en local", "La séance a deux temps, parce qu'un ordinateur ne peut être que sur un Wi-Fi à la fois. En ligne : on récupère le projet et les modèles, avant la séance si possible. Aucun compte GitHub n'est nécessaire, le projet est public. Puis on bascule sur le Wi-Fi de la salle : à partir de là tout se passe sur place, et plus rien ne sort.");
+    box(s, 0.7, 1.8, 5.2, 4.7);
+    await dot(s, 1.0, 2.05, 0.85, C.accent4, "FaGlobeEurope");
+    T(s, "1. En ligne", { x: 2.1, y: 2.05, w: 3.6, h: 0.45, fontSize: 24, bold: true });
+    T(s, "chez vous, ou à l'accueil", { x: 2.1, y: 2.5, w: 3.6, h: 0.4, fontSize: 14, color: C.accent4 });
+    T(s, bullets(["cloner le projet depuis GitHub, sans compte", "télécharger la brique de votre équipe", "créer votre branche, premier commit"], 17), { x: 1.0, y: 3.3, w: 4.6, h: 2.9 });
+    T(s, "Aucun compte GitHub n'est nécessaire.", { x: 1.0, y: 5.6, w: 4.6, h: 0.6, fontSize: 18, bold: true, italic: true, color: C.text2 });
+    arrow(s, 6.05, 4.15, 1.2, 0, C.text1);
+    T(s, "le basculement", { x: 5.9, y: 3.55, w: 1.5, h: 0.5, fontSize: 12, bold: true, align: "center", valign: "middle" });
+    box(s, 7.4, 1.8, 5.2, 4.7, C.text1);
+    await dot(s, 7.7, 2.05, 0.85, C.accent5, "FaWifi");
+    T(s, "2. En local", { x: 8.8, y: 2.05, w: 3.6, h: 0.45, fontSize: 24, bold: true, color: C.background1 });
+    T(s, "sur le Wi-Fi FARCI-SALLE", { x: 8.8, y: 2.5, w: 3.6, h: 0.4, fontSize: 14, color: C.background2 });
+    T(s, bullets(["brancher votre clone sur la forge du Pi", "construire, utiliser, casser", "publier votre branche, la faire relire"], 17), { x: 7.7, y: 3.3, w: 4.6, h: 2.2, color: C.background1 });
+    T(s, "Plus rien ne sort de la salle.", { x: 7.7, y: 5.6, w: 4.6, h: 0.6, fontSize: 18, bold: true, italic: true, color: C.background2 });
+  }
+  {
+    const s = content("Le basculement : on passe en local", "Le moment du basculement, vers 0:20. Vérifier à voix haute les trois points de gauche. Puis tout le monde change de Wi-Fi. La commande ./bin/farci poste salle branche le clone sur la forge du Pi : le compte de l'équipe existe déjà, il n'y a rien à saisir. Un poste dont le téléchargement traîne reste en ligne et rejoint plus tard : la machine de référence sert à sa place.");
+    T(s, "Avant de basculer, chacun a", { x: 0.7, y: 1.75, w: 5.6, h: 0.5, fontSize: 19, bold: true });
+    const avant = ["son clone du projet", "la brique de son équipe, téléchargée", "sa branche, et son premier commit"];
+    for (let i = 0; i < 3; i++) {
+      box(s, 0.7, 2.4 + i * 1.05, 5.6, 0.88);
+      await dot(s, 0.9, 2.52 + i * 1.05, 0.62, C.accent2, "FaCheck");
+      T(s, avant[i], { x: 1.75, y: 2.4 + i * 1.05, w: 4.4, h: 0.88, fontSize: 17, valign: "middle" });
+    }
+    box(s, 6.8, 1.75, 5.8, 3.85, C.text1);
+    T(s, "Puis, dans l'ordre", { x: 7.1, y: 1.95, w: 5.2, h: 0.5, fontSize: 19, bold: true, color: C.background1 });
+    const apres = [["Rejoindre le Wi-Fi", "FARCI-SALLE"], ["Brancher la forge", "./bin/farci poste salle"], ["Vérifier", "./bin/farci doctor"]];
+    apres.forEach(([h, c], i) => {
+      num(s, 7.1, 2.65 + i * 0.95, 0.6, C.accent5, i + 1);
+      T(s, h, { x: 7.9, y: 2.6 + i * 0.95, w: 4.5, h: 0.38, fontSize: 16, bold: true, color: C.background1 });
+      T(s, c, { x: 7.9, y: 2.97 + i * 0.95, w: 4.5, h: 0.36, fontFace: MONO, fontSize: 14, color: C.background2 });
+    });
+    T(s, "Pas de compte à créer : celui de votre équipe existe déjà sur la forge.", { x: 0.7, y: 5.85, w: 11.9, h: 0.6, fontSize: 18, italic: true, color: C.text2 });
+  }
+  {
+    const s = content("Qui héberge quoi", "Une règle simple. Ce dont toute la salle dépend est sur le Pi du formateur : l'accueil, le tableau, la forge. Ce que l'on compare et que l'on casse est sur les machines des équipes : les modèles et leurs runtimes, la passerelle, les documents, les traces, l'extraction. Si une brique d'équipe tombe, la doublure du Pi répond à sa place.");
+    box(s, 0.7, 1.8, 5.8, 3.6, C.text1);
+    await dot(s, 1.0, 2.05, 0.85, C.accent3, "FaServer");
+    T(s, "Le Pi du formateur", { x: 2.1, y: 2.05, w: 4.2, h: 0.85, fontSize: 22, bold: true, valign: "middle", color: C.background1 });
+    T(s, bullets(["l'accueil et le tableau de la salle", "la forge Gitea et les comptes des équipes", "une doublure de chaque service"], 17), { x: 1.0, y: 3.2, w: 5.2, h: 2.0, color: C.background1 });
+    box(s, 6.8, 1.8, 5.8, 3.6);
+    await dot(s, 7.1, 2.05, 0.85, C.accent1, "FaLaptop");
+    T(s, "Vos machines", { x: 8.2, y: 2.05, w: 4.2, h: 0.85, fontSize: 22, bold: true, valign: "middle" });
+    T(s, bullets(["les modèles et leurs runtimes", "la passerelle, les documents, les traces", "l'extraction et l'évaluation"], 17), { x: 7.1, y: 3.2, w: 5.2, h: 2.0 });
+    T(s, "Ce dont toute la salle dépend est sur le Pi. Ce que l'on compare et que l'on casse est chez vous.", { x: 0.7, y: 5.65, w: 11.9, h: 0.8, fontSize: 18, italic: true, color: C.text2 });
+  }
+  {
     const s = content("Ce que vous saurez en sortant", "Les attendus. Lire les trois colonnes. Insister sur git : c'est un objectif pour tout le monde, quelle que soit l'équipe. Le détail est dans COURS.md, section 2.");
     const cols = [
       ["FaComments", C.accent1, "Expliquer", ["pourquoi un LLM peut se tromper avec aplomb", "la différence entre un modèle et un runtime", "pourquoi on valide avant d'écrire en base", "ce que vaut un score sans référence", "ce qui ne sort jamais de la salle"]],
@@ -312,7 +360,7 @@ async function icon(name, color = "FFFFFF") {
   }
   {
     const s = content("Trois lieux, un seul projet", "GitHub est la référence, joignable depuis la faculté. Gitea est le même projet, hébergé dans la salle : c'est ce qu'installe un hôpital dont le code ne doit pas sortir. Les commandes sont les mêmes. Vous clonez, puis vous poussez sur la forge de la salle.");
-    const places = [["FaGithub", C.text1, "GitHub", "La référence du projet. Accessible de partout. Vous y lisez ; plus tard, vous y créez votre copie."], ["FaServer", C.accent5, "Gitea, la forge de la salle", "Le même projet, sur une machine que l'on possède. Vous y poussez votre branche."], ["FaLaptop", C.accent1, "Votre ordinateur", "Votre clone, sur votre branche : le projet adapté à votre machine."]];
+    const places = [["FaGithub", C.text1, "GitHub", "La référence du projet. On y clone sans compte. Plus tard, vous pourrez y créer votre copie."], ["FaServer", C.accent5, "Gitea, la forge de la salle", "Le même projet, sur le Pi du formateur. C'est là que vous publiez votre branche."], ["FaLaptop", C.accent1, "Votre ordinateur", "Votre clone, sur votre branche : le projet adapté à votre machine."]];
     for (let i = 0; i < 3; i++) {
       const [ic, color, head, body] = places[i]; const x = 0.7 + i * 4.05;
       box(s, x, 1.8, 3.8, 3.6);
@@ -323,14 +371,14 @@ async function icon(name, color = "FFFFFF") {
     T(s, "Les fichiers lourds (un modèle pèse de 1 à 18 Go) ne vont jamais dans git : ils se téléchargent à part.", { x: 0.7, y: 5.7, w: 11.9, h: 0.8, fontSize: 17, italic: true, color: C.text2 });
   }
   {
-    const s = content("Votre parcours, en six gestes", "Les six gestes de la séance. Ne pas faire retenir les commandes : ./bin/farci poste donne la suivante à chaque fois. Dire quand chaque geste a lieu : clone et branche à l'accueil, commit à 0:20, push et Pull Request à 1:15.");
-    const steps = [["Cloner", "git clone <adresse> farci"], ["Créer sa branche", "git switch -c poste/equipe-2-atlas"], ["Adapter", "./bin/farci poste nouveau"], ["Enregistrer", 'git commit -m "poste: atlas, 16 Go"'], ["Publier", "git push -u origin <votre branche>"], ["Faire relire", "Pull Request vers « seance »"]];
+    const s = content("Votre parcours, en six gestes", "Les six gestes de la séance. Les quatre premiers se font en ligne, avant la séance ou à l'accueil. Les deux derniers se font en local, après le basculement. Ne pas faire retenir les commandes : ./bin/farci poste donne la suivante à chaque fois.");
+    const steps = [["Cloner (en ligne)", "git clone <adresse GitHub> farci"], ["Créer sa branche", "git switch -c poste/equipe-2-atlas"], ["Adapter", "./bin/farci poste nouveau"], ["Enregistrer", 'git commit -m "poste: atlas, 16 Go"'], ["Rejoindre la forge (en local)", "./bin/farci poste salle"], ["Publier et faire relire", "git push -u salle <votre branche>"]];
     steps.forEach(([head, cmd], i) => {
       const x = 0.7 + (i % 2) * 6.05, y = 1.8 + Math.floor(i / 2) * 1.6;
       box(s, x, y, 5.85, 1.4);
-      num(s, x + 0.25, y + 0.35, 0.7, C.accent5, i + 1);
+      num(s, x + 0.25, y + 0.35, 0.7, i < 4 ? C.accent4 : C.accent5, i + 1);
       T(s, head, { x: x + 1.2, y: y + 0.18, w: 4.5, h: 0.5, fontSize: 19, bold: true, valign: "middle" });
-      T(s, cmd, { x: x + 1.2, y: y + 0.75, w: 4.5, h: 0.45, fontSize: 14, fontFace: i === 5 ? undefined : MONO, color: C.text2, valign: "middle" });
+      T(s, cmd, { x: x + 1.2, y: y + 0.75, w: 4.5, h: 0.45, fontSize: 14, fontFace: MONO, color: C.text2, valign: "middle" });
     });
   }
   {
@@ -356,25 +404,25 @@ async function icon(name, color = "FFFFFF") {
 
   // ───────────────────────────── La séance
   sec("La séance");
-  divider("La séance", "Quatre heures, neuf équipes, une règle", "Transition vers l'organisation pratique.");
+  divider("La séance", "Quatre heures, deux temps, une règle", "Transition vers l'organisation pratique.");
   {
-    const s = content("Quatre heures", "Le minutage. La pause n'est jamais supprimée. Le moment clé de l'étape 1 est CLINICAL PIPELINE READY, vers 1:30. La clôture n'est jamais coupée : c'est là que chacun explique une notion.");
-    const rows = [["0:00", "Accueil", "pré-test, clone, votre branche", C.accent4, 20], ["0:20", "Étape 1 — Construire", "premier commit, votre brique, Pull Request", C.accent1, 90], ["1:50", "Pause", "", C.accent4, 10], ["2:00", "Étape 2 — Utiliser", "extraction des dossiers", C.accent5, 50], ["2:50", "Évaluation", "classement, une trace lue ensemble", C.accent3, 20], ["3:10", "Étape 3 — Casser", "quatre pannes, un pari avant chacune", C.accent6, 35], ["3:45", "Clôture", "une notion chacun, post-test", C.accent4, 15]];
+    const s = content("Quatre heures", "Le minutage. L'accueil se fait en ligne ; le basculement vers le Wi-Fi de la salle a lieu vers 0:20, et tout le reste se passe en local. La pause n'est jamais supprimée. Le moment clé de l'étape 1 est CLINICAL PIPELINE READY, vers 1:30. La clôture n'est jamais coupée : c'est là que chacun explique une notion.");
+    const rows = [["0:00", "Accueil, en ligne", "clone, brique, votre branche", C.accent4, 20], ["~0:20", "Le basculement", "on rejoint FARCI-SALLE", C.text1, 6], ["0:20", "Étape 1 — Construire", "votre brique, push, Pull Request", C.accent1, 90], ["1:50", "Pause", "", C.accent4, 10], ["2:00", "Étape 2 — Utiliser", "extraction des dossiers", C.accent5, 50], ["2:50", "Évaluation", "classement, une trace lue ensemble", C.accent3, 20], ["3:10", "Étape 3 — Casser", "quatre pannes, un pari avant chacune", C.accent6, 35], ["3:45", "Clôture", "une notion chacun, post-test", C.accent4, 15]];
     rows.forEach(([t, head, body, color, min], i) => {
-      const y = 1.75 + i * 0.7;
-      T(s, t, { x: 0.7, y, w: 0.9, h: 0.55, fontFace: MONO, fontSize: 15, valign: "middle", color: C.accent4 });
-      box(s, 1.7, y, 0.9 + (min / 90) * 3.2, 0.55, color);
-      T(s, head, { x: 6.1, y, w: 3.0, h: 0.55, fontSize: 16, bold: true, valign: "middle" });
-      T(s, body, { x: 9.15, y, w: 3.5, h: 0.55, fontSize: 14, valign: "middle", color: C.text2 });
+      const y = 1.75 + i * 0.61;
+      T(s, t, { x: 0.7, y, w: 0.95, h: 0.5, fontFace: MONO, fontSize: 15, valign: "middle", color: C.accent4 });
+      box(s, 1.75, y, 0.9 + (min / 90) * 3.2, 0.5, color);
+      T(s, head, { x: 6.1, y, w: 3.0, h: 0.5, fontSize: 16, bold: true, valign: "middle" });
+      T(s, body, { x: 9.15, y, w: 3.5, h: 0.5, fontSize: 14, valign: "middle", color: C.text2 });
     });
   }
   {
-    const s = content("Neuf équipes, une brique chacune", "Les équipes. Chaque équipe a une fiche d'une page et un objectif minimal atteignable en 45 minutes. Toutes démarrent en même temps. La forge est tenue par le formateur si l'équipe 0 n'existe pas.");
-    const teams = [["0", "La forge", "Gitea"], ["1", "Réseau et tableau", "l'adresse de la salle"], ["2", "Inférence", "un modèle qui répond"], ["3", "Passerelle", "le point d'entrée"], ["4", "Documents", "pseudonymisation"], ["5", "Observabilité", "les traces"], ["6", "Évaluation", "les scores"], ["7", "Applications", "extraction, discussion"], ["8", "Agents", "supervision"]];
+    const s = content("Neuf briques, dont deux sur le Pi", "Les briques. La forge et l'accueil sont tenus par le Pi du formateur : toute la salle en dépend. Les étudiants choisissent parmi les sept autres : celles que l'on compare et que l'on casse. Chaque équipe a une fiche d'une page et un objectif minimal atteignable en 45 minutes.");
+    const teams = [["0", "La forge", "Gitea : sur le Pi"], ["1", "Accueil et tableau", "Caddy : sur le Pi"], ["2", "Inférence", "un modèle qui répond"], ["3", "Passerelle", "le point d'entrée"], ["4", "Documents", "pseudonymisation"], ["5", "Observabilité", "les traces"], ["6", "Évaluation", "les scores"], ["7", "Applications", "extraction, discussion"], ["8", "Agents", "supervision"]];
     teams.forEach(([nb, head, body], i) => {
       const x = 0.7 + (i % 3) * 4.05, y = 1.8 + Math.floor(i / 3) * 1.6;
       box(s, x, y, 3.8, 1.4);
-      num(s, x + 0.25, y + 0.35, 0.7, C.accent1, nb);
+      num(s, x + 0.25, y + 0.35, 0.7, i < 2 ? C.accent4 : C.accent1, nb);
       T(s, head, { x: x + 1.15, y: y + 0.2, w: 2.5, h: 0.5, fontSize: 18, bold: true, valign: "middle" });
       T(s, body, { x: x + 1.15, y: y + 0.72, w: 2.5, h: 0.45, fontSize: 14, color: C.accent4, valign: "middle" });
     });

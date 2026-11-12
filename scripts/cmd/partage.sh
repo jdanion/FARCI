@@ -76,6 +76,17 @@ cmd_maj() {
   # D'où vient le projet : lu par la page /rejoindre (aucune adresse en dur).
   printf '{"github": "%s", "fichiers": "%s", "forge": "%s"}\n' \
     "${FARCI_GITHUB_URL:-}" "${FARCI_FICHIERS_URL:-}" "${GITEA_URL:+$GITEA_URL/FARCI/farci}" > "$SHARE/sources.json"
+  # De quoi brancher un poste sur la forge sans rien saisir (./bin/farci poste
+  # salle). Le mot de passe des comptes equipe-<N> est celui qu'on écrit au
+  # tableau : le publier sur le Wi-Fi de la salle ne l'expose pas davantage.
+  # FARCI_FORGE_MOT_DE_PASSE_PUBLIC=0 (.env) le retire : il sera alors demandé.
+  local forge_pw=""
+  [[ "${FARCI_FORGE_MOT_DE_PASSE_PUBLIC:-1}" == "0" ]] || forge_pw="${GITEA_EQUIPE_PASSWORD:-}"
+  FORGE_URL="${GITEA_URL:-}" FORGE_PW="$forge_pw" python3 -c '
+import json, os
+print(json.dumps({"url": os.environ["FORGE_URL"], "depot": "FARCI/farci",
+                  "compte": "equipe-<N>", "mot_de_passe": os.environ["FORGE_PW"]}, ensure_ascii=False))
+' > "$SHARE/forge.json"
   printf 'FARCI — partage de la salle\nversion : %s (%s)\npublié : %s\n' \
     "$rev" "$(git -C "$FARCI_ROOT" log -1 --format=%s)" "$(date '+%Y-%m-%d %H:%M')" > "$SHARE/VERSION.txt"
   ok "publié : version $rev"

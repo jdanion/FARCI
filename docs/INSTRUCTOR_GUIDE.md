@@ -28,8 +28,10 @@ contient ce qu'il faut **faire, dans quel ordre, et quoi vérifier** pour tenir
       `./bin/farci partage publier <destination rsync>` (modèles, wheels, images
       de cette machine), puis contrôler `FARCI_FICHIERS_URL` (`.env`) depuis un
       autre poste. Les étudiants n'ont plus qu'à cloner et lancer `./preload.sh`
-- [ ] Écrire aux étudiants : l'adresse GitHub du projet, `git` à installer,
-      `git clone` puis `./preload.sh --equipe <N>` ; joindre `docs/GIT.md`
+- [ ] Écrire aux étudiants : l'adresse GitHub du projet (**aucun compte
+      n'est nécessaire**), `git` à installer, `git clone` puis
+      `./preload.sh --equipe <N>` ; joindre `docs/GIT.md`. C'est le temps « en
+      ligne » : ce qui est fait avant la séance n'est plus à faire à l'accueil
 - [ ] Tester le démarrage **de toute la chaîne cœur** sur une machine, une fois
 - [ ] Le jeu de données est versionné (`datasets/raw/*.txt`, `datasets/gold/`) ;
       pour la démonstration Docling : `./bin/farci generate-dataset --pdf`
@@ -74,8 +76,9 @@ Reste à faire à la main :
 - [ ] ouvrir la forge Gitea sur le Pi (toute la salle s'en sert) :
       `./bin/farci up 00-gitops`, `00-gitops/gitea/bootstrap.sh`,
       `./bin/farci forge-sync push`, `00-gitops/post-provision.sh`, puis
-      `./bin/farci room set gitea <IP du Pi>` ; depuis un portable : cloner,
-      créer une branche, pousser avec le compte `equipe-1`
+      `./bin/farci partage maj` (il publie de quoi brancher les postes) ;
+      depuis un portable sur `FARCI-SALLE` : `./bin/farci poste salle`, puis
+      pousser une branche
 - [ ] imprimer `docs/PILOTAGE.md`
 
 ## J0 — Dans la salle (avant l'arrivée des étudiants)
@@ -148,6 +151,8 @@ le détail).
 | « Le modèle a-t-il inventé des données ? » | Peut-être : c'est un composant probabiliste. C'est pour cela qu'on valide avant d'écrire. |
 | « F1 de 0,84, c'est bon ? » | Sans gold standard, ce chiffre ne veut rien dire. Avec, il veut dire qu'il reste 16 % d'écart à expliquer. |
 | « Pourquoi ça marche sans Internet ? » | Parce que tout a été préchargé, et que rien dans la chaîne ne dépend d'un service distant. Internet ne sert qu'à récupérer le code et les fichiers. |
+| « Il me faut un compte GitHub ? » | Non. Le projet est public, on le clone sans s'identifier ; et dans la salle on publie sur la forge du Pi, où le compte de ton équipe existe déjà. |
+| « Pourquoi on coupe Internet ? » | Parce que la salle a son propre réseau, et pour montrer que tout fonctionne sans : rien ne sort, ni les dossiers ni les questions. |
 | « Pourquoi Gitea si on a GitHub ? » | Pour montrer qu'une forge s'héberge : mêmes commandes, mais le code reste dans les murs. Un hôpital fait ce choix. |
 | « Pourquoi une branche par machine ? » | Parce que chaque machine a son matériel et son rôle : la branche porte ces différences sans toucher au projet commun. |
 | « Pourquoi le modèle n'est pas dans git ? » | Git garde tout pour toujours : 6 Go à chaque version. Les gros fichiers vont sur un serveur de fichiers, git garde leur adresse et leur empreinte. |

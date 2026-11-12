@@ -33,7 +33,9 @@ Le projet, adapté à **votre** machine et à votre rôle — le parcours de l'�
 ```bash
 git switch -c poste/equipe-7-<surnom>   # le surnom de la machine, pas le vôtre
 ./bin/farci poste nouveau               # écrit la fiche du poste : relisez-la, corrigez-la
-./bin/farci poste                       # la commande git suivante : commit, push, Pull Request
+./bin/farci poste                       # la commande git suivante : commit, puis…
+./bin/farci poste salle                 # en salle : branche votre clone sur la forge du Pi
+git push -u salle poste/equipe-7-<surnom>  # publier, puis Pull Request vers seance
 ```
 
 Le guide pas à pas : `docs/GIT.md`.

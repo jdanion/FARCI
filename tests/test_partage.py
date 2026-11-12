@@ -25,7 +25,11 @@ class Publication(unittest.TestCase):
     def setUpClass(cls):
         cls.data = Path(tempfile.mkdtemp())
         env = {**os.environ, "FARCI_DATA_DIR": str(cls.data), "NO_COLOR": "1",
-               "REFERENCE_IP": "198.51.100.1", "INFERENCE_A_IP": "198.51.100.20"}
+               "REFERENCE_IP": "198.51.100.1", "INFERENCE_A_IP": "198.51.100.20",
+               "GITEA_IP": "", "GITEA_PORT": "3000", "GITEA_EQUIPE_PASSWORD": 'mot "de" passe'}
+        # L'adresse de la forge doit être déduite ICI, pas héritée du lanceur des tests.
+        for herite in ("GITEA_URL", "FARCI_ENTRY_URL", "FARCI_ENV_LOADED"):
+            env.pop(herite, None)
         cls.result = subprocess.run([str(SCRIPT), "maj"], env=env, capture_output=True, text=True)
         cls.share = cls.data / "partage"
 
@@ -53,6 +57,14 @@ class Publication(unittest.TestCase):
         self.assertIn("REFERENCE_IP", ips)
         self.assertTrue(all(v == "" for k, v in ips.items() if k != "REFERENCE_IP"), ips)
         self.assertIn("http://198.51.100.1/rejoindre", self.result.stdout)
+
+
+    def test_de_quoi_brancher_un_poste_sur_la_forge_du_pi(self):
+        import json
+        forge = json.loads((self.share / "forge.json").read_text(encoding="utf-8"))
+        # Sans adresse déclarée pour Gitea, la forge est celle du Pi.
+        self.assertEqual(forge["url"], "http://198.51.100.1:3000")
+        self.assertEqual(forge["mot_de_passe"], 'mot "de" passe')
 
 
 class PageRejoindre(unittest.TestCase):
