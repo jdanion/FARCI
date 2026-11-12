@@ -177,6 +177,11 @@
   .liens a { color: var(--doux); text-decoration: none; font-weight: 700; font-size: clamp(12px, 1vw, 18px);
     padding: .4vh .7vw; border: 1px solid var(--trait); border-radius: 10px; background: var(--carte); }
   .liens a:hover { color: var(--texte); border-color: var(--accent); }
+  /* Les pages des services qui répondent : une ligne sous l'en-tête. */
+  .interfaces { grid-column: 1 / -1; flex-wrap: wrap; align-items: center; }
+  .interfaces[hidden] { display: none; }
+  .interfaces span { color: var(--doux); font-size: clamp(12px, 1vw, 18px); margin-right: .3vw; }
+  .interfaces a.equipe { border-color: var(--equipe); }
 
   @media (max-aspect-ratio: 4/3) {
     body { overflow: auto; }
@@ -196,6 +201,7 @@
     <div class="frise" id="frise"><div class="fait" id="frise-fait" style="width:0"></div></div>
   </div>
   <div class="heure"><b id="heure">--:--</b><div id="chrono">0:00 / 4:00</div></div>
+  <nav class="liens interfaces" id="interfaces" hidden></nav>
 </header>
 
 <div class="bandeaux">
@@ -505,6 +511,27 @@ function anime() {
   if (morceaux.length) requestAnimationFrame(anime); else ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+/* --- les pages des services qui répondent ---------------------------------- */
+let interfacesVues = "";
+function interfaces(liste) {
+  const cle = JSON.stringify(liste || []);
+  if (cle === interfacesVues) return;   // rien n'a changé : on ne redessine pas
+  interfacesVues = cle;
+  const nav = $("interfaces");
+  nav.textContent = "";
+  nav.appendChild(el("span", "", "Ouvrir :"));
+  const rejoindre = el("a", "", "Rejoindre");
+  rejoindre.href = "/rejoindre";
+  nav.appendChild(rejoindre);
+  for (const i of liste || []) {
+    const a = el("a", i.servi_par === "equipe" ? "equipe" : "", i.nom);
+    a.href = i.url; a.target = "_blank"; a.rel = "noopener";
+    a.title = i.servi_par === "equipe" ? "servi par une équipe" : "servi par le Pi";
+    nav.appendChild(a);
+  }
+  nav.hidden = false;
+}
+
 /* --- boucle ------------------------------------------------------------- */
 async function rafraichir() {
   try {
@@ -516,6 +543,7 @@ async function rafraichir() {
     bandeaux(data);
     pipeline(data);
     tuiles(data.lignes);
+    interfaces(data.interfaces);
     lignesCourantes = data.lignes;
     if (ficheOuverte) dessinerFiche(false);
     // Lien direct vers une fiche : /tableau#fiche=Inference

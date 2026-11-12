@@ -57,6 +57,8 @@ services:
     group: CORE_INFRASTRUCTURE
     ip_var: GITEA_IP
     port_var: GITEA_PORT
+    # Le Pi héberge la forge en premier : sans équipe 0, c'est lui qui la rend.
+    reference_port_var: GITEA_PORT
     # Chemins essayés dans l'ordre : un même contrat peut s'appeler
     # différemment selon l'implémentation (cf. FARCI §16 et §2).
     health_paths:
