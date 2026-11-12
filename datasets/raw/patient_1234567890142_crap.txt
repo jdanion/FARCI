@@ -3,13 +3,9 @@ COMPTE RENDU ANATOMOPATHOLOGIQUE
 Patient : Monique Barbier
 IPP : 1234567890142
 
-Pièce opératoire : Whipple modifié
-
-Résultats :
-- pT : pT3
-- pN : pN1
-- Ganglions examinés : 25
-- Ganglions envahis : 3
-- Marge : R1
-- Histologie : adénocarcinome canalaire
-- Taille : 39.0 mm
+Pièce opératoire adressée à l'état frais. Tumeur de la tête du pancréas mesurant 33 x 39 x 30 mm.
+Il s'agit d'un adénocarcinome canalaire. Index de prolifération estimé à 7 %.
+Un nodule de 6 mm de la graisse péripancréatique correspond à un foyer de cytostéatonécrose, sans cellule tumorale.
+Curage : 25 ganglions prélevés, dont trois métastatiques.
+La tranche de section rétroporte est envahie microscopiquement par la tumeur.
+Stade pT3 pN1 selon la 8e édition (ancienne classification, 7e édition : pT3).

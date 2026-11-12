@@ -4,22 +4,10 @@ Patient : Virginie Perrot
 IPP : 1234567890138
 NIR : 2 38 60 6789 0123 456 93
 Date de naissance : 13/05/1968
-Âge : 57 ans
-Sexe : F
 
-Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+Il s'agit d'une patiente âgée de 57 ans, prise en charge pour un adénocarcinome canalaire du pancréas.
+Antécédents : cholécystectomie par laparotomie en 2011 ; kyste rénal gauche de 12 mm, surveillé.
 
-Intervention : DPC
-Voie d'abord : cœlioscopie
-Résection veineuse : Non
-
-Taille tumorale : 23.0 mm
-Histologie : adénocarcinome canalaire
-
-Complications :
-- Fistule pancréatique : Non
-- DGE : Non
-- Hémorragie : Non
-
-Durée de séjour : 7 jours
-Réadmission : Non
+Il est réalisé une DPC par voie cœlioscopique exclusive. La dissection au contact de la veine porte est laborieuse ; la veine est finalement libérée sans résection.
+Pertes sanguines peropératoires estimées à 300 mL, sans transfusion.
+Examen extemporané de la tranche pancréatique : sain.

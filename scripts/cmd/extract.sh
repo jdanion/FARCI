@@ -4,7 +4,8 @@
 # et écrit datasets/extracted/<run>/patient_<IPP>.json.
 #
 #   ./bin/farci extract --subset quick
-#   ./bin/farci extract --run equipe-3 --prompt v2
+#   ./bin/farci extract --run clinique --prompt clinique
+#   ./bin/farci extract --prompts                liste des consignes
 
 set -euo pipefail
 # shellcheck source=scripts/lib/common.sh

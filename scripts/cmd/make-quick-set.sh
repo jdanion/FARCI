@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # FARCI — ./bin/farci make-quick-set
-# Crée le sous-ensemble quick (10 premiers cas)
+# Crée le sous-ensemble quick (10 dossiers, les quatre styles)
 
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"

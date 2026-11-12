@@ -3,13 +3,8 @@ COMPTE RENDU ANATOMOPATHOLOGIQUE
 Patient : Nathalie Roux
 IPP : 1234567890132
 
-Pièce opératoire : DPC
-
-Résultats :
-- pT : pT4
-- pN : pN2
-- Ganglions examinés : 33
-- Ganglions envahis : 8
-- Marge : R2
-- Histologie : TNE grade 3
-- Taille : 45.0 mm
+Pièce opératoire adressée à l'état frais. La tumeur siège dans la tête du pancréas et mesure 4,5 cm de grand axe.
+Il s'agit d'une TNE grade 3.
+Huit ganglions métastatiques sur 33 examinés.
+Un résidu tumoral macroscopique a été laissé en place (R2).
+Classification pTNM (8e édition) : pT4 pN2.

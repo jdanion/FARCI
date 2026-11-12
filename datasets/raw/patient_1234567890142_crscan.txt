@@ -3,10 +3,7 @@ COMPTE RENDU SCANNER
 Patient : Monique Barbier
 IPP : 1234567890142
 
-Indication : adénocarcinome canalaire du pancréas
-
-Résultat :
-Tumeur du pancréas de 39.0 mm.
-Envahissement veineux constaté.
-
-Conclusion : adénocarcinome canalaire du pancréas
+Scanner thoraco-abdomino-pelvien avec injection.
+Masse de la tête du pancréas mesurée à 36 mm, avec dilatation bicanalaire.
+Engainement de la veine mésentérique supérieure sur plus de 180 degrés.
+Micronodule pulmonaire lobaire inférieur droit de 4 mm, non spécifique, à contrôler.

@@ -473,8 +473,11 @@ def case_count() -> int:
 
 
 def quick_set() -> list[Case]:
-    """Retourne les 10 premiers cas (sous-ensemble quick)."""
-    return CASES[:10]
+    """Le jeu rapide : 10 dossiers qui couvrent les quatre styles d'écriture
+    (datasets/tools/styles.py) — 2 formulaires, 3 narratifs, 2 télégraphiques,
+    3 dossiers à pièges. Les cinq premiers dossiers seuls sont des formulaires :
+    ils ne départagent ni les modèles ni les consignes."""
+    return [CASES[rank] for rank in (0, 1, 5, 6, 8, 10, 12, 15, 16, 19)]
 
 
 def compute_seed() -> int:

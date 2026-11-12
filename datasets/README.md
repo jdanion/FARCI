@@ -10,7 +10,7 @@ charges §53).
 
 | Répertoire | Contenu | Versionné ? |
 |---|---|---|
-| `raw/` | les documents médicaux (PDF) | **oui** — c'est la source de la méthode |
+| `raw/` | les documents médicaux (texte ; PDF à la demande) | **oui** — c'est la source de la méthode |
 | `pseudonymized/` | les mêmes documents, pseudonymisés | non — dérivé, reproductible |
 | `gold/` | la référence : les variables attendues, dossier par dossier | **oui** — c'est la mesure de toute chose |
 | `extracted/` | ce que les équipes ont extrait | non — résultats d'expérience |
@@ -33,7 +33,7 @@ Puis :
 ```
 registre des cas
       │
-      ├─► 4 documents par cas (PDF)      ──►  raw/
+      ├─► 4 documents par cas            ──►  raw/
       │     compte rendu opératoire
       │     compte rendu anatomopathologique
       │     compte rendu scanner
@@ -46,6 +46,27 @@ registre des cas
 **Règle absolue** : le gold standard n'est **jamais** produit par un LLM. Il vient
 du registre, directement. Un gold généré par le modèle qu'on évalue mesurerait le
 modle contre lui-même.
+
+---
+
+## Quatre façons d'écrire le même dossier
+
+Un formulaire « champ : valeur » s'extrait sans effort : n'importe quel modèle et
+n'importe quelle consigne y réussissent, et l'on ne compare rien. Les vingt
+dossiers sont donc rédigés dans quatre styles (`tools/styles.py`), cinq dossiers
+chacun. Les **valeurs** viennent toujours du registre : le gold ne change pas.
+
+| Style | Dossiers | À quoi il ressemble | Ce qu'il met à l'épreuve |
+|---|---|---|---|
+| formulaire | 1 à 5 | `Voie d'abord : cœlioscopie` | rien : c'est la ligne de base |
+| narratif | 6 à 10 | « Il est réalisé une duodénopancréatectomie par abord laparoscopique… » | synonymes, négations, centimètres, nombres en lettres, sexe à déduire |
+| télégraphique | 11 à 15 | `H 71 a. - ADK canalaire pancréas` · `pT2N0 - 0N+/19` · `FP : 0` | les abréviations de service |
+| pièges | 16 à 20 | prose, avec des antécédents, une mesure de scanner, une hémorragie « écartée », une fuite biochimique | le jugement clinique : quelle information compte ? |
+
+Chaque piège a une réponse défendable, écrite dans `gold_schema.md`. Le jeu
+rapide (`--subset quick`, 10 dossiers) couvre les quatre styles. Le rapport
+d'évaluation donne la précision et le rappel **par style** : c'est là que les
+consignes (`07-applications/common/prompts/README.md`) se départagent.
 
 ---
 
@@ -69,9 +90,8 @@ Deux conventions essential pour que les scores ayent un sens :
 2. **Unités imposées** : millimètres pour les tailles, jours pour les durées.
    Une valeur sans unité dans le document est convertie, pas devinée.
 
-Le détail des règles de codage est dans `gold_schema.md` (à produire avec la
-phase 10). C'est le document que les étudiants doivent lire avant de se
-plaintre d'un score.
+Le détail des règles de codage est dans `gold_schema.md`. C'est le document que
+les étudiants doivent lire avant de se plaindre d'un score.
 
 ---
 
@@ -83,8 +103,8 @@ plaintre d'un score.
 | évaluation finale | 20 cas |
 | CI (pull requests) | 3 cas, pour un contrôle rapide |
 
-Le sous-ensemble rapide est **inclus** dans l'ensemble standard : les 10 premiers
-cas. Il n'y a donc jamais deux jeux de données à maintenir.
+Le sous-ensemble rapide est **inclus** dans l'ensemble standard : 10 dossiers
+qui couvrent les quatre styles d'écriture. Il n'y a donc jamais deux jeux de données à maintenir.
 
 ---
 

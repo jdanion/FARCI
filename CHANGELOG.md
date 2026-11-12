@@ -6,6 +6,21 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Des dossiers et des consignes qui départagent
+
+- Les documents n'étaient que des formulaires « champ : valeur » : toute
+  consigne y réussissait. Les vingt dossiers sont désormais écrits dans quatre
+  styles (formulaire, narratif, télégraphique, pièges), cinq chacun
+  (`datasets/tools/styles.py`). Le registre et le gold ne changent pas ; le jeu
+  rapide couvre les quatre styles.
+- Cinq consignes aux stratégies opposées : `naif`, `prudent`, `exhaustif`,
+  `clinique`, `exemples` (`./bin/farci extract --prompts`). Le tableau
+  « F1 attendu », inventé, est remplacé par une grille à remplir en séance
+  (`07-applications/common/prompts/README.md`).
+- `./bin/farci evaluate` détaille la précision et le rappel par style de
+  document, et rappelle la consigne et le modèle de chaque run.
+- `datasets/gold_schema.md` : les règles de codage qui tranchent chaque piège.
+
 ### Le tableau reste juste quand le Pi quitte la salle
 
 - Correctif : en mode Internet, l'adresse du point d'accès disparaissait, et

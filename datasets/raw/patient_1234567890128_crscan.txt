@@ -3,10 +3,7 @@ COMPTE RENDU SCANNER
 Patient : Isabelle Lemoine
 IPP : 1234567890128
 
-Indication : TNE grade 1 du pancréas
-
-Résultat :
-Tumeur du pancréas de 12.0 mm.
-Pas d'envahissement veineux.
-
-Conclusion : TNE grade 1 du pancréas
+Scanner thoraco-abdomino-pelvien avec injection.
+Masse de la tête du pancréas mesurée à 15 mm, avec dilatation bicanalaire.
+Absence de contact vasculaire.
+Absence de lésion secondaire hépatique ou pulmonaire.

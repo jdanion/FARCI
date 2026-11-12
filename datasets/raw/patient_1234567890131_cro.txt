@@ -4,22 +4,8 @@ Patient : Thierry Laurent
 IPP : 1234567890131
 NIR : 1 31 53 6789 0123 456 86
 Date de naissance : 17/02/1951
-Âge : 74 ans
-Sexe : M
 
-Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+Il s'agit d'un patient âgé de 74 ans, pris en charge pour un adénocarcinome canalaire du pancréas.
 
-Intervention : DPC
-Voie d'abord : cœlioscopie
-Résection veineuse : Oui
-
-Taille tumorale : 38.0 mm
-Histologie : adénocarcinome canalaire
-
-Complications :
-- Fistule pancréatique : Oui
-- DGE : Oui
-- Hémorragie : Oui
-
-Durée de séjour : 24 jours
-Réadmission : Oui
+Il est réalisé une DPC par voie cœlioscopique. Une résection-anastomose de la veine porte est nécessaire.
+Reconstruction par anastomoses pancréatico-jéjunale, hépatico-jéjunale et gastro-jéjunale. Mise en place de deux drains.

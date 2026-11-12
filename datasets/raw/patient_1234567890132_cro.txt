@@ -4,22 +4,8 @@ Patient : Nathalie Roux
 IPP : 1234567890132
 NIR : 2 32 54 6789 0123 456 87
 Date de naissance : 03/08/1959
-Âge : 66 ans
-Sexe : F
 
-Diagnostic préopératoire : TNE grade 3 du pancréas
+Il s'agit d'une patiente âgée de 66 ans, prise en charge pour une TNE grade 3 du pancréas.
 
-Intervention : DPC
-Voie d'abord : laparotomie
-Résection veineuse : Non
-
-Taille tumorale : 45.0 mm
-Histologie : TNE grade 3
-
-Complications :
-- Fistule pancréatique : Non
-- DGE : Non
-- Hémorragie : Non
-
-Durée de séjour : 13 jours
-Réadmission : Non
+Il est réalisé une DPC par voie ouverte, incision bi-sous-costale. La dissection est menée au contact de la veine mésentérique supérieure, sans résection veineuse.
+Reconstruction par anastomoses pancréatico-jéjunale, hépatico-jéjunale et gastro-jéjunale. Mise en place de deux drains.

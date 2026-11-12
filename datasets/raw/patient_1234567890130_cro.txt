@@ -4,22 +4,8 @@ Patient : Claire Dubois
 IPP : 1234567890130
 NIR : 2 30 52 6789 0123 456 85
 Date de naissance : 25/06/1967
-Âge : 58 ans
-Sexe : F
 
-Diagnostic préopératoire : IPMN bordeline
+Il s'agit d'une patiente âgée de 58 ans, prise en charge pour un IPMN bordeline.
 
-Intervention : Duodénopancréatectomie
-Voie d'abord : cœlioscopie
-Résection veineuse : Non
-
-Taille tumorale : 22.0 mm
-Histologie : IPMN bordeline
-
-Complications :
-- Fistule pancréatique : Non
-- DGE : Non
-- Hémorragie : Non
-
-Durée de séjour : 10 jours
-Réadmission : Non
+Il est réalisé une duodénopancréatectomie par abord laparoscopique. La dissection est menée au contact de la veine mésentérique supérieure, sans résection veineuse.
+Reconstruction par anastomoses pancréatico-jéjunale, hépatico-jéjunale et gastro-jéjunale. Mise en place de deux drains.

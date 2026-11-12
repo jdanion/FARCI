@@ -3,13 +3,9 @@ COMPTE RENDU ANATOMOPATHOLOGIQUE
 Patient : Pierre Renard
 IPP : 1234567890141
 
-Pièce opératoire : DPC
-
-Résultats :
-- pT : pT2
-- pN : pN0
-- Ganglions examinés : 20
-- Ganglions envahis : 0
-- Marge : R0
-- Histologie : adénocarcinome canalaire
-- Taille : 27.0 mm
+Pièce opératoire adressée à l'état frais. Tumeur de la tête du pancréas mesurant 21 x 27 x 18 mm.
+Il s'agit d'un adénocarcinome canalaire. Index de prolifération estimé à 6 %.
+Un nodule de 6 mm de la graisse péripancréatique correspond à un foyer de cytostéatonécrose, sans cellule tumorale.
+Curage : 20 ganglions prélevés, dont aucun métastatique.
+Limites chirurgicales en tissu sain ; la tumeur reste à 3 mm de la marge rétroporte.
+Stade pT2 pN0 selon la 8e édition (ancienne classification, 7e édition : pT3).

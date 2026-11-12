@@ -1,12 +1,8 @@
-COMPTE RENDU SCANNER
+TDM TAP
 
 Patient : Françoise Blanc
 IPP : 1234567890136
 
-Indication : TNE grade 2 du pancréas
-
-Résultat :
-Tumeur du pancréas de 17.0 mm.
-Pas d'envahissement veineux.
-
-Conclusion : TNE grade 2 du pancréas
+Masse tête pancréas 19 mm.
+Pas de contact vasc.
+Pas de méta.

@@ -3,10 +3,7 @@ COMPTE RENDU SCANNER
 Patient : Nathalie Roux
 IPP : 1234567890132
 
-Indication : TNE grade 3 du pancréas
-
-Résultat :
-Tumeur du pancréas de 45.0 mm.
-Pas d'envahissement veineux.
-
-Conclusion : TNE grade 3 du pancréas
+Scanner thoraco-abdomino-pelvien avec injection.
+Masse de la tête du pancréas mesurée à 42 mm, avec dilatation bicanalaire.
+Absence de contact vasculaire.
+Absence de lésion secondaire hépatique ou pulmonaire.

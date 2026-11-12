@@ -38,6 +38,24 @@ def render_report(results: dict) -> str:
     if not runs:
         lines.append("| — | aucune extraction | | | | | | | |")
 
+    # Le même classement, par style d'écriture des dossiers : un formulaire ne
+    # départage personne, les dossiers à pièges si.
+    styles = [s for s in ("formulaire", "narratif", "telegraphique", "pieges")
+              if any(s in run.get("par_style", {}) for run in runs)]
+    if len(styles) > 1:
+        lines += ["", "## Par style de document", "",
+                  "Précision / rappel de chaque run selon la façon dont le dossier est écrit "
+                  "(`datasets/README.md`).", "",
+                  "| Run | Consigne | Modèle | " + " | ".join(styles) + " |",
+                  "|---|---|---|" + "---|" * len(styles)]
+        for run in runs:
+            cells = []
+            for style in styles:
+                score = run.get("par_style", {}).get(style)
+                cells.append(f"{_num(score['precision'])} / {_num(score['recall'])}" if score else "—")
+            lines.append(f"| {run['run']} | {run.get('prompt') or '—'} | {run.get('modele') or '—'} | "
+                         + " | ".join(cells) + " |")
+
     for run in runs:
         weakest = sorted(run["par_champ"].items(), key=lambda kv: kv[1])[:3]
         problems = [d for d in run["par_dossier"] if d["statut"] != "valide"]

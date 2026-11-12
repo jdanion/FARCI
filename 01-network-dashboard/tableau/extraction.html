@@ -114,10 +114,12 @@
     </section>
     <section>
       <h2><span class="num">★</span>À vous, sur votre poste</h2>
-      <code class="cmd">./bin/farci extract --subset quick --run moi --prompt v2</code>
+      <code class="cmd">./bin/farci extract --subset quick --run prudent --prompt prudent</code>
+      <code class="cmd">./bin/farci extract --subset quick --run exhaustif --prompt exhaustif</code>
       <code class="cmd">./bin/farci evaluate --subset quick</code>
-      <p class="aide">La première écrit un JSON par dossier dans <code>datasets/extracted/moi/</code> ; la seconde
-        classe vos runs contre le gold (précision, rappel, F1).</p>
+      <p class="aide">Chaque extraction écrit un JSON par dossier dans <code>datasets/extracted/&lt;run&gt;/</code> ; l'évaluation
+        classe vos runs contre le gold, puis par style de document. Cinq consignes à comparer :
+        <code>./bin/farci extract --prompts</code>.</p>
     </section>
   </div>
 </main>

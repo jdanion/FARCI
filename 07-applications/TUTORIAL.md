@@ -54,8 +54,9 @@ automatiquement.
 
 ## Configuration
 
-- `07-applications/common/prompts/extraction_v1.md` et `extraction_v2.md` :
-  les deux prompts comparés (`v1-vs-v2.md`).
+- `07-applications/common/prompts/extraction_<nom>.md` : les consignes à
+  comparer (`naif`, `prudent`, `exhaustif`, `clinique`, `exemples`) ; le mode
+  d'emploi et la grille sont dans `07-applications/common/prompts/README.md`.
 - `config/workshop.env` : `FARCI_TRACK` (parcours), `FARCI_PROFILE` (quick ou
   standard).
 
@@ -121,5 +122,5 @@ entre v1 et v2.
 | Symptôme | Cause probable | Commande |
 |---|---|---|
 | `FARCI_GATEWAY_URL absente` | lancé hors de `./bin/farci` | `./bin/farci extract …` |
-| beaucoup de `REJET` | le modèle ne respecte pas le schéma | essayer `--prompt v2`, lire le rapport |
+| beaucoup de `REJET` | le modèle ne respecte pas le schéma | essayer `--prompt clinique`, lire le rapport |
 | `ERREUR … Connection` | passerelle ou runtime tombé | `./bin/farci status` |

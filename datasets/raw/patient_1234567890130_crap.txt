@@ -3,13 +3,8 @@ COMPTE RENDU ANATOMOPATHOLOGIQUE
 Patient : Claire Dubois
 IPP : 1234567890130
 
-Pièce opératoire : Duodénopancréatectomie
-
-Résultats :
-- pT : pT2
-- pN : pN0
-- Ganglions examinés : 14
-- Ganglions envahis : 0
-- Marge : R0
-- Histologie : IPMN bordeline
-- Taille : 22.0 mm
+Pièce opératoire adressée à l'état frais. La tumeur siège dans la tête du pancréas et mesure 2,2 cm de grand axe.
+Il s'agit d'un IPMN bordeline.
+Les 14 ganglions examinés sont indemnes.
+Les limites d'exérèse sont saines (R0).
+Classification pTNM (8e édition) : pT2 pN0.
