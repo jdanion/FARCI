@@ -1,5 +1,9 @@
 # FARCI — support de cours
 
+**F**orge & **A**gents en **R**éseau pour le **C**alcul d'**I**nférence : la
+forge, c'est git ; les agents et le réseau, ce sont les briques que les équipes
+montent et relient ; le calcul d'inférence, c'est faire répondre un modèle.
+
 > Brouillon. Ce document dit **ce qui est attendu de vous** pendant l'atelier,
 > ce que vous saurez faire en sortant, et les notions à comprendre. Le
 > diaporama projeté en séance en est le résumé : `FARCI-support-de-cours.pptx`.
@@ -301,11 +305,11 @@ n'attend, et vous continuez à comprendre et à réparer.
 
 | Quand | Quoi | Pour savoir |
 |---|---|---|
-| à l'arrivée | pré-test Wooclap, 5 minutes, anonyme | ce que vous connaissez déjà |
+| avant la séance, ou à l'arrivée | pré-test Wooclap, 9 minutes, anonyme | ce que vous connaissez déjà, et ce que vous attendez |
 | pendant | la ligne de votre équipe sur le tableau ; votre branche sur la forge | ce que vous avez construit |
 | à la clôture | une notion expliquée à l'oral | ce que vous avez compris |
 | à la clôture | post-test Wooclap, les mêmes questions | ce que vous avez appris |
-| à la clôture | questionnaire de satisfaction | ce qu'il faut améliorer |
+| à la clôture | questionnaire de satisfaction | si vos attentes ont été satisfaites, quelles parties vous ont été utiles, ce qu'il faut améliorer |
 
 Les deux tests ne sont pas notés. Leur comparaison, question par question, est
 montrée à la salle à la fin. Les questions sont dans `EVALUATION.md`.

@@ -6,6 +6,18 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Questionnaires Wooclap à importer
+
+- `docs/support/wooclap/` : `pre-test.xlsx`, `post-test.xlsx` et
+  `satisfaction.xlsx`, générés par `build_wooclap.py` (une seule source, qui
+  réécrit aussi `EVALUATION.md`).
+- 20 questions de connaissance, dont les nouvelles notions (quantification,
+  modèle spécialisé, Pydantic, forme contre fond, rappel, `git diff`, Pull
+  Request) ; attentes des étudiants au pré-test ; au questionnaire de
+  satisfaction : attentes satisfaites ou non, utilité de chaque partie, partie
+  préférée, partie la plus difficile.
+- Diaporama : l'acronyme FARCI sur la page de garde.
+
 ### Diaporama : lisible par PowerPoint, et 22 diapositives de détail
 
 - Correctif : PowerPoint (iPad compris) refusait d'ouvrir le diaporama. Deux

@@ -48,8 +48,8 @@ async function icon(name, color = "FFFFFF") {
   pres.defineSlideMaster({
     title: "Titre", background: { color: C.text1 },
     objects: [
-      { placeholder: { options: { name: "title", type: "title", x: 0.8, y: 1.6, w: 11.7, h: 1.6, fontSize: 80, bold: true, color: C.background1, align: "left", valign: "bottom", margin: 0 }, text: "" } },
-      { placeholder: { options: { name: "body", type: "body", x: 0.8, y: 3.35, w: 10.5, h: 1.3, fontSize: 26, color: C.background2, align: "left", valign: "top", margin: 0 }, text: "" } },
+      { placeholder: { options: { name: "title", type: "title", x: 0.8, y: 0.9, w: 11.7, h: 1.6, fontSize: 80, bold: true, color: C.background1, align: "left", valign: "bottom", margin: 0 }, text: "" } },
+      { placeholder: { options: { name: "body", type: "body", x: 0.8, y: 3.75, w: 10.5, h: 1.3, fontSize: 26, color: C.background2, align: "left", valign: "top", margin: 0 }, text: "" } },
     ],
   });
   pres.defineSlideMaster({
@@ -106,13 +106,19 @@ async function icon(name, color = "FFFFFF") {
     const s = add("Titre");
     s.addText("FARCI", { placeholder: "title" });
     s.addText("Construire, utiliser et casser une plateforme d'IA pour la recherche clinique", { placeholder: "body" });
+    // L'acronyme : chaque initiale en gras, dans la couleur d'accent.
+    const acronyme = [["F", "orge & "], ["A", "gents en "], ["R", "éseau pour le "], ["C", "alcul d'"], ["I", "nférence"]];
+    T(s, acronyme.flatMap(([initiale, suite]) => [
+      { text: initiale, options: { bold: true, color: "A5B4FC" } },
+      { text: suite, options: { color: C.background1 } },
+    ]), { x: 0.8, y: 2.65, w: 11.7, h: 0.7, fontSize: 30, valign: "middle" });
     const steps = ["1  Construire", "2  Utiliser", "3  Casser"];
     steps.forEach((t, i) => {
       box(s, 0.8 + i * 2.75, 5.3, 2.5, 0.7, C.accent1);
       T(s, t, { x: 0.8 + i * 2.75, y: 5.3, w: 2.5, h: 0.7, align: "center", valign: "middle", bold: true, fontSize: 18, color: C.background1 });
     });
     T(s, "Atelier de 4 heures · support de cours", { x: 0.8, y: 6.5, w: 8, h: 0.4, fontSize: 14, color: C.background2 });
-    s.addNotes("Accueil. Dire en une phrase ce qu'on va faire : construire une plateforme d'IA sur les machines de la salle, s'en servir sur des dossiers médicaux synthétiques, puis la casser pour voir ce qui tient. Annoncer que le pré-test arrive dans deux minutes.");
+    s.addNotes("Accueil. Le nom : Forge et Agents en Réseau pour le Calcul d'Inférence. La forge, c'est git ; les agents et le réseau, ce sont les briques que les équipes montent et relient ; le calcul d'inférence, c'est faire répondre un modèle. Dire en une phrase ce qu'on va faire : construire une plateforme d'IA sur les machines de la salle, s'en servir sur des dossiers médicaux synthétiques, puis la casser pour voir ce qui tient. Annoncer que le pré-test arrive dans deux minutes.");
   }
   {
     const s = content("Une IA en médecine est un système", "Message central. Une application d'IA n'est pas « appeler une API ». Montrer les six pièces : chacune sera montée par une équipe. Insister : ce sont des pièces remplaçables, et c'est tout l'intérêt.");
@@ -175,7 +181,7 @@ async function icon(name, color = "FFFFFF") {
     T(s, "Comme à un collègue non informaticien.", { x: 7.4, y: 5.25, w: 4.8, h: 0.5, fontSize: 16, italic: true, color: C.background2 });
   }
   {
-    const s = content("Pré-test : six minutes, anonyme", "Lancer le pré-test Wooclap. Afficher le code de l'événement. Dire que ce n'est pas noté, que les mêmes questions reviennent à la fin, et qu'on comparera les deux devant la salle. Ne pas afficher les bonnes réponses maintenant.");
+    const s = content("Pré-test : neuf minutes, anonyme", "Si le pré-test n'a pas été envoyé avant la séance, le lancer maintenant. Afficher le code de l'événement. Dire que ce n'est pas noté, que les mêmes questions reviennent à la fin, et qu'on comparera les deux devant la salle. Ne pas afficher les bonnes réponses maintenant.");
     await dot(s, 0.7, 2.0, 1.3, C.accent1, "FaMobileAlt");
     T(s, "wooclap.com", { x: 2.4, y: 1.95, w: 6, h: 0.8, fontSize: 40, bold: true, color: C.accent1 });
     T(s, "Le code de l'événement est affiché par le formateur.", { x: 2.4, y: 2.8, w: 6.5, h: 0.5, fontSize: 18 });
