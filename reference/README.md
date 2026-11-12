@@ -81,9 +81,16 @@ Avec NetworkManager (par défaut sur Bookworm), une seule connexion suffit.
 sudo nmcli con add type wifi ifname wlan0 con-name farci-ap autoconnect yes \
   ssid FARCI-SALLE mode ap 802-11-wireless.band bg \
   ipv4.method shared ipv4.addresses 192.168.50.1/24 \
-  wifi-sec.key-mgmt wpa-psk wifi-sec.psk 'choisir-un-mot-de-passe'
+  wifi-sec.key-mgmt wpa-psk wifi-sec.psk 'choisir-un-mot-de-passe' \
+  wifi-sec.proto rsn wifi-sec.pairwise ccmp wifi-sec.group ccmp
 sudo nmcli con up farci-ap
 ```
+
+`rsn` et `ccmp` imposent WPA2 avec AES : sans eux, les appareils Apple
+refusent le réseau (« type de sécurité incorrect »). Si le Pi était client
+d'un Wi-Fi (installation à la maison), lui retirer la radio :
+`sudo nmcli con mod <ce Wi-Fi> connection.autoconnect no`. Le Pi démarre
+alors **toujours** en point d'accès : c'est ce qu'il faut à un Pi sans écran.
 
 L'adresse (`192.168.50.1`) et le sous-réseau (`192.168.50.0/24`) sont ceux
 de `config/network.env.example` : ne les changer qu'ici et là.
@@ -92,8 +99,28 @@ de `config/network.env.example` : ne les changer qu'ici et là.
 Au-delà, travailler en binômes (une machine pour deux), ou brancher un
 routeur de voyage en Ethernet sur le Pi.
 
-**Pas d'Internet dans la salle** : c'est voulu. Le Pi ne route rien vers
-l'extérieur ; tout ce dont la séance a besoin est déjà sur les machines.
+**Internet par le Pi** : seulement si un câble Ethernet le relie à un réseau
+qui en a (`ipv4.method shared` partage alors cette connexion avec la salle).
+Sans câble, la salle n'a pas Internet par le Pi, et n'en a pas besoin : la
+forge Gitea remplace GitHub, et tout le reste est déjà sur les machines.
+
+### Une seule radio : salle **ou** Internet
+
+Le Pi ne peut pas être à la fois le point d'accès de la salle et client d'un
+autre Wi-Fi. Pour lui faire télécharger quelque chose sans câble :
+
+```bash
+./bin/farci wifi ajouter 'NOM-DU-RESEAU'   # une fois ; le mot de passe est demandé
+./bin/farci wifi internet                  # quitte la salle, rejoint ce Wi-Fi
+./bin/farci wifi salle                     # recrée le Wi-Fi de la salle
+./bin/farci wifi                           # où en est la radio
+```
+
+Basculer coupe la connexion SSH en cours : on se reconnecte par l'autre
+réseau (`ssh farci@farci.local`). **Sans connexion SSH pendant 5 minutes, et
+sans téléchargement en cours, le Pi revient seul en salle** ; un Wi-Fi
+injoignable l'y ramène tout de suite. Un Pi sans écran n'est donc jamais
+perdu : au pire, on attend cinq minutes (`FARCI_WIFI_DELAI`, en secondes).
 
 ---
 

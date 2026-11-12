@@ -6,6 +6,15 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Le Pi sans écran : salle ou Internet
+
+- `./bin/farci wifi` : `internet` quitte le point d'accès pour un Wi-Fi qui a
+  Internet, `salle` y revient, `ajouter` enregistre un réseau sans écrire son
+  mot de passe dans l'historique. Sans connexion SSH pendant 5 minutes (et
+  sans téléchargement en cours), le Pi recrée seul le Wi-Fi de la salle.
+- Point d'accès créé en WPA2/AES (`rsn`, `ccmp`) : les appareils Apple
+  refusaient le réglage par défaut.
+
 ### Six modèles, selon la machine
 
 - Qwen3.5-4B, Gemma 4 E4B et MedGemma 4B (deux généralistes et un modèle

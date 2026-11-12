@@ -77,6 +77,7 @@ Pause, évaluation et clôture restent.
 | forge tombée | cloner depuis GitHub ; les commits restent sur les postes, on pousse à son retour |
 | un push refusé | compte `equipe-<N>` ? branche `poste/…` et non `main` ou `seance` ? `./bin/farci poste` |
 | un fichier lourd manque | `./preload.sh --equipe <N> --skip-existing` (serveur de fichiers), sinon `http://<REFERENCE_IP>/partage/` |
+| le Pi doit télécharger quelque chose, sans câble | `./bin/farci wifi internet`, puis `./bin/farci wifi salle` (il y revient seul après 5 min sans SSH) |
 | Wi-Fi tombé | `sudo nmcli con up farci-ap` ; sinon point d'accès de secours + `room set reference` |
 | plus de réseau du tout | chaque équipe en local ; étape 2 : `./bin/farci extract --replay` |
 | étudiant sans machine | binôme, ou Open WebUI de la référence (`REFERENCE_IP:3080`) |
