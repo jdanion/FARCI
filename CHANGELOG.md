@@ -6,6 +6,39 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Questionnaires Wooclap à importer
+
+- `docs/support/wooclap/` : `pre-test.xlsx`, `post-test.xlsx` et
+  `satisfaction.xlsx`, générés par `build_wooclap.py` (une seule source, qui
+  réécrit aussi `EVALUATION.md`).
+- 20 questions de connaissance, dont les nouvelles notions (quantification,
+  modèle spécialisé, Pydantic, forme contre fond, rappel, `git diff`, Pull
+  Request) ; attentes des étudiants au pré-test ; au questionnaire de
+  satisfaction : attentes satisfaites ou non, utilité de chaque partie, partie
+  préférée, partie la plus difficile.
+- Classeurs alignés sur l'en-tête d'un export Wooclap réel (`Type`, `Title`,
+  `Correct`, `Choice`). Questionnaire de satisfaction adapté à des étudiants
+  en médecine : se sont-ils sentis à leur place, les comparaisons médicales
+  ont-elles aidé, le format atelier contre le cours magistral, l'usage en
+  thèse ou en mémoire.
+- Diaporama : l'acronyme FARCI sur la page de garde ; trois diapositives sur
+  le parallèle médical (rappel = sensibilité, précision = valeur prédictive
+  positive, tableau de contingence, effet de la prévalence), et deux
+  questions de connaissance correspondantes.
+
+### Diaporama : lisible par PowerPoint, et 22 diapositives de détail
+
+- Correctif : PowerPoint (iPad compris) refusait d'ouvrir le diaporama. Deux
+  flèches du schéma de la passerelle avaient une hauteur négative, tolérée
+  par LibreOffice et par le contrôle automatique, interdite par le format.
+- Quatre sections de détail : les modèles (lire un nom de fichier, les six
+  modèles, généraliste / spécialisé / à raisonnement / mélange d'experts,
+  protocole de comparaison), Pydantic (le schéma réel, ce qu'il refuse),
+  la mesure (quatre issues par champ, rappel et précision, lire le
+  classement) et git (commit, branche, diff, Pull Request, dépannage).
+- `docs/support/deck/` : le générateur du diaporama. `COURS.md` reprend les
+  nouvelles notions.
+
 ### Le Pi sans écran : salle ou Internet
 
 - `./bin/farci wifi` : `internet` quitte le point d'accès pour un Wi-Fi qui a

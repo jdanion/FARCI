@@ -1,5 +1,9 @@
 # FARCI — support de cours
 
+**F**orge & **A**gents en **R**éseau pour le **C**alcul d'**I**nférence : la
+forge, c'est git ; les agents et le réseau, ce sont les briques que les équipes
+montent et relient ; le calcul d'inférence, c'est faire répondre un modèle.
+
 > Brouillon. Ce document dit **ce qui est attendu de vous** pendant l'atelier,
 > ce que vous saurez faire en sortant, et les notions à comprendre. Le
 > diaporama projeté en séance en est le résumé : `FARCI-support-de-cours.pptx`.
@@ -134,6 +138,24 @@ relit avant de s'en servir.
 | **Modèle** | un fichier de chiffres : les connaissances | de Qwen3.5-2B (1 Go) à Ornith-1.5-9B (6 Go), en passant par deux « 4B » à comparer : Qwen3.5-4B et Gemma 4 E4B |
 | **Runtime** | le logiciel qui charge ce fichier et répond | Ollama, llama.cpp |
 
+Lire le nom d'un fichier de modèle, par exemple `Qwen3.5-4B-Q4_K_M.gguf` :
+
+| Morceau | Sens |
+|---|---|
+| `Qwen3.5` | la famille et la version |
+| `4B` | la taille : 4 milliards de paramètres. Plus il y en a, plus le modèle est capable, lourd et lent |
+| `Q4_K_M` | la compression (quantification) : 4 bits par paramètre, un fichier quatre fois plus petit, un peu moins précis |
+| `.gguf` | le format, lu par Ollama comme par llama.cpp |
+
+Le projet propose six modèles ; chaque poste prend le plus grand que sa
+machine supporte. Trois d'entre eux ont le même gabarit (« 4B ») et se
+comparent sur les mêmes dossiers : deux **généralistes** de familles
+différentes (Qwen3.5-4B, Gemma 4 E4B) et un modèle **spécialisé** en médecine
+(MedGemma 4B). Un modèle entraîné sur la médecine extrait-il mieux ? C'est le
+score qui répond. On croisera aussi un modèle **à raisonnement** (Ornith, qui
+réfléchit avant de répondre) et un **mélange d'experts** (Ornith-1.5-35B-A3B :
+35 milliards de paramètres, dont 3 milliards actifs à chaque mot).
+
 Un livre et la personne qui le lit à voix haute. Le même modèle tourne dans
 deux runtimes différents, avec des vitesses différentes ; une machine modeste
 prend un modèle plus petit. Les applications, elles, demandent toujours
@@ -153,9 +175,25 @@ l'application.
 ### 5.4 Une sortie de LLM n'est pas une donnée
 
 On demande au modèle de remplir un **formulaire** : âge, sexe, diagnostic,
-stade, complications. La réponse est contrôlée contre ce formulaire. Un âge
+stade, complications. La réponse est contrôlée contre ce formulaire, écrit
+en Python avec la bibliothèque **Pydantic** :
+
+```python
+class ClinicalExtraction(BaseModel):
+    age: int = Field(ge=0, le=120)                             # un nombre, entre 0 et 120
+    sex: str = Field(pattern="^(M|F)$")                        # M ou F, rien d'autre
+    pT: Optional[str] = Field(pattern="^(pT1|pT2|pT3|pT4)$")   # exigé, mais peut valoir « non précisé »
+    pancreatic_fistula: bool                                   # oui ou non
+```
+
+`Optional` ne veut pas dire facultatif : le champ doit être présent, mais peut
+valoir `null`, c'est-à-dire « non précisé dans le compte rendu ». Un âge
 écrit en toutes lettres, un champ manquant, un champ inventé : la réponse est
 **rejetée**, et rien n'entre dans la base de recherche.
+
+Pydantic vérifie la **forme**, pas le fond : un âge de 76 ans est accepté
+(c'est un nombre entre 0 et 120) même si le patient en a 67. Repérer cette
+erreur-là est le travail de la mesure.
 
 ### 5.5 Protéger les documents
 
@@ -174,6 +212,34 @@ standard**. On compare chaque extraction à cette référence.
 | **Précision** | parmi ce que le système a trouvé, quelle part est juste ? |
 | **Rappel** | parmi ce qu'il fallait trouver, quelle part a été trouvée ? |
 | **F1** | les deux à la fois |
+
+Pour chaque champ de chaque dossier, quatre issues :
+
+| La référence | Le modèle | Issue |
+|---|---|---|
+| pT3 | pT3 | **trouvé** |
+| R0 | non précisé | **manqué** : le rappel baisse |
+| non précisée | 28 mm | **inventé** : la précision baisse |
+| pN1 | pN2 | **faux** : compte comme manqué et comme inventé |
+
+Vous connaissez déjà ces mesures sous un autre nom :
+
+| En informatique | En médecine | La question posée |
+|---|---|---|
+| **rappel** | **sensibilité** | parmi les valeurs à trouver, combien le modèle en a-t-il trouvé ? |
+| **précision** | **valeur prédictive positive** | quand le modèle donne une valeur, est-elle juste ? |
+| — | spécificité | quand il n'y avait rien à trouver, le modèle s'est-il abstenu ? |
+| — | valeur prédictive négative | quand le modèle dit « non précisé », n'y avait-il vraiment rien ? |
+
+Et comme pour un dépistage, **la prévalence compte**. Une complication
+présente dans 5 % des dossiers, un modèle de sensibilité 90 % et de
+spécificité 95 % : sur 1 000 dossiers, il en signale 45 à raison et 48 à tort.
+Sa valeur prédictive positive est de 48 %. Ce n'est pas le modèle qui est
+mauvais, c'est la complication qui est rare.
+
+Un modèle qui se tait a une bonne précision et un mauvais rappel ; un modèle
+bavard, l'inverse. Savoir lequel est le plus grave — manquer une complication
+ou en inventer une — est une décision clinique, pas informatique.
 
 Exemple : le système signale 10 complications, dont 8 réelles ; il y en avait
 16 à trouver. Précision 8/10 = 80 %, rappel 8/16 = 50 %. Un « F1 de 0,84 »
@@ -254,11 +320,11 @@ n'attend, et vous continuez à comprendre et à réparer.
 
 | Quand | Quoi | Pour savoir |
 |---|---|---|
-| à l'arrivée | pré-test Wooclap, 5 minutes, anonyme | ce que vous connaissez déjà |
+| avant la séance, ou à l'arrivée | pré-test Wooclap, 10 minutes, anonyme | ce que vous connaissez déjà, et ce que vous attendez |
 | pendant | la ligne de votre équipe sur le tableau ; votre branche sur la forge | ce que vous avez construit |
 | à la clôture | une notion expliquée à l'oral | ce que vous avez compris |
 | à la clôture | post-test Wooclap, les mêmes questions | ce que vous avez appris |
-| à la clôture | questionnaire de satisfaction | ce qu'il faut améliorer |
+| à la clôture | questionnaire de satisfaction | si vos attentes ont été satisfaites, quelles parties vous ont été utiles, ce qu'il faut améliorer |
 
 Les deux tests ne sont pas notés. Leur comparaison, question par question, est
 montrée à la salle à la fin. Les questions sont dans `EVALUATION.md`.
