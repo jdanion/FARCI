@@ -222,6 +222,21 @@ Pour chaque champ de chaque dossier, quatre issues :
 | non précisée | 28 mm | **inventé** : la précision baisse |
 | pN1 | pN2 | **faux** : compte comme manqué et comme inventé |
 
+Vous connaissez déjà ces mesures sous un autre nom :
+
+| En informatique | En médecine | La question posée |
+|---|---|---|
+| **rappel** | **sensibilité** | parmi les valeurs à trouver, combien le modèle en a-t-il trouvé ? |
+| **précision** | **valeur prédictive positive** | quand le modèle donne une valeur, est-elle juste ? |
+| — | spécificité | quand il n'y avait rien à trouver, le modèle s'est-il abstenu ? |
+| — | valeur prédictive négative | quand le modèle dit « non précisé », n'y avait-il vraiment rien ? |
+
+Et comme pour un dépistage, **la prévalence compte**. Une complication
+présente dans 5 % des dossiers, un modèle de sensibilité 90 % et de
+spécificité 95 % : sur 1 000 dossiers, il en signale 45 à raison et 48 à tort.
+Sa valeur prédictive positive est de 48 %. Ce n'est pas le modèle qui est
+mauvais, c'est la complication qui est rare.
+
 Un modèle qui se tait a une bonne précision et un mauvais rappel ; un modèle
 bavard, l'inverse. Savoir lequel est le plus grave — manquer une complication
 ou en inventer une — est une décision clinique, pas informatique.
@@ -305,7 +320,7 @@ n'attend, et vous continuez à comprendre et à réparer.
 
 | Quand | Quoi | Pour savoir |
 |---|---|---|
-| avant la séance, ou à l'arrivée | pré-test Wooclap, 9 minutes, anonyme | ce que vous connaissez déjà, et ce que vous attendez |
+| avant la séance, ou à l'arrivée | pré-test Wooclap, 10 minutes, anonyme | ce que vous connaissez déjà, et ce que vous attendez |
 | pendant | la ligne de votre équipe sur le tableau ; votre branche sur la forge | ce que vous avez construit |
 | à la clôture | une notion expliquée à l'oral | ce que vous avez compris |
 | à la clôture | post-test Wooclap, les mêmes questions | ce que vous avez appris |

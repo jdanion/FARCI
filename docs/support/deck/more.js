@@ -96,7 +96,7 @@ module.exports = (ctx) => {
 
   const mesurer = async () => {
     sec("Valider, puis mesurer");
-    divider("Valider, puis mesurer", "Pydantic refuse ce qui est mal formé ; le rappel dit ce qui a été manqué", "Deux contrôles différents, souvent confondus. Pydantic vérifie la forme de la réponse. L'évaluation contre le gold standard vérifie le fond.");
+    divider("Valider, puis mesurer", "Pydantic refuse ce qui est mal formé ; le rappel, votre sensibilité, dit ce qui a été manqué", "Deux contrôles différents, souvent confondus. Pydantic vérifie la forme de la réponse. L'évaluation contre le gold standard vérifie le fond.");
     {
       const s = content("Pydantic : le formulaire, écrit en Python", "Pydantic est la bibliothèque Python qui décrit le formulaire et contrôle chaque réponse. C'est un extrait du vrai fichier du projet, 07-applications/common/schemas.py. Chaque champ a un type, parfois des bornes ou une liste de valeurs permises. Optional ne veut pas dire facultatif : le champ doit être présent, mais peut valoir null, c'est-à-dire non précisé dans le compte rendu.");
       code(s, 0.7, 1.8, 7.3, 4.7, [
@@ -173,6 +173,60 @@ module.exports = (ctx) => {
         T(s, f, { x: x + 0.3, y: 4.55, w: 5.3, h: 0.9, fontSize: 15, italic: true, color: C.text2 });
       });
       T(s, "Un modèle qui se tait a un bon score de précision et un mauvais rappel. Un modèle bavard, l'inverse.", { x: 0.7, y: 6.05, w: 11.9, h: 0.6, fontSize: 17, italic: true, color: C.text2 });
+    }
+    {
+      const s = content("Vous connaissez déjà ces mesures", "Le pont avec la médecine. Le rappel est exactement la sensibilité d'un test : parmi ce qu'il fallait trouver, quelle part a été trouvée. La précision est exactement la valeur prédictive positive : quand le modèle donne une valeur, quelle est la probabilité qu'elle soit juste. Seul le vocabulaire change. Le classement du projet affiche précision et rappel ; la spécificité et la valeur prédictive négative se calculent à partir des mêmes quatre cases.");
+      T(s, "En informatique", { x: 0.9, y: 1.7, w: 3.4, h: 0.4, fontSize: 14, color: C.accent4 });
+      T(s, "En médecine", { x: 4.5, y: 1.7, w: 3.4, h: 0.4, fontSize: 14, color: C.accent4 });
+      T(s, "La question posée", { x: 8.1, y: 1.7, w: 4.4, h: 0.4, fontSize: 14, color: C.accent4 });
+      const rows = [["Rappel", "Sensibilité", "Parmi les valeurs à trouver, combien le modèle en a-t-il trouvé ?", C.accent3], ["Précision", "Valeur prédictive positive", "Quand le modèle donne une valeur, est-elle juste ?", C.accent2], ["(rarement nommée)", "Spécificité", "Quand il n'y avait rien à trouver, le modèle s'est-il abstenu ?", C.accent4], ["(rarement nommée)", "Valeur prédictive négative", "Quand le modèle dit « non précisé », n'y avait-il vraiment rien ?", C.accent1]];
+      rows.forEach(([a, b, c, color], i) => {
+        const y = 2.15 + i * 1.05;
+        box(s, 0.7, y, 11.9, 0.9);
+        box(s, 0.7, y, 3.5, 0.9, color);
+        T(s, a, { x: 0.7, y, w: 3.5, h: 0.9, fontSize: i < 2 ? 21 : 15, bold: i < 2, italic: i >= 2, align: "center", valign: "middle", color: C.background1 });
+        T(s, "=", { x: 4.2, y, w: 0.4, h: 0.9, fontSize: 22, bold: true, align: "center", valign: "middle", color: C.accent4 });
+        T(s, b, { x: 4.6, y, w: 3.3, h: 0.9, fontSize: 18, bold: true, valign: "middle" });
+        T(s, c, { x: 8.1, y, w: 4.3, h: 0.9, fontSize: 14, valign: "middle" });
+      });
+    }
+    {
+      const s = content("Le tableau de contingence d'une extraction", "Le tableau à quatre cases, celui des tests diagnostiques. En colonnes, la référence : le compte rendu contenait-il la valeur ? En lignes, le modèle : a-t-il donné une valeur ? Vrai positif : trouvé. Faux positif : inventé. Faux négatif : manqué. Vrai négatif : non précisé, à raison. Exemple sur cent champs. Une valeur fausse, non montrée ici, compte à la fois comme inventée et comme manquée.");
+      T(s, "La référence : la valeur est dans le compte rendu", { x: 3.5, y: 1.65, w: 5.6, h: 0.4, fontSize: 14, align: "center", color: C.accent4 });
+      [["oui", 3.5], ["non", 6.35]].forEach(([t, x]) => T(s, t, { x, y: 2.05, w: 2.75, h: 0.4, fontSize: 16, bold: true, align: "center" }));
+      [["Le modèle donne une valeur", 2.5], ["Le modèle répond « non précisé »", 3.95]].forEach(([t, y]) => T(s, t, { x: 0.7, y, w: 2.65, h: 1.3, fontSize: 15, bold: true, valign: "middle" }));
+      const cells = [[3.5, 2.5, C.accent2, "72", "trouvées", "vrais positifs"], [6.35, 2.5, C.accent6, "3", "inventées", "faux positifs"], [3.5, 3.95, C.accent3, "8", "manquées", "faux négatifs"], [6.35, 3.95, C.accent4, "17", "non précisé, à raison", "vrais négatifs"]];
+      cells.forEach(([x, y, color, v, l, m]) => {
+        box(s, x, y, 2.75, 1.3, color);
+        T(s, v, { x: x + 0.2, y, w: 0.95, h: 1.3, fontSize: 36, bold: true, valign: "middle", color: C.background1 });
+        T(s, l, { x: x + 1.15, y: y + 0.2, w: 1.5, h: 0.55, fontSize: 14, bold: true, valign: "middle", color: C.background1 });
+        T(s, m, { x: x + 1.15, y: y + 0.75, w: 1.5, h: 0.4, fontSize: 12, color: C.background1 });
+      });
+      const m = [["Rappel = sensibilité", "72 ÷ (72 + 8)", "90 %"], ["Précision = VPP", "72 ÷ (72 + 3)", "96 %"], ["Spécificité", "17 ÷ (17 + 3)", "85 %"], ["VPN", "17 ÷ (17 + 8)", "68 %"]];
+      m.forEach(([h, f, v], i) => {
+        const y = 1.75 + i * 0.95;
+        box(s, 9.5, y, 3.1, 0.82);
+        T(s, h, { x: 9.65, y: y + 0.06, w: 1.9, h: 0.38, fontSize: 14, bold: true });
+        T(s, f, { x: 9.65, y: y + 0.42, w: 1.9, h: 0.34, fontSize: 12, color: C.accent4 });
+        T(s, v, { x: 11.45, y, w: 1.05, h: 0.82, fontSize: 22, bold: true, align: "right", valign: "middle", color: C.accent1 });
+      });
+      T(s, "Sur 100 champs. Bon rappel, bonne précision, et pourtant : quand le modèle dit « non précisé », il y avait quelque chose une fois sur trois.", { x: 0.7, y: 5.65, w: 11.9, h: 0.9, fontSize: 17, italic: true, color: C.text2 });
+    }
+    {
+      const s = content("Comme pour un dépistage, la prévalence compte", "Le raisonnement du dépistage, appliqué à l'extraction. Une complication rare : présente dans 5 % des dossiers. Le modèle est bon : sensibilité 90 %, spécificité 95 %. Sur mille dossiers, 50 ont la complication, il en trouve 45. Mais sur les 950 autres, il en signale 48 à tort. Résultat : quand il signale la complication, il a raison moins d'une fois sur deux. La valeur prédictive dépend de la fréquence de ce que l'on cherche, pas seulement de la qualité du modèle.");
+      T(s, "Une complication rare : 5 % des dossiers. Un bon modèle : sensibilité 90 %, spécificité 95 %.", { x: 0.7, y: 1.7, w: 11.9, h: 0.6, fontSize: 19 });
+      const st = [["1 000", "dossiers", C.accent4], ["50", "ont la complication", C.accent3], ["45", "signalées à raison", C.accent2], ["48", "signalées à tort, parmi les 950 autres", C.accent6]];
+      st.forEach(([v, l, color], i) => {
+        const x = 0.7 + i * 3.03;
+        box(s, x, 2.55, 2.8, 1.9);
+        T(s, v, { x: x + 0.25, y: 2.65, w: 2.3, h: 0.95, fontSize: 44, bold: true, color, valign: "middle" });
+        T(s, l, { x: x + 0.25, y: 3.6, w: 2.3, h: 0.75, fontSize: 14 });
+        if (i < 3) arrow(s, x + 2.82, 3.5, 0.19, 0);
+      });
+      box(s, 0.7, 4.75, 11.9, 1.75, C.text1);
+      T(s, "48 %", { x: 1.0, y: 4.75, w: 2.6, h: 1.75, fontSize: 60, bold: true, valign: "middle", color: C.background1 });
+      T(s, "Valeur prédictive positive : 45 ÷ (45 + 48)", { x: 3.8, y: 4.95, w: 8.5, h: 0.5, fontSize: 18, bold: true, color: C.background1 });
+      T(s, "Quand le modèle signale cette complication, il a raison moins d'une fois sur deux. Ce n'est pas le modèle qui est mauvais : c'est la complication qui est rare.", { x: 3.8, y: 5.45, w: 8.5, h: 0.95, fontSize: 15, color: C.background2 });
     }
     {
       const s = content("Lire le classement", "Un exemple fictif, pour apprendre à lire le tableau que produira la salle. Les chiffres réels seront ceux de vos extractions. Trois clés de lecture. Un rappel bas : le modèle se tait. Une précision basse : il invente. Un JSON invalide : le dossier entier compte comme manqué. Et la dernière colonne : un modèle plus juste mais trois fois plus lent n'est pas toujours le bon choix.");

@@ -16,7 +16,15 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
   Request) ; attentes des étudiants au pré-test ; au questionnaire de
   satisfaction : attentes satisfaites ou non, utilité de chaque partie, partie
   préférée, partie la plus difficile.
-- Diaporama : l'acronyme FARCI sur la page de garde.
+- Classeurs alignés sur l'en-tête d'un export Wooclap réel (`Type`, `Title`,
+  `Correct`, `Choice`). Questionnaire de satisfaction adapté à des étudiants
+  en médecine : se sont-ils sentis à leur place, les comparaisons médicales
+  ont-elles aidé, le format atelier contre le cours magistral, l'usage en
+  thèse ou en mémoire.
+- Diaporama : l'acronyme FARCI sur la page de garde ; trois diapositives sur
+  le parallèle médical (rappel = sensibilité, précision = valeur prédictive
+  positive, tableau de contingence, effet de la prévalence), et deux
+  questions de connaissance correspondantes.
 
 ### Diaporama : lisible par PowerPoint, et 22 diapositives de détail
 

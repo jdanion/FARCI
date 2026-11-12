@@ -10,13 +10,13 @@
     docs/support/wooclap/satisfaction.xlsx
     docs/support/EVALUATION.md               la version lisible, pour relecture
 
-FORMAT D'IMPORT. Wooclap importe un classeur Excel dont il fournit le modèle
-(« Importer des questions » → « Depuis un fichier Excel » → télécharger le
-modèle). Ce script suit la forme connue de ce modèle : une question par ligne,
-colonnes Type, Title, Correct, puis une colonne par réponse ; « Correct » porte
-le numéro de la ou des bonnes réponses. Seuls l'intitulé « MCQ » et ce principe
-sont confirmés : si le modèle de votre compte nomme autrement une colonne ou un
-type de question, corriger ENTETES et TYPES ci-dessous et relancer.
+FORMAT D'IMPORT. Les classeurs reprennent la forme d'un export Wooclap réel
+(celui du compte du formateur) : une feuille « Questions », une question par
+ligne, et la ligne d'en-tête Type, Title, Correct, Choice ; les réponses
+occupent la colonne Choice et les suivantes, et « Correct » porte le numéro de
+la ou des bonnes réponses. L'en-tête et l'intitulé « MCQ » sont confirmés ; les
+noms des autres types de question (TYPES ci-dessous) ne le sont pas : si
+l'import en refuse un, le corriger ici et relancer.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ ICI = Path(__file__).resolve().parent
 EVALUATION = ICI.parent / "EVALUATION.md"
 
 # --- À ajuster au modèle Excel de votre compte Wooclap ------------------------
-ENTETES = {"type": "Type", "titre": "Title", "correct": "Correct", "choix": "Choice {n}"}
+ENTETES = ["Type", "Title", "Correct", "Choice"]   # ligne d'en-tête de l'export Wooclap
 TYPES = {
     "qcm": "MCQ",              # une ou plusieurs bonnes réponses
     "sondage": "Poll",         # pas de bonne réponse
@@ -76,7 +76,7 @@ AUTO = [
       ["la différence entre un modèle et le logiciel qui l'exécute",
        "comment choisir un modèle selon la machine dont on dispose",
        "pourquoi la réponse d'une IA doit être vérifiée avant d'entrer dans une base de recherche",
-       "ce que veut dire « un rappel de 0,80 »",
+       "ce que veut dire « un rappel de 0,80 », et son équivalent en médecine",
        "ce qu'est une branche git, et à quoi elle sert",
        "ce qui, dans une IA utilisée à l'hôpital, peut ou non passer par Internet"]),
 ]
@@ -136,6 +136,13 @@ CONNAISSANCES = [
       ["Le rappel : une valeur à trouver a été manquée", "La précision : le modèle a inventé une valeur",
        "Les deux", "Aucune : « non précisé » est toujours une bonne réponse"], [1],
       "rappel", "évaluation ; diaporama « Quatre issues pour chaque champ »"),
+    q("C21", "qcm", "Le rappel d'un système d'extraction correspond, pour un test diagnostique, à…",
+      ["la spécificité", "la sensibilité", "la valeur prédictive positive", "la valeur prédictive négative"], [2],
+      "rappel = sensibilité", "évaluation ; diaporama « Vous connaissez déjà ces mesures »"),
+    q("C22", "qcm", "Un modèle signale une complication rare (5 % des dossiers) avec une sensibilité de 90 % et une spécificité de 95 %. Quand il la signale…",
+      ["il a raison dans 95 % des cas", "il a raison dans 90 % des cas",
+       "il a raison environ une fois sur deux : la complication est rare", "on ne peut rien en dire"], [3],
+      "précision = VPP, prévalence", "évaluation ; diaporama « La prévalence compte »"),
     q("C14", "qcm", "L'outil qui enregistre les traces tombe en panne pendant une extraction. Dans une plateforme bien conçue…",
       ["l'extraction s'arrête, par sécurité", "les résultats deviennent faux",
        "l'extraction continue ; seules les traces manquent", "le traitement bascule sur un service en ligne"], [3],
@@ -175,34 +182,51 @@ RESTITUTION = [
        "Comparer deux modèles", "Lire une trace"], plusieurs=True),
 ]
 
+# Le questionnaire de satisfaction s'adresse à des étudiants en médecine dans
+# une séance inhabituelle pour eux : un atelier technique, en équipe, au
+# terminal. Il demande donc aussi s'ils s'y sont sentis à leur place, si le
+# langage médical les a aidés, et ce qu'ils en feront comme futurs médecins.
 SATISFACTION = [
     q("E1", "echelle", "Votre avis sur la séance (1 = pas du tout d'accord, 5 = tout à fait d'accord)",
       ["Dans l'ensemble, cette séance m'a été utile", "Les objectifs étaient clairs dès le début",
        "J'ai pu participer activement, et pas seulement regarder", "Quand j'étais bloqué, j'ai obtenu de l'aide à temps",
-       "Le support de cours m'a aidé à suivre"]),
-    q("E2", "sondage", "La séance a-t-elle répondu à vos attentes ?",
+       "Le travail en équipe a bien fonctionné", "Le support de cours m'a aidé à suivre"]),
+    q("E2", "echelle", "Un atelier d'informatique pour des étudiants en médecine (1 = pas du tout d'accord, 5 = tout à fait d'accord)",
+      ["Je me suis senti à ma place, sans être informaticien",
+       "Les comparaisons avec la médecine (dossier patient, sensibilité, dépistage) m'ont aidé à comprendre",
+       "Je vois le lien avec ma future pratique ou avec un travail de recherche",
+       "Je lirai d'un œil plus critique un article ou un outil qui évalue une IA en santé",
+       "Je saurais dire à un patient ou à un collègue ce qu'une IA peut et ne peut pas faire"]),
+    q("E3", "sondage", "Construire soi-même plutôt qu'écouter un cours : pour apprendre ces notions, ce format était…",
+      ["bien plus efficace qu'un cours magistral", "un peu plus efficace", "équivalent", "moins efficace : j'aurais préféré un cours"]),
+    q("E4", "sondage", "La séance a-t-elle répondu à vos attentes ?",
       ["Oui, complètement", "En grande partie", "En partie seulement", "Non"]),
-    q("E3", "ouverte", "Quelle attente n'a pas été satisfaite ? Qu'auriez-vous voulu voir en plus ?"),
-    q("E4", "echelle", "Utilité de chaque partie pour vous (1 = inutile, 5 = très utile)", PARTIES),
-    q("E5", "sondage", "La partie que vous avez préférée", PARTIES),
-    q("E6", "sondage", "La partie la plus difficile à suivre", PARTIES + ["Aucune en particulier"]),
-    q("E7", "sondage", "Le rythme était…", ["trop lent", "adapté", "trop rapide"]),
-    q("E8", "sondage", "Le niveau technique était…",
+    q("E5", "ouverte", "Quelle attente n'a pas été satisfaite ? Qu'auriez-vous voulu voir en plus ?"),
+    q("E6", "echelle", "Utilité de chaque partie pour vous (1 = inutile, 5 = très utile)", PARTIES),
+    q("E7", "sondage", "La partie que vous avez préférée", PARTIES),
+    q("E8", "sondage", "La partie la plus difficile à suivre", PARTIES + ["Aucune en particulier"]),
+    q("E9", "sondage", "Le rythme était…", ["trop lent", "adapté", "trop rapide"]),
+    q("E10", "sondage", "Le niveau technique était…",
       ["trop simple", "adapté", "trop difficile, mais j'ai suivi", "trop difficile, j'ai décroché"]),
-    q("E9", "sondage", "Qu'allez-vous réutiliser ? (plusieurs réponses possibles)",
-      ["git", "Faire tourner un modèle sur ma machine", "Valider la sortie d'une IA", "Mesurer avec une référence",
-       "Comparer plusieurs modèles avant d'en choisir un", "Lire des traces", "Rien de particulier"], plusieurs=True),
-    q("E10", "sondage", "Avant la séance, mon poste était prêt (projet cloné, brique téléchargée).",
+    q("E11", "sondage", "Qu'allez-vous réutiliser ? (plusieurs réponses possibles)",
+      ["git, pour un mémoire, une thèse ou un projet", "Faire tourner un modèle sur ma machine, sans envoyer de données en ligne",
+       "Vérifier la sortie d'une IA avant de m'en servir", "Demander à quelle référence un score a été comparé",
+       "Comparer plusieurs modèles avant d'en choisir un", "Rien de particulier"], plusieurs=True),
+    q("E12", "sondage", "Cette séance vous donne-t-elle envie d'utiliser ces outils dans un travail de recherche (thèse, mémoire) ?",
+      ["Oui, j'ai déjà une idée", "Peut-être, si j'étais accompagné", "Non", "Je ne suis pas concerné pour l'instant"]),
+    q("E13", "sondage", "Avant la séance, mon poste était prêt (projet cloné, brique téléchargée).",
       ["Oui", "En partie", "Non", "Je n'avais pas de machine utilisable"]),
-    q("E11", "sondage", "Dans quelle équipe étiez-vous ?",
+    q("E14", "sondage", "Dans quelle équipe étiez-vous ?",
       ["0 Forge", "1 Réseau", "2 Inférence", "3 Passerelle", "4 Documents", "5 Observabilité", "6 Évaluation",
        "7 Applications", "8 Agents"]),
-    q("E12", "ouverte", "Ce qui a le mieux fonctionné pour vous."),
-    q("E13", "ouverte", "Ce qui vous a bloqué, ou ce qu'il faudrait changer."),
-    q("E14", "ouverte", "Un sujet que vous aimeriez approfondir dans une prochaine séance."),
-    q("E15", "echelle", "Recommanderiez-vous cet atelier à un autre étudiant ? (0 = certainement pas, 10 = certainement)",
+    q("E15", "ouverte", "Ce qui a le mieux fonctionné pour vous."),
+    q("E16", "ouverte", "Ce qui vous a bloqué, ou ce qu'il faudrait changer."),
+    q("E17", "ouverte", "Un sujet que vous aimeriez approfondir dans une prochaine séance."),
+    q("E18", "echelle", "Recommanderiez-vous cet atelier à un autre étudiant en médecine ? (0 = certainement pas, 10 = certainement)",
       ["Ma recommandation"]),
 ]
+
+NB = len(CONNAISSANCES)
 
 QUESTIONNAIRES = {
     "pre-test": PROFIL + AUTO + CONNAISSANCES,
@@ -217,8 +241,7 @@ def ecrire_classeur(nom: str, questions: list[dict]) -> Path:
     ws = wb.active
     ws.title = "Questions"
     police = Font(name="Arial", size=10)
-    ws.append([ENTETES["type"], ENTETES["titre"], ENTETES["correct"]]
-              + [ENTETES["choix"].format(n=i) for i in range(1, largeur + 1)])
+    ws.append(ENTETES)
     for x in questions:
         correct = SEPARATEUR_CORRECT.join(str(n) for n in x["correct"])
         ws.append([TYPES[x["type"]], x["titre"], correct or None] + x["choix"])
@@ -267,9 +290,9 @@ ce que la séance a appris. Rien n'est noté ; tout est anonyme.
 
 | Questionnaire | Fichier à importer | Quand | Durée | Contenu |
 |---|---|---|---|---|
-| **Pré-test** | `wooclap/pre-test.xlsx` | avant la séance, ou à l'arrivée | 9 min | profil et attentes (A), auto-évaluation (B), connaissances (C) |
+| **Pré-test** | `wooclap/pre-test.xlsx` | avant la séance, ou à l'arrivée | 10 min | profil et attentes (A), auto-évaluation (B), connaissances (C) |
 | **Post-test** | `wooclap/post-test.xlsx` | à la clôture | 8 min | auto-évaluation (B), connaissances (C), restitution (D) |
-| **Satisfaction** | `wooclap/satisfaction.xlsx` | juste après | 5 min | retour sur le contenu, les attentes, les parties utiles (E) |
+| **Satisfaction** | `wooclap/satisfaction.xlsx` | juste après | 6 min | retour sur le format, le contenu, les attentes, les parties utiles (E) |
 
 Le pré-test est long pour un accueil de vingt minutes : l'envoyer **avant la
 séance** (mode « au rythme du participant ») laisse l'accueil au clonage et à
@@ -281,12 +304,13 @@ Dans un événement : **Importer des questions → Depuis un fichier Excel**, pu
 choisir le classeur. Créer trois événements, un par classeur.
 
 Les classeurs suivent la forme du modèle Excel de Wooclap : une question par
-ligne, colonnes `Type`, `Title`, `Correct`, puis une colonne par réponse ;
-`Correct` porte le numéro de la ou des bonnes réponses. **Seuls l'intitulé
-`MCQ` et ce principe sont confirmés.** Avant le premier import, télécharger le
-modèle proposé par Wooclap dans cette même fenêtre et comparer ses en-têtes et
-ses noms de types à ceux du script (`ENTETES`, `TYPES`) : s'ils diffèrent, les
-corriger là et relancer le script.
+ligne, et la ligne d'en-tête `Type`, `Title`, `Correct`, `Choice` de l'export
+Wooclap du formateur ; les réponses occupent la colonne `Choice` et les
+suivantes, et `Correct` porte le numéro de la ou des bonnes réponses.
+**L'en-tête et l'intitulé `MCQ` sont confirmés ; les noms des autres types de
+question ne le sont pas.** Si l'import en refuse un, créer à la main une
+question de ce type dans Wooclap, exporter l'événement, lire le nom dans la
+colonne `Type`, puis le corriger dans le script (`TYPES`) et le relancer.
 
 Réglages conseillés : participation anonyme ; **bonnes réponses masquées au
 pré-test** (sinon le post-test mesure la mémoire du corrigé), affichées au
@@ -299,7 +323,7 @@ post-test.
 {tableau(PROFIL)}
 
 A6 est reposée au post-test (D1) : les deux nuages se projettent côte à côte.
-A4 et A5 se relisent avec E2 et E3 : la séance a-t-elle répondu aux attentes ?
+A4 et A5 se relisent avec E4 et E5 : la séance a-t-elle répondu aux attentes ?
 
 ## B. Auto-évaluation — pré-test et post-test
 
@@ -323,8 +347,10 @@ La bonne réponse est en **gras**.
 
 ## E. Questionnaire de satisfaction
 
-> Un questionnaire existe déjà sur le compte Wooclap du formateur : celui-ci
-> est à fusionner avec lui. E4 à E6 portent sur le contenu propre à cet atelier.
+> Pensé pour des étudiants en médecine dans une séance inhabituelle pour eux :
+> un atelier technique, en équipe, au terminal. E2 et E3 demandent s'ils s'y
+> sont sentis à leur place et si le format les a aidés ; E6 à E8 portent sur
+> le contenu ; E11 et E12 sur ce qu'ils en feront.
 
 {tableau(SATISFACTION)}
 
@@ -333,21 +359,24 @@ La bonne réponse est en **gras**.
 ## Lire les résultats
 
 - **Gain par question** : part de bonnes réponses au post-test moins part au
-  pré-test (C1 à C20). Une question déjà réussie à plus de 80 % au pré-test
+  pré-test (C1 à C{NB}). Une question déjà réussie à plus de 80 % au pré-test
   désigne une notion connue : y passer moins de temps la prochaine fois.
 - **Question sans gain** : la notion n'a pas été vue, ou la question est mal
   posée. Le tableau « Où chaque question trouve sa réponse » dit quel moment
   de la séance revoir.
 - **Auto-évaluation contre connaissances** : B qui monte sans que C monte
   signale une confiance mal placée.
-- **Attentes** : A4 (ce qu'ils attendaient) contre E2 et E3 (ce qu'ils ont
+- **Attentes** : A4 (ce qu'ils attendaient) contre E4 et E5 (ce qu'ils ont
   eu). Une attente fréquente et non satisfaite est le premier sujet à ajouter.
-- **Parties utiles** : E4 note chaque partie, E5 dit la préférée, E6 la plus
+- **Parties utiles** : E6 note chaque partie, E7 dit la préférée, E8 la plus
   difficile. Une partie jugée utile **et** difficile mérite plus de temps ;
   une partie jugée peu utile et facile peut être raccourcie.
-- **Croiser avec le profil** : le gain sur C16 à C20 chez ceux qui ont répondu
+- **Croiser avec le profil** : le gain sur les questions de git chez ceux qui ont répondu
   « jamais » à A1 est la mesure directe de l'objectif git.
-- **Croiser avec E10 et E11** : un poste non préparé ou une équipe en
+- **Le format** : E2 et E3 disent si un atelier technique convient à des
+  étudiants en médecine. Un « je me suis senti à ma place » bas avec un niveau
+  jugé trop difficile (E10) appelle plus d'accompagnement, pas moins de contenu.
+- **Croiser avec E13 et E14** : un poste non préparé ou une équipe en
   difficulté explique souvent une mauvaise note de rythme.
 """, encoding="utf-8")
 

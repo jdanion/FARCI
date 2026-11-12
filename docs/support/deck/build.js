@@ -181,7 +181,7 @@ async function icon(name, color = "FFFFFF") {
     T(s, "Comme à un collègue non informaticien.", { x: 7.4, y: 5.25, w: 4.8, h: 0.5, fontSize: 16, italic: true, color: C.background2 });
   }
   {
-    const s = content("Pré-test : neuf minutes, anonyme", "Si le pré-test n'a pas été envoyé avant la séance, le lancer maintenant. Afficher le code de l'événement. Dire que ce n'est pas noté, que les mêmes questions reviennent à la fin, et qu'on comparera les deux devant la salle. Ne pas afficher les bonnes réponses maintenant.");
+    const s = content("Pré-test : dix minutes, anonyme", "Si le pré-test n'a pas été envoyé avant la séance, le lancer maintenant. Afficher le code de l'événement. Dire que ce n'est pas noté, que les mêmes questions reviennent à la fin, et qu'on comparera les deux devant la salle. Ne pas afficher les bonnes réponses maintenant.");
     await dot(s, 0.7, 2.0, 1.3, C.accent1, "FaMobileAlt");
     T(s, "wooclap.com", { x: 2.4, y: 1.95, w: 6, h: 0.8, fontSize: 40, bold: true, color: C.accent1 });
     T(s, "Le code de l'événement est affiché par le formateur.", { x: 2.4, y: 2.8, w: 6.5, h: 0.5, fontSize: 18 });
