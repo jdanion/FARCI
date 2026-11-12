@@ -122,6 +122,11 @@ sans téléchargement en cours, le Pi revient seul en salle** ; un Wi-Fi
 injoignable l'y ramène tout de suite. Un Pi sans écran n'est donc jamais
 perdu : au pire, on attend cinq minutes (`FARCI_WIFI_DELAI`, en secondes).
 
+Hors de la salle, l'adresse du point d'accès disparaît. Le Pi la garde alors
+pour lui-même, pour que le tableau, `./bin/farci status` et `./bin/farci test`
+continuent de trouver ses services ; sans cela, tout s'affiche en panne alors
+que tout tourne. `./bin/farci wifi` dit si c'est le cas.
+
 ---
 
 ## J0 — Dans la salle

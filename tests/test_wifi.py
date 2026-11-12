@@ -27,7 +27,16 @@ case "$*" in
 esac
 """
 SS = '#!/usr/bin/env bash\ncat "$FAKE/ssh" 2>/dev/null\n'
-IP = '#!/usr/bin/env bash\necho "3: wlan0    inet 198.51.100.1/24 brd 198.51.100.255 scope global wlan0"\n'
+IP = r"""#!/usr/bin/env bash
+echo "ip $*" >> "$FAKE/appels"
+case "$*" in
+  "addr add "*) echo "$3" >> "$FAKE/lo" ;;
+  "addr del "*) : > "$FAKE/lo" ;;
+  "-4 -o addr show")
+    echo "3: wlan0    inet 198.51.100.1/24 brd 198.51.100.255 scope global wlan0"
+    while read -r a; do [[ -n "$a" ]] && echo "1: lo    inet $a scope global lo"; done < "$FAKE/lo" ;;
+esac
+"""
 PGREP = '#!/usr/bin/env bash\n[[ -e "$FAKE/telechargement" ]]\n'
 SYSTEMD_RUN = '#!/usr/bin/env bash\necho "systemd-run $*" >> "$FAKE/appels"\n'
 SYSTEMCTL = '#!/usr/bin/env bash\nexit 0\n'
@@ -42,12 +51,13 @@ class Radio(unittest.TestCase):
             path = self.fake / name
             path.write_text(body, encoding="utf-8")
             path.chmod(path.stat().st_mode | stat.S_IEXEC)
-        for name, content in (("actif", "farci-ap\n"), ("profils", "maison\n"), ("injoignables", ""), ("appels", "")):
+        for name, content in (("actif", "farci-ap\n"), ("profils", "maison\n"), ("injoignables", ""), ("appels", ""), ("lo", "")):
             (self.fake / name).write_text(content, encoding="utf-8")
 
     def wifi(self, *args: str, timeout: int = 20) -> subprocess.CompletedProcess:
         env = {k: v for k, v in os.environ.items() if not k.startswith("FARCI_")}
         env.update(PATH=f"{self.fake}:{env['PATH']}", FAKE=str(self.fake), NO_COLOR="1", FARCI_SKIP_ENV="1",
+                   REFERENCE_IP="192.0.2.1",
                    FARCI_WIFI_DELAI="2", FARCI_WIFI_PAS="1")
         return subprocess.run([str(SCRIPT), *args], env=env, capture_output=True, text=True, timeout=timeout)
 
@@ -59,6 +69,17 @@ class Radio(unittest.TestCase):
         self.assertEqual(resultat.returncode, 0, resultat.stderr)
         self.assertIn("con up maison", (self.fake / "appels").read_text())
         self.assertEqual(self.actif(), "farci-ap")
+
+    def test_hors_de_la_salle_le_pi_garde_l_adresse_de_la_salle(self):
+        # Sans elle, le tableau cherche les services du Pi à une adresse absente : tout « en panne ».
+        (self.fake / "ssh").write_text("0 0 198.51.100.1:22 198.51.100.7:50000\n", encoding="utf-8")
+        with self.assertRaises(subprocess.TimeoutExpired):
+            self.wifi("_bascule", "maison", timeout=5)
+        self.assertEqual((self.fake / "lo").read_text().strip(), "192.0.2.1/32")
+        (self.fake / "ssh").unlink()
+        self.wifi("_salle")
+        self.assertEqual((self.fake / "lo").read_text().strip(), "")
+        self.assertIn("ip addr del 192.0.2.1/32 dev lo", (self.fake / "appels").read_text())
 
     def test_une_session_ssh_garde_internet(self):
         (self.fake / "ssh").write_text("0 0 198.51.100.1:22 198.51.100.7:50000\n", encoding="utf-8")

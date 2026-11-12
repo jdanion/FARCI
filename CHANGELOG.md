@@ -6,6 +6,14 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Le tableau reste juste quand le Pi quitte la salle
+
+- Correctif : en mode Internet, l'adresse du point d'accès disparaissait, et
+  le tableau, `status` et `test` cherchaient les services du Pi à une adresse
+  absente : tout s'affichait en panne. `./bin/farci wifi internet` garde
+  désormais cette adresse sur le Pi lui-même, `wifi salle` la rend au point
+  d'accès.
+
 ### Le tableau ouvre les pages des services
 
 - Une ligne « Ouvrir : » sous l'en-tête du tableau de la salle : Rejoindre,
