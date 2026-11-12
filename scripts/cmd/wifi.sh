@@ -17,6 +17,13 @@
 # minutes. Un Wi-Fi injoignable (mauvais mot de passe, hors de portée) ramène
 # le Pi en salle tout de suite.
 #
+# L'ADRESSE DE LA SALLE NE DISPARAÎT PLUS. Hors de la salle, le point d'accès
+# n'existe plus, et son adresse (REFERENCE_IP) avec lui : le tableau, les tests
+# et ./bin/farci status cherchaient alors les services du Pi à une adresse
+# absente et les croyaient tous en panne. « wifi internet » garde donc cette
+# adresse sur le Pi lui-même (interface locale) ; « wifi salle » la rend au
+# point d'accès. Rien ne change pour les autres machines.
+#
 # Réglages (.env) : FARCI_WIFI_AP (farci-ap), FARCI_WIFI_DEV (wlan0),
 # FARCI_WIFI_DELAI (300), FARCI_WIFI_INTERNET (profil par défaut).
 # Journal : journalctl -u farci-wifi
@@ -48,7 +55,9 @@ active() { nmcli -g GENERAL.CONNECTION dev show "$DEV" 2>/dev/null | head -1; }
 # minutes côté noyau : on ne compte que celles dont l'adresse locale existe encore.
 ssh_sessions() {
   local ips
-  ips="$(ip -4 -o addr show 2>/dev/null | awk '{sub(/\/.*/, "", $4); print $4}')"
+  # Hors interface locale : l'adresse de la salle qu'on y garde (keep_room_address)
+  # ne doit pas faire passer pour vivante la session restée sur le point d'accès.
+  ips="$(ip -4 -o addr show 2>/dev/null | awk '$2 != "lo" {sub(/\/.*/, "", $4); print $4}')"
   ss -Htn state established '( sport = :22 )' 2>/dev/null \
     | awk -v ips="$ips" 'BEGIN { n = split(ips, a, "\n"); for (i = 1; i <= n; i++) ok[a[i]] = 1 }
         { for (f = 1; f <= NF; f++) if ($f ~ /:22$/) {   # premier champ en :22 = adresse locale
@@ -62,8 +71,25 @@ client_profiles() {
   nmcli -t -f NAME,TYPE con show 2>/dev/null | awk -F: -v ap="$AP" '$2 ~ /wireless|wifi/ && $1 != ap {print $1}'
 }
 
+# L'adresse de la salle, gardée sur l'interface locale tant que le point
+# d'accès n'existe pas : le Pi continue de trouver ses propres services.
+keep_room_address() {
+  [[ -n "${REFERENCE_IP:-}" ]] || return 0
+  ip addr add "$REFERENCE_IP/32" dev lo 2>/dev/null || true
+}
+release_room_address() {
+  [[ -n "${REFERENCE_IP:-}" ]] || return 0
+  ip addr del "$REFERENCE_IP/32" dev lo 2>/dev/null || true
+}
+
 to_salle() {
-  nmcli con up "$AP" && ok "Wi-Fi de la salle recréé ($AP)"
+  release_room_address
+  if nmcli con up "$AP"; then
+    ok "Wi-Fi de la salle recréé ($AP)"
+  else
+    keep_room_address   # pas de point d'accès : le Pi garde au moins ses services
+    return 1
+  fi
 }
 
 # La veille : tant que la radio est sur Internet, compter le temps sans SSH.
@@ -90,6 +116,7 @@ cmd_bascule() {
   local profil="$1"
   if nmcli con up "$profil"; then
     ok "radio sur « $profil »"
+    keep_room_address
     cmd_veille
   else
     err "« $profil » injoignable (mot de passe ? hors de portée ?) : retour en salle"
@@ -162,6 +189,11 @@ cmd_etat() {
     printf '  mode           salle : point d'"'"'accès « %s »\n' "$AP"
   elif [[ -n "$now" ]]; then
     printf '  mode           Internet : cliente de « %s »\n' "$now"
+    if [[ -n "${REFERENCE_IP:-}" ]] && ip -4 -o addr show dev lo 2>/dev/null | grep -qF " $REFERENCE_IP/"; then
+      printf '  services       le Pi garde l'"'"'adresse de la salle (%s) : tableau et tests restent justes\n' "$REFERENCE_IP"
+    else
+      printf '  services       adresse de la salle absente : le tableau croira tout en panne (relancer ./bin/farci wifi internet)\n'
+    fi
     if systemctl is-active --quiet "$UNIT" 2>/dev/null; then
       printf '  retour         en salle après %s min sans SSH ni téléchargement\n' "$(( DELAI / 60 ))"
     else
