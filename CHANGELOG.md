@@ -6,6 +6,19 @@ versionnement est [sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Diaporama : lisible par PowerPoint, et 22 diapositives de détail
+
+- Correctif : PowerPoint (iPad compris) refusait d'ouvrir le diaporama. Deux
+  flèches du schéma de la passerelle avaient une hauteur négative, tolérée
+  par LibreOffice et par le contrôle automatique, interdite par le format.
+- Quatre sections de détail : les modèles (lire un nom de fichier, les six
+  modèles, généraliste / spécialisé / à raisonnement / mélange d'experts,
+  protocole de comparaison), Pydantic (le schéma réel, ce qu'il refuse),
+  la mesure (quatre issues par champ, rappel et précision, lire le
+  classement) et git (commit, branche, diff, Pull Request, dépannage).
+- `docs/support/deck/` : le générateur du diaporama. `COURS.md` reprend les
+  nouvelles notions.
+
 ### Le Pi sans écran : salle ou Internet
 
 - `./bin/farci wifi` : `internet` quitte le point d'accès pour un Wi-Fi qui a
