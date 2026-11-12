@@ -59,6 +59,7 @@ evaluate	dataset	Comparer les extractions au gold, classer les runs	evaluate.sh
 
 chaos	chaos	Étape 3 : list | scenario-NN | status | reset	chaos.sh
 
+wifi	secours	La radio du Pi : wifi salle | wifi internet (retour seul après 5 min sans SSH)	wifi.sh
 rescue	secours	Basculer une brique sur la référence (sur le Pi)	rescue.sh
 reset-all	secours	Retour à un état propre connu (sur le Pi)	reset-all.sh
 rehearse	secours	Répétition générale J-1 (< 15 min) : PASS / FAIL	rehearse.sh

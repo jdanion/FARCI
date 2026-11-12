@@ -51,6 +51,12 @@ status	ok	./bin/farci status --watch	en continu, pour l'écran de la salle
 status	ok	./bin/farci test	le contrat de votre brique est-il tenu ?
 status	echec	./bin/farci room	une brique non déclarée ? (sur le Pi : room set)
 status	echec	./bin/farci rescue	sur le Pi : faire servir une brique par la référence
+wifi	ok	./bin/farci wifi internet	quitter la salle pour un Wi-Fi qui a Internet (retour seul après 5 min sans SSH)
+wifi	ok	./bin/farci wifi salle	recréer le Wi-Fi de la salle
+wifi internet	ok	./preload.sh --pi --skip-existing	une fois reconnecté : télécharger ce qui manque au Pi
+wifi salle	ok	./bin/farci doctor	une fois reconnecté : l'accueil de la salle répond-il ?
+wifi ajouter	ok	./bin/farci wifi internet	rejoindre ce Wi-Fi
+wifi	echec	./bin/farci wifi	où en est la radio, quels Wi-Fi sont enregistrés
 room	ok	http://{salle}/tableau/formateur	ou dans le navigateur : onglet formateur du tableau
 room	ok	./bin/farci room set <équipe> <ip>	sur le Pi : déclarer le poste d'une équipe
 room	ok	./bin/farci status	le tableau de la salle
