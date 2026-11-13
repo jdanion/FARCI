@@ -3,13 +3,8 @@ COMPTE RENDU ANATOMOPATHOLOGIQUE
 Patient : Michel Garcia
 IPP : 1234567890129
 
-Pièce opératoire : Whipple modifié
-
-Résultats :
-- pT : pT3
-- pN : pN1
-- Ganglions examinés : 26
-- Ganglions envahis : 4
-- Marge : R0
-- Histologie : adénocarcinome canalaire
-- Taille : 31.0 mm
+Pièce opératoire adressée à l'état frais. La tumeur siège dans la tête du pancréas et mesure 3,1 cm de grand axe.
+Il s'agit d'un adénocarcinome canalaire.
+Quatre ganglions métastatiques sur 26 examinés.
+Les limites d'exérèse sont saines (R0).
+Classification pTNM (8e édition) : pT3 pN1.

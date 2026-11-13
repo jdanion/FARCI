@@ -246,6 +246,39 @@ Exemple : le système signale 10 complications, dont 8 réelles ; il y en avait
 16 à trouver. Précision 8/10 = 80 %, rappel 8/16 = 50 %. Un « F1 de 0,84 »
 cité sans référence ne veut rien dire.
 
+#### La consigne est un réglage, comme un seuil
+
+Les dossiers ne sont pas tous écrits de la même façon : cinq sont des
+formulaires, cinq des comptes rendus dictés, cinq des notes en abrégé de
+service (« ADK », « T3 N1 », « 3N+/24 »), cinq contiennent des **pièges** — la
+taille mesurée au scanner à côté de celle de la pièce, un antécédent opéré par
+une autre voie, une hémorragie « suspectée puis écartée », une fuite
+biochimique qui n'est pas une fistule.
+
+Sur ces dossiers, la **consigne** donnée au modèle déplace le curseur, comme
+le seuil d'un test diagnostique :
+
+| Consigne | Ce qu'elle dit au modèle | Ce que l'on s'attend à observer |
+|---|---|---|
+| `naif` | « extrais les informations » | la ligne de base |
+| `prudent` | « dans le doute, abstiens-toi » | précision haute, rappel bas — un test spécifique |
+| `exhaustif` | « ne laisse aucun champ vide, signale tout » | rappel haut, précision basse — un test sensible |
+| `clinique` | les définitions du registre, champ par champ | le meilleur compromis sur les pièges |
+| `exemples` | un dossier fictif et sa réponse | bon sur ce qui ressemble à l'exemple |
+
+Ce sont des hypothèses : vous les vérifierez. Lancez la même extraction avec
+deux consignes, puis lisez le tableau « par style de document » du rapport :
+
+```bash
+./bin/farci extract --subset quick --run prudent --prompt prudent
+./bin/farci extract --subset quick --run exhaustif --prompt exhaustif
+./bin/farci evaluate --subset quick
+```
+
+Le mode d'emploi et la grille à remplir sont dans
+`07-applications/common/prompts/README.md` ; les règles qui tranchent chaque
+piège dans `datasets/gold_schema.md`.
+
 ### 5.7 Observer et résister aux pannes
 
 Chaque requête laisse une **trace** : quel modèle a répondu, en combien de

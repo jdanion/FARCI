@@ -4,22 +4,8 @@ Patient : Michel Garcia
 IPP : 1234567890129
 NIR : 1 29 51 6789 0123 456 84
 Date de naissance : 08/12/1962
-Âge : 63 ans
-Sexe : M
 
-Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+Il s'agit d'un patient âgé de 63 ans, pris en charge pour un adénocarcinome canalaire du pancréas.
 
-Intervention : Whipple modifié
-Voie d'abord : laparotomie
-Résection veineuse : Non
-
-Taille tumorale : 31.0 mm
-Histologie : adénocarcinome canalaire
-
-Complications :
-- Fistule pancréatique : Oui
-- DGE : Non
-- Hémorragie : Non
-
-Durée de séjour : 16 jours
-Réadmission : Non
+Il est réalisé une intervention de type Whipple modifié par laparotomie médiane. Aucun geste vasculaire associé.
+Reconstruction par anastomoses pancréatico-jéjunale, hépatico-jéjunale et gastro-jéjunale. Mise en place de deux drains.

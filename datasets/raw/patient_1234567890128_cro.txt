@@ -4,22 +4,8 @@ Patient : Isabelle Lemoine
 IPP : 1234567890128
 NIR : 2 28 50 6789 0123 456 83
 Date de naissance : 14/05/1956
-Âge : 69 ans
-Sexe : F
 
-Diagnostic préopératoire : TNE grade 1 du pancréas
+Il s'agit d'une patiente âgée de 69 ans, prise en charge pour une TNE grade 1 du pancréas.
 
-Intervention : Duodénopancréatectomie
-Voie d'abord : cœlioscopie
-Résection veineuse : Non
-
-Taille tumorale : 12.0 mm
-Histologie : TNE grade 1
-
-Complications :
-- Fistule pancréatique : Non
-- DGE : Non
-- Hémorragie : Non
-
-Durée de séjour : 7 jours
-Réadmission : Non
+Il est réalisé une duodénopancréatectomie par abord laparoscopique. La dissection est menée au contact de la veine mésentérique supérieure, sans résection veineuse.
+Reconstruction par anastomoses pancréatico-jéjunale, hépatico-jéjunale et gastro-jéjunale. Mise en place de deux drains.

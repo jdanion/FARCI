@@ -1,15 +1,9 @@
-COMPTE RENDU ANATOMOPATHOLOGIQUE
+ANAPATH
 
 Patient : Philippe Morel
 IPP : 1234567890133
 
-Pièce opératoire : Whipple modifié
-
-Résultats :
-- pT : pT2
-- pN : pN0
-- Ganglions examinés : 19
-- Ganglions envahis : 0
-- Marge : R0
-- Histologie : adénocarcinome canalaire
-- Taille : 26.0 mm
+Pièce : Whipple modifié
+ADK canalaire, 26 mm
+pT2N0 - 0N+/19
+Marges : R0

@@ -3,13 +3,8 @@ COMPTE RENDU ANATOMOPATHOLOGIQUE
 Patient : Thierry Laurent
 IPP : 1234567890131
 
-Pièce opératoire : DPC
-
-Résultats :
-- pT : pT3
-- pN : pN2
-- Ganglions examinés : 29
-- Ganglions envahis : 6
-- Marge : R1
-- Histologie : adénocarcinome canalaire
-- Taille : 38.0 mm
+Pièce opératoire adressée à l'état frais. La tumeur siège dans la tête du pancréas et mesure 3,8 cm de grand axe.
+Il s'agit d'un adénocarcinome canalaire.
+Six ganglions métastatiques sur 29 examinés.
+La marge rétroporte est envahie microscopiquement (R1).
+Classification pTNM (8e édition) : pT3 pN2.

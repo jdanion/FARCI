@@ -203,7 +203,7 @@ eds entites	ok	./bin/farci eds compare --subset quick	toutes les entités contre
 eds compare	ok	./bin/farci evaluate --subset quick	le score de l'extraction structurée
 eds	echec	./bin/farci status	la ligne EDS-NLP : servie par l'équipe 4 ou le Pi ?
 eds	echec	./bin/farci eds --help	sous-commandes : pseudo, entites, compare
-evaluate	ok	./bin/farci extract --subset quick --run v2 --prompt v2	comparer un second prompt
+evaluate	ok	./bin/farci extract --prompts	comparer d'autres consignes (prudent, exhaustif, clinique…)
 evaluate	ok	./bin/farci up 06-evaluation/mlflow	bonus : suivre les runs dans MLflow
 evaluate	echec	./bin/farci extract --subset quick	il faut d'abord des extractions
 

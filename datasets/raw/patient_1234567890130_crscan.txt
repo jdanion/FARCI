@@ -3,10 +3,7 @@ COMPTE RENDU SCANNER
 Patient : Claire Dubois
 IPP : 1234567890130
 
-Indication : IPMN bordeline
-
-Résultat :
-Tumeur du pancréas de 22.0 mm.
-Pas d'envahissement veineux.
-
-Conclusion : IPMN bordeline
+Scanner thoraco-abdomino-pelvien avec injection.
+Masse de la tête du pancréas mesurée à 26 mm, avec dilatation bicanalaire.
+Absence de contact vasculaire.
+Absence de lésion secondaire hépatique ou pulmonaire.

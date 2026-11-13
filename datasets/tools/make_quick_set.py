@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""FARCI — crée le sous-ensemble quick (10 premiers cas).
+"""FARCI — crée le sous-ensemble quick (10 dossiers, les quatre styles).
 
-Le quick set est inclus dans le full set : ce sont les 10 premiers cas.
+Le quick set est inclus dans le full set : 10 dossiers qui couvrent les quatre styles d'écriture.
 Ce script vérifie simplement que le sous-ensemble est bien contenu dans
 l'ensemble complet.
 

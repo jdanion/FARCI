@@ -4,7 +4,8 @@
 Usage :
     ./bin/farci extract                          20 dossiers, run « python »
     ./bin/farci extract --subset quick           10 dossiers (jeu rapide)
-    ./bin/farci extract --run equipe-3 --prompt v2
+    ./bin/farci extract --run clinique --prompt clinique   une consigne par run, pour comparer
+    ./bin/farci extract --prompts                liste des consignes disponibles
     ./bin/farci extract --replay                 plan C : runtime rejoué local, sans réseau
 
 La passerelle est lue dans FARCI_GATEWAY_URL (dérivée de config/network.env).
@@ -28,12 +29,30 @@ def main() -> int:
     parser.add_argument("--run", default="python", help="nom de la run : datasets/extracted/<run>/")
     parser.add_argument("--output", type=Path, default=None, help="dossier de sortie (prioritaire sur --run)")
     parser.add_argument("--model", default="med-extraction")
-    parser.add_argument("--prompt", default="v1", choices=["v1", "v2"])
+    prompts = sorted(p.stem.removeprefix("extraction_")
+                     for p in (ROOT / "07-applications" / "common" / "prompts").glob("extraction_*.md"))
+    parser.add_argument("--prompt", default="v1", choices=prompts,
+                        help="la consigne : 07-applications/common/prompts/extraction_<nom>.md")
+    parser.add_argument("--prompts", action="store_true", help="lister les consignes et sortir")
     parser.add_argument("--subset", choices=["full", "quick"], default="full")
     parser.add_argument("--limit", type=int, default=None, help="n premiers dossiers seulement")
     parser.add_argument("--replay", action="store_true",
                         help="plan C : runtime rejoué dans ce processus, sans réseau ni modèle")
     args = parser.parse_args()
+
+    if args.prompts:
+        for name in prompts:
+            text = (ROOT / "07-applications" / "common" / "prompts" / f"extraction_{name}.md").read_text(encoding="utf-8")
+            strategy = text.split("Stratégie :", 1)[1].split(".", 1)[0].strip() if "Stratégie :" in text else "consigne historique"
+            print(f"  {name:<10} {' '.join(strategy.split())}")
+        print("\n  Comparer : ./bin/farci extract --subset quick --run <nom> --prompt <nom>, puis ./bin/farci evaluate --subset quick")
+        return 0
+
+    if args.replay and args.prompt not in ("v1", "v2"):
+        # Le mode rejoué ne contient que des réponses enregistrées pour v1 et v2 :
+        # il ne peut pas montrer l'effet d'une autre consigne.
+        print(f"ATTENTION : le mode rejoué ignore la consigne « {args.prompt} » (réponses enregistrées v1).\n"
+              "            Comparer des consignes demande un vrai modèle.\n", file=sys.stderr)
 
     if args.replay:
         # Plan C : ni accueil, ni passerelle, ni modèle. Le runtime rejoué

@@ -250,6 +250,38 @@ module.exports = (ctx) => {
       });
     }
     {
+      const s = content("Le même dossier, écrit de quatre façons", "Pourquoi le jeu de données n'est pas fait que de formulaires. Sur un formulaire, n'importe quel modèle réussit avec n'importe quelle consigne : on ne mesure rien. Les vingt dossiers sont donc écrits dans quatre styles, cinq chacun. Le narratif demande de comprendre des phrases, des négations, des centimètres. Le télégraphique demande de connaître les abréviations du service. Les dossiers à pièges demandent un jugement clinique : la taille du scanner n'est pas celle de la pièce, une fuite biochimique n'est pas une fistule, une hémorragie écartée n'est pas une hémorragie. Les valeurs attendues, elles, ne changent pas : elles viennent du registre.");
+      const st = [
+        ["Formulaire", C.accent4, "Voie d'abord : cœlioscopie\nMarge : R0", "Rien à comprendre : la ligne de base."],
+        ["Narratif", C.accent1, "« …par abord laparoscopique. Les limites d'exérèse sont saines. »", "Synonymes, négations, cm, nombres en lettres."],
+        ["Télégraphique", C.accent3, "H 71 a. - ADK canalaire\npT2N0 - 0N+/19 · FP : 0", "Les abréviations du service."],
+        ["Pièges", C.accent6, "Scanner : 26 mm. Pièce : 17 x 23 x 14 mm. Hémorragie suspectée, écartée.", "Quelle information compte ? Un jugement clinique."],
+      ];
+      st.forEach(([h, color, ex, b], i) => {
+        const x = 0.7 + i * 3.03;
+        box(s, x, 1.75, 2.8, 3.75);
+        T(s, h, { x: x + 0.2, y: 1.85, w: 2.4, h: 0.5, fontSize: 19, bold: true, color });
+        T(s, ex, { x: x + 0.2, y: 2.45, w: 2.4, h: 1.6, fontSize: 13, fontFace: MONO });
+        T(s, b, { x: x + 0.2, y: 4.15, w: 2.4, h: 1.2, fontSize: 14 });
+      });
+      T(s, "Cinq dossiers par style. Les valeurs attendues ne changent pas : seule l'écriture change.", { x: 0.7, y: 5.75, w: 11.9, h: 0.6, fontSize: 17, italic: true, color: C.text2 });
+    }
+    {
+      const s = content("La consigne est un réglage, comme un seuil", "La consigne donnée au modèle déplace le curseur entre sensibilité et valeur prédictive, exactement comme le seuil d'un test. Cinq consignes sont fournies. Naïf : une phrase. Prudent : dans le doute, abstiens-toi. Exhaustif : ne laisse rien passer. Clinique : les définitions du registre, champ par champ. Exemples : un dossier fictif et sa réponse. La colonne de droite est une hypothèse, pas un résultat : c'est à la salle de la vérifier, en lançant la même extraction avec deux consignes et en lisant le tableau par style de document. Un petit modèle peut ignorer la consigne : c'est aussi un résultat.");
+      const hdr = (t) => ({ text: t, options: { bold: true, color: THEME.colors.lt1, fill: { color: THEME.colors.dk1 }, fontSize: 14 } });
+      const cell = (t, o = {}) => ({ text: t, options: { fontSize: 14, color: THEME.colors.dk1, ...o } });
+      s.addTable([
+        [hdr("Consigne"), hdr("Ce qu'elle dit au modèle"), hdr("Hypothèse à vérifier"), hdr("En médecine")],
+        [cell("naif", { bold: true }), cell("« Extrais les informations. »"), cell("la ligne de base"), cell("l'interne à qui l'on n'a rien expliqué")],
+        [cell("prudent", { bold: true }), cell("« Dans le doute, abstiens-toi. »"), cell("précision haute, rappel bas"), cell("un test spécifique")],
+        [cell("exhaustif", { bold: true }), cell("« Aucun champ vide ; dans le doute, signale. »"), cell("rappel haut, précision basse"), cell("un test sensible")],
+        [cell("clinique", { bold: true }), cell("Les définitions du registre, champ par champ"), cell("le meilleur compromis sur les pièges"), cell("le protocole de recueil")],
+        [cell("exemples", { bold: true }), cell("Un dossier fictif et sa réponse"), cell("bon sur ce qui ressemble à l'exemple"), cell("le compagnonnage")],
+      ], { x: 0.7, y: 1.75, w: 11.9, colW: [1.6, 4.1, 3.4, 2.8], rowH: 0.5, border: { type: "solid", color: THEME.colors.lt2, pt: 1 }, valign: "middle", objectName: "consignes" });
+      box(s, 0.7, 5.05, 11.9, 1.45, C.text1);
+      T(s, "./bin/farci extract --subset quick --run prudent --prompt prudent\n./bin/farci extract --subset quick --run exhaustif --prompt exhaustif\n./bin/farci evaluate --subset quick", { x: 1.0, y: 5.15, w: 11.3, h: 1.25, fontSize: 14, fontFace: MONO, color: C.background1, valign: "middle" });
+    }
+    {
       const s = content("Manquer ou inventer : lequel est le plus grave ?", "Question ouverte, à poser à la salle après le classement. Il n'y a pas de réponse unique : elle dépend de ce que l'on fait de la donnée. Pour repérer des patients à inclure, on veut un bon rappel. Pour remplir une base qui servira à une publication, une invention est une faute. C'est une décision clinique, pas informatique.");
       box(s, 0.7, 1.8, 5.8, 3.6);
       await dot(s, 1.0, 2.05, 0.8, C.accent3, "FaEyeSlash");

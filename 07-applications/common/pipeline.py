@@ -63,8 +63,16 @@ def build_dossier(paths: list[Path], mapping: MappingStore) -> str:
     return pseudonymize_text(text, mapping)
 
 
+def available_prompts() -> list[str]:
+    """Les consignes disponibles : un fichier prompts/extraction_<nom>.md chacune."""
+    return sorted(p.stem.removeprefix("extraction_") for p in PROMPTS_DIR.glob("extraction_*.md"))
+
+
 def render_prompt(prompt_version: str) -> str:
     template = (PROMPTS_DIR / f"extraction_{prompt_version}.md").read_text(encoding="utf-8")
+    # Les commentaires <!-- ... --> expliquent la stratégie au lecteur : le
+    # modèle ne les reçoit pas (il ne doit pas savoir ce que l'on attend de lui).
+    template = re.sub(r"<!--.*?-->\n*", "", template, flags=re.DOTALL)
     # Le document part dans le message utilisateur : le prompt système ne
     # contient que les règles et le schéma.
     return template.replace("{{text}}", "(le dossier est dans le message suivant)")

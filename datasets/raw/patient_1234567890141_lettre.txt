@@ -3,14 +3,7 @@ LETTRE DE SORTIE
 Patient : Pierre Renard
 IPP : 1234567890141
 
-Intervention : DPC
-Date de sortie : jour 8 post-opératoire
-
-Complications :
-- Fistule pancréatique : Non
-- DGE : Non
-- Hémorragie : Non
-
-Réadmission à 30 jours : Non
-
-Suivi : consultation chirurgicale à 1 mois.
+Monsieur a été hospitalisé dans le service pour une DPC.
+Élévation isolée de l'amylase sur le drain à J3 (fuite biochimique), sans retentissement clinique ; le drain a été retiré à J5. Une déglobulisation à J4 a fait suspecter une hémorragie, écartée par l'angioscanner. Iléus réflexe résolutif à J3, alimentation reprise à J4 sans gastroparésie.
+Sortie à J8, suivie de trois semaines en soins de suite et de réadaptation.
+Consultation non programmée à J14 pour douleurs abdominales : bilan rassurant, retour à domicile le jour même.

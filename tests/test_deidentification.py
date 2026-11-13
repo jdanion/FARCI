@@ -33,10 +33,12 @@ class Pseudonymisation(unittest.TestCase):
         self.assertIn("IPP_0", first.to_dict())
 
     def test_le_contenu_clinique_est_conserve(self):
-        path = next(RAW.glob("patient_*_crap.txt"))
-        text = pseudonymize_text(path.read_text(encoding="utf-8"), MappingStore())
-        self.assertIn("Ganglions examinés", text)
-        self.assertRegex(text, r"pT\d")
+        # Quel que soit le style d'écriture du dossier, le stade et le curage
+        # ganglionnaire restent lisibles après pseudonymisation.
+        for path in sorted(RAW.glob("patient_*_crap.txt")):
+            text = pseudonymize_text(path.read_text(encoding="utf-8"), MappingStore())
+            self.assertRegex(text, r"(?i)ganglions|N\+/", path.name)
+            self.assertRegex(text, r"p?T\d", path.name)
 
 
 if __name__ == "__main__":

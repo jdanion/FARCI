@@ -36,6 +36,7 @@ sys.path.insert(0, str(ROOT / "datasets" / "tools"))
 from metrics import SCORED_FIELDS, add_outcome, compute_metrics, empty_counts, scores  # noqa: E402
 from report import render_report, save_report  # noqa: E402
 from schema_check import load_schema, validate  # noqa: E402
+from styles import STYLES, style_of  # noqa: E402
 
 
 def load_json(path: Path):
@@ -74,6 +75,8 @@ def evaluate_run(name: str, run_dir: Path, gold: dict[str, dict], schema: dict) 
     dossiers = []
     latencies = []
     found = valid = 0
+    per_style: dict[str, dict] = {}
+    prompts, models = set(), set()
 
     for key, gold_record in gold.items():
         path = run_dir / f"patient_{key}.json"
@@ -91,13 +94,18 @@ def evaluate_run(name: str, run_dir: Path, gold: dict[str, dict], schema: dict) 
                 else:
                     status, predicted = "valide", data
                     valid += 1
-                    latency = (data.get("_meta") or {}).get("latency_s")
+                    meta = data.get("_meta") or {}
+                    prompts.add(str(meta.get("prompt") or "?"))
+                    models.add(str(meta.get("model") or "?"))
+                    latency = meta.get("latency_s")
                     if isinstance(latency, (int, float)) and not isinstance(latency, bool):
                         latencies.append(float(latency))
 
         result = compute_metrics(gold_record, predicted)
+        style_counts = per_style.setdefault(style_of(key), empty_counts())
         for field, comparison in result["fields"].items():
             add_outcome(counts, comparison["outcome"])
+            add_outcome(style_counts, comparison["outcome"])
             per_field[field] += comparison["correct"]
         dossiers.append({
             "patient": key,
@@ -115,6 +123,11 @@ def evaluate_run(name: str, run_dir: Path, gold: dict[str, dict], schema: dict) 
         "completude": valid / total if total else 0.0,
         **scores(counts),
         "latence_moyenne_s": sum(latencies) / len(latencies) if latencies else None,
+        "prompt": "/".join(sorted(prompts)) or None,
+        "modele": "/".join(sorted(models)) or None,
+        # Le même score, par style d'écriture du dossier (datasets/tools/styles.py) :
+        # c'est là que les consignes se départagent.
+        "par_style": {style: scores(per_style[style]) for style in STYLES if style in per_style},
         "par_champ": {field: per_field[field] / total if total else 0.0 for field in SCORED_FIELDS},
         "par_dossier": dossiers,
     }

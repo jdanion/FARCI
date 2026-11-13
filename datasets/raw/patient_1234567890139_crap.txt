@@ -3,13 +3,9 @@ COMPTE RENDU ANATOMOPATHOLOGIQUE
 Patient : Georges Lambert
 IPP : 1234567890139
 
-Pièce opératoire : Duodénopancréatectomie
-
-Résultats :
-- pT : pT3
-- pN : pN1
-- Ganglions examinés : 23
-- Ganglions envahis : 2
-- Marge : R0
-- Histologie : adénocarcinome canalaire
-- Taille : 29.0 mm
+Pièce opératoire adressée à l'état frais. Tumeur de la tête du pancréas mesurant 23 x 29 x 20 mm.
+Il s'agit d'un adénocarcinome canalaire. Index de prolifération estimé à 4 %.
+Un nodule de 6 mm de la graisse péripancréatique correspond à un foyer de cytostéatonécrose, sans cellule tumorale.
+Curage : 23 ganglions prélevés, dont deux métastatiques.
+Limites chirurgicales en tissu sain ; la tumeur reste à 3 mm de la marge rétroporte.
+Stade pT3 pN1 selon la 8e édition (ancienne classification, 7e édition : pT3).

@@ -4,22 +4,10 @@ Patient : Pierre Renard
 IPP : 1234567890141
 NIR : 1 41 63 6789 0123 456 96
 Date de naissance : 16/06/1957
-Âge : 68 ans
-Sexe : M
 
-Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+Il s'agit d'un patient âgé de 68 ans, pris en charge pour un adénocarcinome canalaire du pancréas.
+Antécédents : cholécystectomie par laparotomie en 2008 ; frère suivi pour une TNE grade 2 du grêle.
 
-Intervention : DPC
-Voie d'abord : cœlioscopie
-Résection veineuse : Non
-
-Taille tumorale : 27.0 mm
-Histologie : adénocarcinome canalaire
-
-Complications :
-- Fistule pancréatique : Non
-- DGE : Non
-- Hémorragie : Non
-
-Durée de séjour : 8 jours
-Réadmission : Non
+Il est réalisé une DPC par voie cœlioscopique exclusive. La dissection au contact de la veine porte est laborieuse ; la veine est finalement libérée sans résection.
+Pertes sanguines peropératoires estimées à 330 mL, sans transfusion.
+Examen extemporané de la tranche pancréatique : sain.

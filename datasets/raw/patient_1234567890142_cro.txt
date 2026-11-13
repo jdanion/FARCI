@@ -4,22 +4,10 @@ Patient : Monique Barbier
 IPP : 1234567890142
 NIR : 2 42 64 6789 0123 456 97
 Date de naissance : 04/09/1952
-Âge : 73 ans
-Sexe : F
 
-Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+Il s'agit d'une patiente âgée de 73 ans, prise en charge pour un adénocarcinome canalaire du pancréas.
+Antécédents : hystérectomie par cœlioscopie en 2004 ; mère âgée de 94 ans, suivie pour un adénocarcinome mammaire.
 
-Intervention : Whipple modifié
-Voie d'abord : laparotomie
-Résection veineuse : Oui
-
-Taille tumorale : 39.0 mm
-Histologie : adénocarcinome canalaire
-
-Complications :
-- Fistule pancréatique : Oui
-- DGE : Non
-- Hémorragie : Non
-
-Durée de séjour : 17 jours
-Réadmission : Non
+Il est réalisé une intervention de type Whipple modifié par laparotomie bi-sous-costale. L'envahissement de la veine mésentérique supérieure sur 2 cm impose une résection-anastomose veineuse.
+Pertes sanguines peropératoires estimées à 340 mL, sans transfusion.
+Examen extemporané de la tranche pancréatique : sain.

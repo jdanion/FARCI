@@ -4,22 +4,10 @@ Patient : Georges Lambert
 IPP : 1234567890139
 NIR : 1 39 61 6789 0123 456 94
 Date de naissance : 07/11/1955
-Âge : 70 ans
-Sexe : M
 
-Diagnostic préopératoire : adénocarcinome canalaire du pancréas
+Il s'agit d'un patient âgé de 70 ans, pris en charge pour un adénocarcinome canalaire du pancréas.
+Antécédents : appendicectomie par cœlioscopie dans l'enfance ; père décédé à 71 ans d'un adénocarcinome colique.
 
-Intervention : Duodénopancréatectomie
-Voie d'abord : laparotomie
-Résection veineuse : Non
-
-Taille tumorale : 29.0 mm
-Histologie : adénocarcinome canalaire
-
-Complications :
-- Fistule pancréatique : Oui
-- DGE : Non
-- Hémorragie : Non
-
-Durée de séjour : 15 jours
-Réadmission : Non
+Il est réalisé une duodénopancréatectomie par laparotomie bi-sous-costale. La dissection au contact de la veine porte est laborieuse ; la veine est finalement libérée sans résection.
+Pertes sanguines peropératoires estimées à 310 mL, sans transfusion.
+Examen extemporané de la tranche pancréatique : sain.

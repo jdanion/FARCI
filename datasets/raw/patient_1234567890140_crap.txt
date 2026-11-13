@@ -3,13 +3,9 @@ COMPTE RENDU ANATOMOPATHOLOGIQUE
 Patient : Martine Faure
 IPP : 1234567890140
 
-Pièce opératoire : Duodénopancréatectomie
-
-Résultats :
-- pT : pT1
-- pN : pN0
-- Ganglions examinés : 10
-- Ganglions envahis : 0
-- Marge : R0
-- Histologie : TNE grade 1
-- Taille : 14.0 mm
+Pièce opératoire adressée à l'état frais. Tumeur de la tête du pancréas mesurant 8 x 14 x 5 mm.
+Il s'agit d'une TNE grade 1. Index de prolifération estimé à 5 %.
+Un nodule de 6 mm de la graisse péripancréatique correspond à un foyer de cytostéatonécrose, sans cellule tumorale.
+Curage : 10 ganglions prélevés, dont aucun métastatique.
+Limites chirurgicales en tissu sain ; la tumeur reste à 3 mm de la marge rétroporte.
+Stade pT1 pN0 selon la 8e édition (ancienne classification, 7e édition : pT1).

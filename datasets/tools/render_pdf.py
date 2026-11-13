@@ -20,6 +20,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from cases import Case
 
+sys.path.insert(0, str(Path(__file__).parent))
+from styles import render_documents  # noqa: E402
+
 try:
     from fpdf import FPDF
     HAS_FPDF = True
@@ -164,7 +167,9 @@ def render_case_pdfs(case, output_dir: Path, fmt: str = "txt") -> list[Path]:
     data = _format_case(case)
     base = f"patient_{case.patient_id}"
 
-    documents = {
+    # Cinq dossiers sur vingt gardent ce formulaire ; les autres sont rédigés
+    # en prose, en style télégraphique ou avec des pièges (styles.py).
+    documents = render_documents(case) or {
         "cro": TEMPLATE_CRO.format(**data),
         "crap": TEMPLATE_CRAP.format(**data),
         "crscan": TEMPLATE_CRSCAN.format(**data),

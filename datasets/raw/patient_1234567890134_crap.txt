@@ -1,15 +1,9 @@
-COMPTE RENDU ANATOMOPATHOLOGIQUE
+ANAPATH
 
 Patient : Sylvie Girard
 IPP : 1234567890134
 
-Pièce opératoire : Duodénopancréatectomie
-
-Résultats :
-- pT : pT1
-- pN : pN0
-- Ganglions examinés : 11
-- Ganglions envahis : 0
-- Marge : R0
-- Histologie : adénocarcinome canalaire
-- Taille : 19.0 mm
+Pièce : duodénopancréatectomie
+ADK canalaire, 19 mm
+T1 N0 - 0N+/11
+Marges : R0
